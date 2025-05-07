@@ -29,7 +29,7 @@ namespace TasksHubServer.Controllers
             ApplicationUser user = new()
             {
               
-                FullName = model.Email,
+                FullName = model.Fullname,
                 Email = model.Email,
                 PasswordHash = passwordHash,
                 PasswordSalt = passwordSalt,
@@ -39,12 +39,24 @@ namespace TasksHubServer.Controllers
             if (await _repo.CreateUserAsync(user) is null) 
                 return BadRequest("Repository failed to create user");
 
+            // Send a welcome email
+            await EmailSender.SendEmail(user.Email, "Welcome to TasksHub", "Thank you for registering!");
+
             return Ok("Registered Successfuly");
 
 
         }
 
+        [HttpGet("GetAllUsers")]
+        public async Task<IEnumerable<ApplicationUser>> GetAllUsers()
+        {
+            IEnumerable<ApplicationUser> users = await _repo.GetAllUsersAsync();
+            return users;
+        }
+
         [HttpPost("Login")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
         public async Task<IActionResult> Login(LoginDto model)
         {
             ApplicationUser? user = await _repo.GetUserByEmailAsync(model.Email);
@@ -60,6 +72,9 @@ namespace TasksHubServer.Controllers
         }
 
         [HttpPost("RefreshToken")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
         public async Task<IActionResult> RefreshToken(string refreshToken)
         {
             ApplicationUser? user = await _repo.GetUserByRefreshTokenAsync(refreshToken);
@@ -77,11 +92,47 @@ namespace TasksHubServer.Controllers
 
             return Ok(new { AccessToken = accessToken, RefreshToken = newRefreshToken });
         }
-        // [HttpGet]
-        // public async Task<IEnumerable<UserTasks>> GetUserTasks(Guid userId)
-        // {
 
-        // }
-        
+        [HttpPost("SendOTP")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        public async Task<IActionResult> SendOTP(string email)
+        {
+            // ApplicationUser? user = await _repo.GetUserByEmailAsync(email);
+            // if (user == null) return BadRequest();
+
+            OTPService otpService = new ();
+            string otp = otpService.GenerateAndStoreOtp(email);
+            string subject = "Confirm it's you";
+            string body = $"Hi {email},\n" +
+                $"We're sending a security code to comfirm that it's really you." +
+                $"\n\nCode:{otp}\n\n" +
+                $"This code will expire in 5 minutes.\n\n" +
+                $"Didn't request this?\n" +
+                $"If you got this email but didn't request for it, it's poosible someone is trying to access your TasksHub account.\n" +
+                $"As long as you don't share this code with anyone, you don't need to take any further step.\n\n" +
+                $"Thanks,\n TasksHub";
+
+
+            await EmailSender.SendEmail(email, subject, body);
+
+            return Ok("OTP sent successfully.");
+        }
+
+        [HttpPost("VerifyOtp")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        public IActionResult VerifyOTP(string email, string submittedOtp)
+        {
+            OTPService otpService = new();
+            if (!otpService.VerifyOtp(email, submittedOtp))
+            {
+                return BadRequest("Invalid or expired OTP.");
+
+            }
+
+             return Ok("OTP verified successfully.");
+        }
+
     }
 }

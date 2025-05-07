@@ -6,6 +6,7 @@ namespace TasksHubServer.Repositories
     public interface ITasksHubRepository
     {
         Task<ApplicationUser?> CreateUserAsync(ApplicationUser user);
+        Task<IEnumerable<ApplicationUser>> GetAllUsersAsync();
         Task<ApplicationUser?> GetUserByIdAsync(Guid userId);
         Task<ApplicationUser?> GetUserByEmailAsync(string email);
         Task<ApplicationUser?> GetUserByRefreshTokenAsync(string refreshToken);

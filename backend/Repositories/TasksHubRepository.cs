@@ -35,6 +35,23 @@ public class TasksHubRepository (IDistributedCache distributedCache, Application
 
     }
 
+    public async Task<IEnumerable<ApplicationUser>> GetAllUsersAsync()
+    {
+        string key = "TasksHUB_Users";
+        string? cachedUsers = await _distributedCache.GetStringAsync(key);
+
+        if (cachedUsers != null)
+        {
+            return JsonConvert.DeserializeObject<IEnumerable<ApplicationUser>>(cachedUsers) ?? Enumerable.Empty<ApplicationUser>();
+        }
+
+        IEnumerable<ApplicationUser> users = await _db.ApplicationUsers.ToListAsync();
+
+        await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(users), _cacheOptions);
+
+        return users;
+    }
+
     public async Task<ApplicationUser?> GetUserByIdAsync(Guid userId)
     {
         string key = $"User_{userId}";
