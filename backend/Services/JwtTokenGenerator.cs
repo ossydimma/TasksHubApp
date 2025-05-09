@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using TasksHubServer.Models;
 
-namespace TasksHubServer.TokenGenerator;
+namespace TasksHubServer.Services;
 
 public static class JwtTokenGenerator
 {

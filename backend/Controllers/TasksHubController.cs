@@ -3,20 +3,22 @@ using TasksHubServer.DTOs;
 using TasksHubServer.Models;
 using TasksHubServer.Repositories;
 using TasksHubServer.Services;
-using TasksHubServer.TokenGenerator;
+// using TasksHubServer.TokenGenerator;
 
 namespace TasksHubServer.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class TasksHubController(ITasksHubRepository  repo) : ControllerBase
+    public class TasksHubController(ITasksHubRepository  repo, OTPService otpService, EmailSender emailSender) : ControllerBase
     {
         private readonly ITasksHubRepository _repo = repo;
+        private readonly OTPService _otpService = otpService;
+        private readonly EmailSender _emailSender = emailSender;
 
         [HttpPost("Signup")]
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
-        public async Task<IActionResult> CreateUser(SignupDto model)
+        public async Task<IActionResult> CreateUser([FromBody] SignupDto model)
         {
             if (model is null) return BadRequest();
 
@@ -40,7 +42,7 @@ namespace TasksHubServer.Controllers
                 return BadRequest("Repository failed to create user");
 
             // Send a welcome email
-            await EmailSender.SendEmail(user.Email, "Welcome to TasksHub", "Thank you for registering!");
+            await _emailSender.SendEmail(user.Email, "Welcome to TasksHub", "Thank you for registering!");
 
             return Ok("Registered Successfuly");
 
@@ -57,7 +59,7 @@ namespace TasksHubServer.Controllers
         [HttpPost("Login")]
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
-        public async Task<IActionResult> Login(LoginDto model)
+        public async Task<IActionResult> Login([FromBody] LoginDto model)
         {
             ApplicationUser? user = await _repo.GetUserByEmailAsync(model.Email);
 
@@ -75,7 +77,7 @@ namespace TasksHubServer.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
-        public async Task<IActionResult> RefreshToken(string refreshToken)
+        public async Task<IActionResult> RefreshToken([FromBody] string refreshToken)
         {
             ApplicationUser? user = await _repo.GetUserByRefreshTokenAsync(refreshToken);
             if (user is null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime < DateTime.UtcNow)
@@ -96,25 +98,37 @@ namespace TasksHubServer.Controllers
         [HttpPost("SendOTP")]
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
-        public async Task<IActionResult> SendOTP(string email)
+        public async Task<IActionResult> SendOTP([FromQuery] string email)
         {
             // ApplicationUser? user = await _repo.GetUserByEmailAsync(email);
             // if (user == null) return BadRequest();
 
-            OTPService otpService = new ();
-            string otp = otpService.GenerateAndStoreOtp(email);
+            string otp = _otpService.GenerateAndStoreOtp(email);
+
             string subject = "Confirm it's you";
-            string body = $"Hi {email},\n" +
-                $"We're sending a security code to comfirm that it's really you." +
-                $"\n\nCode:{otp}\n\n" +
-                $"This code will expire in 5 minutes.\n\n" +
-                $"Didn't request this?\n" +
-                $"If you got this email but didn't request for it, it's poosible someone is trying to access your TasksHub account.\n" +
-                $"As long as you don't share this code with anyone, you don't need to take any further step.\n\n" +
-                $"Thanks,\n TasksHub";
+            string body = $@"
+                <div style='font-size:18px;'>
+                    <h1 style='font-size:20px;'>Hi {email},</h1>
+                    <p>We're sending a security code to confirm that it's really you.</p>
+                    <p><strong style='font-size:20px;'> Code : <strong style='font-size:25px; word-spacing: 20px;'> {otp}</strong> </p>
+                    <p>This code will expire in 5 minutes.</p>
+                    <p>
+                        <span style='font-size:18px; font-weight: 700;'>Didn't request this? </span>
+                        If you got this email but didn't request for it, it's possible someone is trying to access your TasksHub account.
+                        As long as you don't share this code with anyone, you don't need to take any further step.
+                    </p>
+                    <p style='font-size:18px;'>Thanks,<br/> <span style='font-weight: 800;'>TasksHub </span></p>
+                </div>";
 
-
-            await EmailSender.SendEmail(email, subject, body);
+            try
+            {
+                await _emailSender.SendEmail(email, subject, body);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                return BadRequest();
+            }
 
             return Ok("OTP sent successfully.");
         }
@@ -122,10 +136,9 @@ namespace TasksHubServer.Controllers
         [HttpPost("VerifyOtp")]
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
-        public IActionResult VerifyOTP(string email, string submittedOtp)
+        public IActionResult VerifyOTP( string email,string submittedOtp)
         {
-            OTPService otpService = new();
-            if (!otpService.VerifyOtp(email, submittedOtp))
+            if (!_otpService.VerifyOtp(email, submittedOtp))
             {
                 return BadRequest("Invalid or expired OTP.");
 

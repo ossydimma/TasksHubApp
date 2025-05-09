@@ -355,7 +355,6 @@ C:\Users\user\Desktop\projects\TasksHubApp\backend\obj\Debug\net9.0\refint\Tasks
 C:\Users\user\Desktop\projects\TasksHubApp\backend\obj\Debug\net9.0\TasksHubServer.pdb
 C:\Users\user\Desktop\projects\TasksHubApp\backend\obj\Debug\net9.0\TasksHubServer.genruntimeconfig.cache
 C:\Users\user\Desktop\projects\TasksHubApp\backend\obj\Debug\net9.0\ref\TasksHubServer.dll
-C:\Users\user\Desktop\projects\TasksHubApp\backend\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt
 C:\Users\user\Desktop\projects\TasksHubApp\backend\bin\Debug\net9.0\BouncyCastle.Cryptography.dll
 C:\Users\user\Desktop\projects\TasksHubApp\backend\bin\Debug\net9.0\Google.Apis.dll
 C:\Users\user\Desktop\projects\TasksHubApp\backend\bin\Debug\net9.0\Google.Apis.Auth.dll
@@ -364,3 +363,6 @@ C:\Users\user\Desktop\projects\TasksHubApp\backend\bin\Debug\net9.0\Google.Apis.
 C:\Users\user\Desktop\projects\TasksHubApp\backend\bin\Debug\net9.0\MimeKit.dll
 C:\Users\user\Desktop\projects\TasksHubApp\backend\bin\Debug\net9.0\System.Management.dll
 C:\Users\user\Desktop\projects\TasksHubApp\backend\bin\Debug\net9.0\runtimes\win\lib\net7.0\System.Management.dll
+C:\Users\user\Desktop\projects\TasksHubApp\backend\bin\Debug\net9.0\credential.json
+C:\Users\user\Desktop\projects\TasksHubApp\backend\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt
+C:\Users\user\Desktop\projects\TasksHubApp\backend\bin\Debug\net9.0\MailKit.dll

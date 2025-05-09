@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using TasksHubServer.Data;
 using TasksHubServer.Repositories;
+using TasksHubServer.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +27,9 @@ builder.Services.AddStackExchangeRedisCache(options =>
 });
 
 builder.Services.AddScoped<ITasksHubRepository, TasksHubRepository>();
+
+builder.Services.AddSingleton<OTPService>();
+builder.Services.AddSingleton<EmailSender>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
