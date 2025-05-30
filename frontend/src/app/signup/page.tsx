@@ -7,6 +7,7 @@ import {
   ShowPasswordType,
   SignupModelType,
 } from "../../../Interfaces";
+import { api } from "../../../services/axios"
 
 export default function page() {
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -76,20 +77,26 @@ export default function page() {
       return;
     }
 
-    //call the signup API here
+    // Calling the create user API
+    try {
+      // await api.post("/signup", signupModel);
+      await api.post(`/sendOTP?email=${encodeURIComponent(signupModel.email)}`);
+      setDisplayModal(true);
+      setTimeLeft(60);
+    } catch (err : any) {
+      setErrorMessage(err.message)
+    }
 
-    // Perform signup logic here
-    setDisplayModal(true);
-    setTimeLeft(60);
-    console.log("Signup data:", signupModel);
+   
     setIsLoading(false);
   };
+
+  
 
   return (
     <div className="w-screen h-screen flex justify-center items-center">
       {displayModal ? (
         <EnterOTP
-          handleVerifyCode={() => {}}
           handleCancel={() => setDisplayModal(false)}
           timeLeft={timeLeft}
           setTimeLeft={setTimeLeft}

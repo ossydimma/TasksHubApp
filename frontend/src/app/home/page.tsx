@@ -3,10 +3,20 @@ import TimeTracker from ".././components/TimeTracker";
 import Calendar from "react-calendar";
 import Header from ".././components/header";
 import "react-calendar/dist/Calendar.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { redirect } from "next/navigation";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function Home() {
   const [date, setDate] = useState<Date>(new Date());
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      redirect("/login");
+    }
+  }, [isAuthenticated]);
+
   return (
     <main className="text-black">
       <Header />

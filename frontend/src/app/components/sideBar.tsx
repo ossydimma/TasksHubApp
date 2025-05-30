@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useAuth } from "../../../context/AuthContext";
 import Link from "next/link";
 import clsx from "clsx";
 import { NavBarToolTips } from "../../../Interfaces";
@@ -8,11 +9,12 @@ import { usePathname } from "next/navigation";
 
 export default function sideBar() {
   const pathname = usePathname();
+  const { isAuthenticated } = useAuth();
 
-  const isAuthPages =
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/signup") ||
-    pathname.startsWith("/forgetPassword");
+  // const isAuthPages =
+  //   pathname.startsWith("/login") ||
+  //   pathname.startsWith("/signup") ||
+  //   pathname.startsWith("/forgetPassword");
 
   const [isMaximized, setIsMaximized] = useState<boolean>(
     window.innerWidth <= 815 ? false : true
@@ -49,7 +51,7 @@ export default function sideBar() {
 
   return (
     <div className=" h-[96Vh] sm:my-[2vh] sm:ml-[0.5vh] sm:pt-2 pb-3.5 sm:px-3 md:px-2 text-black ">
-      {showSideBar && !isAuthPages && (
+      {showSideBar && isAuthenticated && (
         <div className=" h-[95vh] flex flex-col justify-between pt-2 ">
           <ul
             className={clsx(`flex flex-col gap-4 text-sm md:text-[1rem]`, {
@@ -490,7 +492,7 @@ export default function sideBar() {
 
       {
         // ---------------- MOBILE VIEW -------------------
-        !showSideBar && !isAuthPages && (
+        !showSideBar && isAuthenticated && (
           <div className=" w-full fixed bottom-0 bg-[#dadde2] z-50">
             <ul className="flex justify-between items-center  text-xs xxs:text-sm px-6 xxs:px-8 pt-2  ">
               {/* --------------- HOME -------------- */}

@@ -7,7 +7,7 @@ using StackExchange.Redis;
 
 namespace TasksHubServer.Repositories;
 
-public class TasksHubRepository (IDistributedCache distributedCache, ApplicationDbContext Db) : ITasksHubRepository 
+public class TasksHubRepository(IDistributedCache distributedCache, ApplicationDbContext Db) : ITasksHubRepository
 {
     private readonly ApplicationDbContext _db = Db;
     private readonly IDistributedCache _distributedCache = distributedCache;
@@ -21,7 +21,7 @@ public class TasksHubRepository (IDistributedCache distributedCache, Application
 
         await _db.AddAsync(user);
         int affect = await _db.SaveChangesAsync();
-    
+
         if (affect == 1)
         {
             await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(user), _cacheOptions);
@@ -97,17 +97,30 @@ public class TasksHubRepository (IDistributedCache distributedCache, Application
     {
         string key = $"TasksHUB_User_{user.Id}";
 
-        _db.ApplicationUsers.Update(user);
+        _db.Entry(user).State = EntityState.Modified;
+
         int affect = await _db.SaveChangesAsync();
 
-        if (affect == 1)
+        if (affect > 0)
         {
             await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(user), _cacheOptions);
             return true;
         }
-        
+
         return false;
+
+        //_db.ApplicationUsers.Update(user);
+        //int affect = await _db.SaveChangesAsync();
+
+        //if (affect > 1)
+        //{
+        //    await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(user), _cacheOptions);
+        //    return true;
+        //}
+
+        //return false;
     }
+    // public async Task<string?> 
 
     public async Task<ApplicationUser?> GetUserByRefreshTokenAsync(string refreshToken)
     {
@@ -148,7 +161,29 @@ public class TasksHubRepository (IDistributedCache distributedCache, Application
 
         return tasks;
     }
-   
+
+    public async Task<bool> DeleteUserAsync(Guid id)
+    {
+        string key = $"TasksHUB_User_{id}";
+
+        // Get user by Id
+        ApplicationUser? user = await _db.ApplicationUsers.FindAsync(id);
+        if (user is null) return false;
+
+        // Remove user and save changes
+        _db.ApplicationUsers.Remove(user);
+        int affect = await _db.SaveChangesAsync();
+
+        // Valid save chnges and remove user from cache
+        if (affect == 1)
+        {
+            _distributedCache.Remove(key);
+            return true;
+        }
+
+        //  Return false if save wasn't successful
+        return false;
+    }
 
 
 

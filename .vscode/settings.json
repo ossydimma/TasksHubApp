@@ -1,0 +1,13 @@
+{
+    "[json]": {
+        "editor.quickSuggestions": {
+            "strings": "off",
+            "other": "off"
+        }
+    },
+    "editor.inlineSuggest.enabled": false,
+    "editor.quickSuggestions": {
+        "other": "off"
+    },
+    "editor.suggestOnTriggerCharacters": false
+}

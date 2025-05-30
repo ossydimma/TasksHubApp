@@ -1,10 +1,10 @@
 
 export interface User {
     // id : string; 
+    fullName : string;
     userName : string;
     email : string;
-    imageSrc : string;
-    PhoneNumber : string;   
+    imageSrc : string;   
 }
 
 export interface SignupModelType {
@@ -17,7 +17,7 @@ export interface SignupModelType {
 export interface LoginModelType {
     email : string;
     password : string;
-    remberMe : boolean;
+    rememberMe : boolean;
 }
 export interface NavBarToolTips {
     createTask : boolean;
@@ -87,4 +87,12 @@ export interface PasswordValueType {
     oldPassword : string;
     newPassword : string;
     confirmPassword : string;
+}
+
+export interface AuthContextType {
+    accessToken : string | null;
+    isAuthenticated : boolean;
+    setAccessToken : (token : string) => void;
+    logout : () => void;
+    userInfo : User | null
 }

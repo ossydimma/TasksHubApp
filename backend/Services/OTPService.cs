@@ -1,46 +1,57 @@
 ﻿
 using System.Collections.Concurrent;
+using System.Text;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace TasksHubServer.Services
 {
-    public class OTPService
+    public class OTPService(IDistributedCache distributedCache)
     {
-        private readonly ConcurrentDictionary<string, (string Otp, DateTime Expiry)> _otpStore = new();
-        public string GenerateAndStoreOtp(string userEmail, int length = 6)
+        private readonly IDistributedCache _distributedCache = distributedCache;
+        private readonly DistributedCacheEntryOptions _cacheOptions = new DistributedCacheEntryOptions()
+            .SetSlidingExpiration(TimeSpan.FromMinutes(5));
+
+        private static readonly Random _random = new();
+        public async Task<string> GenerateAndStoreOtp(string userEmail, int length = 6)
         {
-            const string Chars = "0123456789";
+            string normlizedEmail = NormalizedEmail(userEmail);
+            string key = $"otp:{normlizedEmail}";
+
+            const string digits = "0123456789";
+            StringBuilder otpBuilder = new(length);
             Random? random = new();
             var otp = new char[length];
 
 
             for (int i = 0; i < length; i++)
             {
-                otp[i] = Chars[random.Next(Chars.Length)];
+                otpBuilder.Append(digits[_random.Next(digits.Length)]);
             }
 
-            string otpCode = new(otp);
+            string otpCode = otpBuilder.ToString();
 
-            DateTime expiry = DateTime.UtcNow.AddMinutes(5);
-
-            _otpStore[userEmail] = (otpCode, expiry);
+            await _distributedCache.SetStringAsync(key, otpCode, _cacheOptions);
 
             return otpCode;
         }
 
-        public bool VerifyOtp(string userEmail, string submittedOtp)
+        public async Task<bool> VerifyOtp(string userEmail, string submittedOtp)
         {
-            if (_otpStore.TryGetValue(userEmail, out var otpData))
+            string normlizedEmail = NormalizedEmail(userEmail);
+            string key = $"otp:{normlizedEmail}";
+            string? storedOtp = await _distributedCache.GetStringAsync(key);
+
+            // Check if OTP is valid and not null
+            if (storedOtp != null && storedOtp == submittedOtp)
             {
-                // Check if OTP is valid and not expired
-                if (otpData.Otp == submittedOtp && otpData.Expiry > DateTime.UtcNow)
-                {
-                    // Remove OTP after successful verification
-                    _otpStore.TryRemove(userEmail, out _);
-                    return true;
-                }
+                // Remove OTP after successful verification
+                await _distributedCache.RemoveAsync(key);
+                return true;
             }
 
             return false; // Invalid or expired OTP
         }
+
+        private static string NormalizedEmail(string email) => email.Trim().ToLowerInvariant();
     }
 }

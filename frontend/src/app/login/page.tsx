@@ -1,7 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import EyeIcon from "../components/EyeIcon";
 import { LoginModelType } from "../../../Interfaces";
+import { api } from "../../../services/axios";
+import { useAuth } from "../../../context/AuthContext";
+import { redirect } from "next/navigation";
+
 
 export default function page() {
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -13,8 +17,10 @@ export default function page() {
   const [loginModal, setLoginModal] = useState<LoginModelType>({
     email: "",
     password: "",
-    remberMe: false,
+    rememberMe: false,
   });
+
+  const { isAuthenticated, setAccessToken } = useAuth();
 
   // FUNCTIONS
   const togglePasword = () => {
@@ -28,13 +34,53 @@ export default function page() {
     // Toggle the showPassword state
     setShowPassword(!showPassword);
   };
+
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setErrorMessage("");
+
+    if (!loginModal.email || !loginModal.password) {
+      setErrorMessage("Please fill all the fields");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+
+      const res = await api.post("/login", loginModal, {withCredentials: true});
+      const token = res.data.accessToken;
+
+      setAccessToken(token);
+
+      redirect("/home");
+
+    } catch (error : any ) {
+
+      if ( error.response && error.response.data?.message) {
+        setErrorMessage(error.response.data.message);
+      } else {
+        setErrorMessage("An unexpected error occurred");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      redirect("/home");
+    }
+  }, [isAuthenticated]);
+
   return (
     <div className="w-screen h-screen flex justify-center items-center">
       <div className=" w-[60%] sm:w-[50%] md:w-[40%] lg:w-[28%] rounded-[0.8rem] px-4 py-8 border border-gray-300 font-serif">
         <h2 className=" text-2xl text-black font-semibold text-center">
           Login
         </h2>
-        <form action="" className="relative flex flex-col gap-3 mt-10">
+        <form action="" onSubmit={handleLogin} className="relative flex flex-col gap-3 mt-10">
           <p className="text-red-500">{errorMessage}</p>
           <div className="flex flex-col gap-2">
             <label htmlFor="email">Email:</label>
@@ -71,9 +117,9 @@ export default function page() {
               <input
                 type="checkbox"
                 id="rememberMe"
-                checked={loginModal.remberMe}
+                checked={loginModal.rememberMe}
                 onChange={(e) =>
-                  setLoginModal({ ...loginModal, remberMe: e.target.checked })
+                  setLoginModal({ ...loginModal, rememberMe: e.target.checked })
                 }
               />
               <label htmlFor="rememberMe">Remember me</label>

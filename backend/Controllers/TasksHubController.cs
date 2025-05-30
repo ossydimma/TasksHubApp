@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TasksHubServer.DTOs;
 using TasksHubServer.Models;
@@ -9,14 +10,14 @@ namespace TasksHubServer.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class TasksHubController(ITasksHubRepository  repo, OTPService otpService, EmailSender emailSender) : ControllerBase
+    public class TasksHubController(ITasksHubRepository repo, OTPService otpService, EmailSender emailSender) : ControllerBase
     {
         private readonly ITasksHubRepository _repo = repo;
         private readonly OTPService _otpService = otpService;
         private readonly EmailSender _emailSender = emailSender;
 
         [HttpPost("Signup")]
-        [ProducesResponseType(200)]
+        [ProducesResponseType(201)]
         [ProducesResponseType(400)]
         public async Task<IActionResult> CreateUser([FromBody] SignupDto model)
         {
@@ -30,7 +31,7 @@ namespace TasksHubServer.Controllers
 
             ApplicationUser user = new()
             {
-              
+
                 FullName = model.Fullname,
                 Email = model.Email,
                 PasswordHash = passwordHash,
@@ -38,13 +39,14 @@ namespace TasksHubServer.Controllers
 
             };
 
-            if (await _repo.CreateUserAsync(user) is null) 
+            if (await _repo.CreateUserAsync(user) is null)
                 return BadRequest("Repository failed to create user");
 
             // Send a welcome email
             await _emailSender.SendEmail(user.Email, "Welcome to TasksHub", "Thank you for registering!");
 
-            return Ok("Registered Successfuly");
+            return CreatedAtAction(nameof(GetAllUsers), new { email = model.Email }, "Registered successfully.");
+
 
 
         }
@@ -56,54 +58,108 @@ namespace TasksHubServer.Controllers
             return users;
         }
 
-        [HttpPost("Login")]
+        [HttpPost("login")]
         [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
         [ProducesResponseType(401)]
         public async Task<IActionResult> Login([FromBody] LoginDto model)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            // 1. Find user by email
             ApplicationUser? user = await _repo.GetUserByEmailAsync(model.Email);
-
             if (user is null || !Hasher.VerifyPassword(model.Password, user.PasswordHash, user.PasswordSalt))
                 return Unauthorized("Invalid email or password");
 
+            // 2. Generate new token
             string accessToken = JwtTokenGenerator.GenerateToken(user, HttpContext.RequestServices.GetRequiredService<IConfiguration>());
-        
             string refreshToken = JwtTokenGenerator.GenerateRefreshToken();
 
-            return Ok (new { AccessToken = accessToken, RefreshToken = refreshToken });
+            // 3. Update user's refresh token and expiry
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+
+            // 4. Save updated user to the database
+            bool updated = await _repo.UpdateUserAsync(user);
+            if (!updated)
+                return BadRequest("Failed to update user refresh token");
+            Console.WriteLine($"Resfresh token on login : {refreshToken}");
+
+            // 5. Set refresh token in HttpOnly cookie
+            var cookieoptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTime.UtcNow.AddDays(7)
+            };
+
+            Response.Cookies.Append("refreshToken", refreshToken, cookieoptions);
+
+            // 6. Return access token to the frontend
+            return Ok(new { AccessToken = accessToken });
         }
 
-        [HttpPost("RefreshToken")]
+        [HttpGet("refresh-token")]
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
-        public async Task<IActionResult> RefreshToken([FromBody] string refreshToken)
+        public async Task<IActionResult> RefreshToken()
         {
-            ApplicationUser? user = await _repo.GetUserByRefreshTokenAsync(refreshToken);
-            if (user is null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime < DateTime.UtcNow)
-                return Unauthorized("Invalid or expired refresh token");
+            // 1. Getting refresh token from HttpOnly cookie
+            var cookie = Request.Cookies["refreshToken"];
 
+            if (string.IsNullOrEmpty(cookie))
+                return Unauthorized();
+
+            var refreshToken = Uri.UnescapeDataString(cookie);
+
+            // 2. Find user by refresh token
+            ApplicationUser? user = await _repo.GetUserByRefreshTokenAsync(refreshToken);
+            if (user is null)
+                return Unauthorized("Refresh token is invalid");
+
+            if (user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+                return Unauthorized("Refresh token has expired");
+
+            // 3. Generate new token
             string accessToken = JwtTokenGenerator.GenerateToken(user, HttpContext.RequestServices.GetRequiredService<IConfiguration>());
             string newRefreshToken = JwtTokenGenerator.GenerateRefreshToken();
 
+            // 4. Update user's refresh token and expiry
             user.RefreshToken = newRefreshToken;
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
 
-            if (!await _repo.UpdateUserAsync(user) )
+            // 5. Save updated user to the database
+            bool updated = await _repo.UpdateUserAsync(user);
+            if (!updated)
                 return BadRequest("Failed to update user refresh token");
 
-            return Ok(new { AccessToken = accessToken, RefreshToken = newRefreshToken });
+            // 6. Set new refresh token in HttpOnly cookie
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTime.UtcNow.AddDays(7)
+            };
+            Response.Cookies.Append("refreshToken", newRefreshToken, cookieOptions);
+
+            // 7. Return new acess token to the frontend
+            return Ok(new { AccessToken = accessToken });
         }
 
-        [HttpPost("SendOTP")]
+        [HttpPost("sendOTP")]
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
-        public async Task<IActionResult> SendOTP([FromQuery] string email)
+        public async Task<IActionResult> SendOTP( string email)
         {
-            // ApplicationUser? user = await _repo.GetUserByEmailAsync(email);
-            // if (user == null) return BadRequest();
+            if (string.IsNullOrWhiteSpace(email) || !email.Contains("@"))
+                return BadRequest("Invalid email address");
 
-            string otp = _otpService.GenerateAndStoreOtp(email);
+            ApplicationUser? user = await _repo.GetUserByEmailAsync(email);
+            if (user == null) return BadRequest($"{email} invalid user.");
+
+            string otp = await _otpService.GenerateAndStoreOtp(email);
 
             string subject = "Confirm it's you";
             string body = $@"
@@ -124,7 +180,7 @@ namespace TasksHubServer.Controllers
             {
                 await _emailSender.SendEmail(email, subject, body);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
                 return BadRequest();
@@ -133,19 +189,33 @@ namespace TasksHubServer.Controllers
             return Ok("OTP sent successfully.");
         }
 
-        [HttpPost("VerifyOtp")]
+        [HttpPost("verifyOtp")]
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
-        public IActionResult VerifyOTP( string email,string submittedOtp)
+        public async Task<IActionResult> VerifyOTP([FromBody] VerifyOtpDto model)
         {
-            if (!_otpService.VerifyOtp(email, submittedOtp))
-            {
+            if (string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.SubmittedOtp))
+                return BadRequest("Email ans OTP are Required.");
+
+            bool isValid = await _otpService.VerifyOtp(model.Email, model.SubmittedOtp);
+
+            if(!isValid)
                 return BadRequest("Invalid or expired OTP.");
 
-            }
-
-             return Ok("OTP verified successfully.");
+            return Ok("OTP verified successfully.");
         }
 
+        [HttpDelete("deleteUser")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> DeleteUser(Guid id)
+        {
+            bool deleted = await _repo.DeleteUserAsync(id);
+
+            if (deleted) return new NoContentResult();
+
+            return BadRequest();
+        }
     }
 }

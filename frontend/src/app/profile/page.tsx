@@ -1,16 +1,22 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { User } from "../../../Interfaces";
+import { useState, useEffect } from "react";
+import { useAuth} from "../../../context/AuthContext";
+import { redirect } from "next/navigation";
 
 export default function page() {
-  const [users, setUsers] = useState<User>({
-    userName: "User's Name",
-    email: "UserName@gmail.com",
-    PhoneNumber: "0000000000",
-    imageSrc: "",
-  });
+  
+
+  const {userInfo, isAuthenticated} = useAuth();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      redirect("/login");
+    }
+  }, [isAuthenticated])
+
+
   return (
     <div className="px-10 pt-7 pb-20 md:pb-0 w-full h-auto md:h-full flex flex-col gap-3 items-center">
       <h1 className=" w-full text-center font-serif text-3xl font-bold border-b-2 border-gray-400 border-dashed pb-2 mb-4 md:mb-14">
@@ -18,9 +24,9 @@ export default function page() {
       </h1>
 
       <div className="relative w-[60%] xxs:w-[42%] xs:w-[30%] sm:w-[36%] md:w-[28%] lmd:w-[25%] xl:w-[20%]  h-[25vh] sm:h-[33vh] md:h-[37vh] border-2 border-gray-300 rounded-full shadow-lg">
-        {users.imageSrc ? (
+        {userInfo?.imageSrc ? (
           <Image
-            src={users.imageSrc}
+            src={userInfo?.imageSrc}
             alt="User's image"
             width={100}
             height={100}
@@ -41,10 +47,12 @@ export default function page() {
               if (e.target.files && e.target.files[0]) {
                 const reader = new FileReader();
                 reader.onload = (event) => {
-                  setUsers({
-                    ...users,
-                    imageSrc: event.target?.result as string,
-                  });
+                  // setUsers({
+                  //   ...users,
+                  //   imageSrc: event.target?.result as string,
+                  // });
+                  
+                  // Call update image api here
                   console.log(event.target?.result as string);
                 };
                 reader.readAsDataURL(e.target.files[0]);
@@ -84,8 +92,8 @@ export default function page() {
       </div>
 
       <div className="flex flex-col items-center pb-[2.2rem] border-b-2 border-gray-400 border-dashed w-full">
-        <h2 className="font-bold text-xl">{users.userName}</h2>
-        <h2 className="font-medium text-[1.15rem]">{users.email}</h2>
+        <h2 className="font-bold text-xl">{userInfo?.userName}</h2>
+        <h2 className="font-medium text-[1.15rem]">{userInfo?.email}</h2>
       </div>
 
       <section className=" flex flex-col gap-4 md:flex-row md:gap-8 w-full justify-between items-center pt-2 pb-4 border-b-2 border-gray-400 border-dashed">

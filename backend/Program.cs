@@ -27,9 +27,31 @@ builder.Services.AddStackExchangeRedisCache(options =>
 });
 
 builder.Services.AddScoped<ITasksHubRepository, TasksHubRepository>();
-
 builder.Services.AddSingleton<OTPService>();
 builder.Services.AddSingleton<EmailSender>();
+
+
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowAllOrigins", policyBuilder =>
+//    {
+//        policyBuilder.AllowAnyOrigin()
+//            .AllowAnyMethod()
+//            .AllowAnyHeader();
+//    });
+//});
+
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
@@ -63,6 +85,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowReactApp");
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 
