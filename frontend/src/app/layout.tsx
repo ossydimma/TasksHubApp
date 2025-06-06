@@ -3,6 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import SideBar from "./components/sideBar";
 import "./globals.css";
 import { AuthProvider } from "../../context/AuthContext";
+import SessionProviderWrapper from "./components/SessionProviderWrapper";
+
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,15 +29,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      
       <body
         className={` antialiased font-serif bg-[#dadde2] w-screen h-auto md:h-screen pr-0 md:pr-[-20px] sm:pr-1 flex gap-0 sm:gap-1 md:gap-3" `}
       >
-        <AuthProvider>
-          <SideBar />
-          <div className="relative bg-[#f6f5f5] h-[98Vh] ) overflow-x-hidden overflow-y-scroll md:overflow-hidden my-0 sm:my-[1vh]  w-screen sm:rounded-[2rem]">
-            {children}
-          </div>
-        </AuthProvider>
+        <SessionProviderWrapper>
+          <AuthProvider>
+            <SideBar />
+            <div className="relative bg-[#f6f5f5] h-[98Vh] ) overflow-x-hidden overflow-y-scroll md:overflow-hidden my-0 sm:my-[1vh]  w-screen sm:rounded-[2rem]">
+              {children}
+            </div>
+          </AuthProvider>
+        </SessionProviderWrapper>
+
       </body>
     </html>
   );

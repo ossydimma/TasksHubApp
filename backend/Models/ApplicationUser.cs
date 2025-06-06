@@ -15,8 +15,8 @@ namespace TasksHubServer.Models;
         [Required]
         [EmailAddress (ErrorMessage = "Invalid Email Address")]
         public string Email { get; set; } = string.Empty;
-        public byte[] PasswordHash { get; set; } = null!;
-        public byte[] PasswordSalt { get; set; } = null!;
+        public byte[]? PasswordHash { get; set; } = null;
+        public byte[]? PasswordSalt { get; set; } = null;
         public string? RefreshToken { get; set; } = null;
         public DateTime? RefreshTokenExpiryTime { get; set; } = null;
 

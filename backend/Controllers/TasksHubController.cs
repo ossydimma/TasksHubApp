@@ -1,3 +1,4 @@
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TasksHubServer.DTOs;
@@ -42,13 +43,69 @@ namespace TasksHubServer.Controllers
             if (await _repo.CreateUserAsync(user) is null)
                 return BadRequest("Repository failed to create user");
 
-            // Send a welcome email
-            await _emailSender.SendEmail(user.Email, "Welcome to TasksHub", "Thank you for registering!");
 
             return CreatedAtAction(nameof(GetAllUsers), new { email = model.Email }, "Registered successfully.");
 
 
 
+        }
+
+        [HttpPost("auth/google")]
+        public async Task<IActionResult> GoogleAuth([FromBody] GoogleAuthDto model)
+        {
+            try
+            {
+                var payload = await GoogleJsonWebSignature.ValidateAsync(model.Credential);
+
+                ApplicationUser? user = await _repo.GetUserByEmailAsync(payload.Email);
+
+                if (user == null)
+                {
+                    user = new ApplicationUser
+                    {
+                        Email = payload.Email,
+                        FullName = payload.Name,
+                        ProfilePicture = payload.Picture ?? null,
+                    };
+
+                    await _repo.CreateUserAsync(user);
+                }
+
+                string accessToken = JwtTokenGenerator.GenerateToken(user, HttpContext.RequestServices.GetRequiredService<IConfiguration>());
+                string refreshToken = JwtTokenGenerator.GenerateRefreshToken();
+
+                // Update user's refresh token and expiry
+                user.RefreshToken = refreshToken;
+                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+
+                // Save updated user to the database
+                bool updated = await _repo.UpdateUserAsync(user);
+                if (!updated)
+                    return BadRequest("Failed to update user refresh token");
+                Console.WriteLine($"Resfresh token on login : {refreshToken}");
+
+                // Set refresh token in HttpOnly cookie
+                var cookieoptions = new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Expires = DateTime.UtcNow.AddDays(7)
+                };
+
+                Response.Cookies.Append("refreshToken", refreshToken, cookieoptions);
+
+                // Return access token to the frontend
+                return Ok(new { AccessToken = accessToken });
+            }
+            catch (InvalidJwtException)
+            {
+                return Unauthorized("Invalid Goggle token.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
         [HttpGet("GetAllUsers")]
@@ -67,11 +124,18 @@ namespace TasksHubServer.Controllers
             if (!ModelState.IsValid) return BadRequest(ModelState);
             // 1. Find user by email
             ApplicationUser? user = await _repo.GetUserByEmailAsync(model.Email);
-            if (user is null || !Hasher.VerifyPassword(model.Password, user.PasswordHash, user.PasswordSalt))
+            if ( user is null )
                 return Unauthorized("Invalid email or password");
 
+            // Checking user auth provider
+            if (user.PasswordHash == null || user.PasswordSalt == null)
+                return BadRequest("Please login with Google");
+                
+            if (!Hasher.VerifyPassword(model.Password, user.PasswordHash, user.PasswordSalt))
+                 return Unauthorized("Invalid email or password");
+
             // 2. Generate new token
-            string accessToken = JwtTokenGenerator.GenerateToken(user, HttpContext.RequestServices.GetRequiredService<IConfiguration>());
+                string accessToken = JwtTokenGenerator.GenerateToken(user, HttpContext.RequestServices.GetRequiredService<IConfiguration>());
             string refreshToken = JwtTokenGenerator.GenerateRefreshToken();
 
             // 3. Update user's refresh token and expiry
@@ -201,6 +265,17 @@ namespace TasksHubServer.Controllers
 
             if(!isValid)
                 return BadRequest("Invalid or expired OTP.");
+
+            // Send a welcome email
+            if (model.Aim == "signup")
+            {
+                await _emailSender.SendEmail(model.Email, "Welcome to TasksHub", "Thank you for registering!");
+            }
+            else if (model.Aim == "change password")
+            {
+                await _emailSender.SendEmail(model.Email, "Change Password", "Your Password has been successfully changed.");
+            }
+            
 
             return Ok("OTP verified successfully.");
         }

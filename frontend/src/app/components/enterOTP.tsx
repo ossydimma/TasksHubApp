@@ -5,10 +5,12 @@ import { redirect } from "next/navigation";
 export default function enterOTP({
   handleCancel,
   userEmail,
+  aim,
   timeLeft,
   setTimeLeft,
 }: {
   userEmail: string;
+  aim: string;
   timeLeft: number;
   setTimeLeft: React.Dispatch<React.SetStateAction<number>>;
   handleCancel: () => void;
@@ -21,7 +23,7 @@ export default function enterOTP({
     e.preventDefault();
 
     if (userEmail !== "" && OTP !== "") {
-      const payload = { email: userEmail, submittedOtp: OTP };
+      const payload = { email: userEmail, submittedOtp: OTP, Aim: aim };
 
       try {
         await api.post(`/verifyOtp`, payload);

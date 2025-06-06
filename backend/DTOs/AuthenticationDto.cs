@@ -19,6 +19,12 @@ public class VerifyOtpDto
 {
     public string Email { get; set; } = string.Empty;
     public string SubmittedOtp { get; set; } = string.Empty;
+    public string Aim { get; set; } = string.Empty;
+}
+
+public class GoogleAuthDto
+{
+    public string Credential { get; set; } = string.Empty;
 }
 
 

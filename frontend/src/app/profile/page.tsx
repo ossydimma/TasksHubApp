@@ -9,6 +9,8 @@ export default function page() {
   
 
   const {userInfo, isAuthenticated} = useAuth();
+  console.log(userInfo?.imageSrc)
+  console.log(userInfo?.email)
 
   useEffect(() => {
     if (!isAuthenticated) {

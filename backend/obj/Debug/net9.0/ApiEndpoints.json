@@ -1,6 +1,22 @@
 [
   {
     "ContainingType": "TasksHubServer.Controllers.TasksHubController",
+    "Method": "GoogleAuth",
+    "RelativePath": "api/TasksHub/auth/google",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "TasksHubServer.DTOs.GoogleAuthDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TasksHubServer.Controllers.TasksHubController",
     "Method": "DeleteUser",
     "RelativePath": "api/TasksHub/deleteUser",
     "HttpMethod": "DELETE",
