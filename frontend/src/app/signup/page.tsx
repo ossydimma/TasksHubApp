@@ -85,7 +85,7 @@ export default function page() {
 
     // Calling the create user API
     try {
-      // await api.post("/signup", signupModel);
+      await api.post("/auth/signup", signupModel);
       await api.post(`/sendOTP?email=${encodeURIComponent(signupModel.email)}`);
       setDisplayModal(true);
       setTimeLeft(60);

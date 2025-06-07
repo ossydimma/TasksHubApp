@@ -27,7 +27,7 @@ export default function GoogleLoginBtn({ text }: { text: string }) {
             { withCredentials: true }
           );
           setAccessToken(res.data.accessToken);
-          console.log("done");
+          // console.log("done");
           router.push("/home");
         } catch (err) {
           setAccessToken("");

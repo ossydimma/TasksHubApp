@@ -1,33 +1,59 @@
-// import { NextResponse } from "next/server";
-// import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-// export function middleware(request : NextRequest) {
-//     const {pathname} = request.nextUrl;
-//     const refreshToken = request.cookies.get("refreshToken")?.value;
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const refreshToken = request.cookies.get("refreshToken")?.value;
 
-//     const isAuthPages = pathname.startsWith("/login") || pathname.startsWith("/signup") || pathname.startsWith("/forgetPassword");
-//     const isProtectedPages = pathname.startsWith("/home") || pathname.startsWith("/profile") || pathname.startsWith("/settings") || pathname.startsWith("/mytasks") || pathname.startsWith("/documentation") || pathname.startsWith("/createtask") ;
+  const isAuthPage = ["/login", "/signup", "/forgetPassword"].some((path) =>
+    pathname.startsWith(path)
+  );
 
-//     // If user is Authenticated and trying to access protected pages, redirect to home page
-//     if (isAuthPages && refreshToken) {
-//         const url = request.nextUrl.clone();
-//         url.pathname = "/home";
-//         return NextResponse.redirect(url);
-//     }
+  const isProtectedPage = [
+    "/home",
+    "/profile",
+    "/settings",
+    "/mytasks",
+    "/documentation",
+    "/createtask",
+  ].some((path) => pathname.startsWith(path));
 
-//     // If user is not Authenticated and trying to access protected pages, redirect to login page
-//     if (isProtectedPages && !refreshToken) {
-//         const url = request.nextUrl.clone();
-//         url.pathname = "/login";
-//         return NextResponse.redirect(url);
-//     }
+  let isValidRefreshToken = false;
 
+  if (refreshToken) {
+    try {
+      const res = await fetch(
+        `${process.env.BACKEND_URL}/api/auth/validate-refresh`,
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
+      isValidRefreshToken = res.ok;
+    } catch (err) {
+      console.error("Token validation failed:", err);
+      isValidRefreshToken = false;
+    }
 
-//     return NextResponse.next();
-// }
+    // If user is Authenticated and trying to access auth pages, redirect to home page
+    if (isAuthPage && isValidRefreshToken) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/home";
+      return NextResponse.redirect(url);
+    }
 
-// export const config = {
-//   matcher: ["/((?!_next|api|favicon.ico).*)"], // apply to all pages except assets and API
-// };
+    // If user is not Authenticated and trying to access protected pages, redirect to login page
+    if (isProtectedPage && !isValidRefreshToken) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
+  }
 
-export function middleware() {}
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: ["/((?!_next|api|favicon.ico).*)"], // apply to all pages except assets and API
+};
+

@@ -49,7 +49,7 @@ export default function page() {
     }
 
     try {
-      const res = await api.post("/login", loginModal, {
+      const res = await api.post("/auth/login", loginModal, {
         withCredentials: true,
       });
       const token = res.data.accessToken;

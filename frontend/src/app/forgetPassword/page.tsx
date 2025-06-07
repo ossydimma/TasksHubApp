@@ -90,7 +90,7 @@ export default function page() {
     <>
       {displayModal && (
         <EnterOTP
-          handleVerifyCode={handleVerifyCode}
+          aim="forgot password"
           handleCancel={() => {
             setDisplayModal(false);
             setDisplayEmail(true);
