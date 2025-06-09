@@ -216,7 +216,7 @@ export default function page() {
             </button>
           </form>
 
-          <GoogleLoginBtn text={"Sign up with Google"} />
+          <GoogleLoginBtn text={"Sign up with Google"} source="signup" />
 
           <div className=" text-xs text-center">
             Already have an account?{" "}

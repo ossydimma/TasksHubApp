@@ -55,7 +55,7 @@ api.interceptors.response.use(
             isRefreshing = true;
 
             try {
-                const res = await api.get("/refresh-token", {withCredentials: true});
+                const res = await api.get("/auth/refresh-token", {withCredentials: true});
                 const newToken = res.data.accessToken;
 
                 tokenService.set(newToken);

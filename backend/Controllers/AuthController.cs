@@ -1,6 +1,6 @@
 namespace TasksHubServer.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/")]
 [ApiController]
 public class AuthController(ITasksHubRepository repo, OTPService otpService, EmailSender emailSender) : ControllerBase
 {
@@ -74,7 +74,6 @@ public class AuthController(ITasksHubRepository repo, OTPService otpService, Ema
             bool updated = await _repo.UpdateUserAsync(user);
             if (!updated)
                 return BadRequest("Failed to update user refresh token");
-            Console.WriteLine($"Resfresh token on login : {refreshToken}");
 
             // Set refresh token in HttpOnly cookie
             var cookieoptions = new CookieOptions
@@ -131,7 +130,6 @@ public class AuthController(ITasksHubRepository repo, OTPService otpService, Ema
         bool updated = await _repo.UpdateUserAsync(user);
         if (!updated)
             return BadRequest("Failed to update user refresh token");
-        Console.WriteLine($"Resfresh token on login : {refreshToken}");
 
         // 5. Set refresh token in HttpOnly cookie
         var cookieoptions = new CookieOptions
@@ -164,11 +162,19 @@ public class AuthController(ITasksHubRepository repo, OTPService otpService, Ema
 
         // 2. Find user by refresh token
         ApplicationUser? user = await _repo.GetUserByRefreshTokenAsync(refreshToken);
-        if (user is null)
-            return Unauthorized("Refresh token is invalid");
+        if (user is null || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+        {
+            // Clear refresh token from cookie
+            Response.Cookies.Append("refreshToken", "", new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTime.UtcNow.AddDays(-1) // Expire immediately
+            });
 
-        if (user.RefreshTokenExpiryTime <= DateTime.UtcNow)
-            return Unauthorized("Refresh token has expired");
+            return Unauthorized("Refresh token is invalid or expired");
+        }
 
         // 3. Generate new token
         string accessToken = JwtTokenGenerator.GenerateToken(user, HttpContext.RequestServices.GetRequiredService<IConfiguration>());
@@ -197,26 +203,67 @@ public class AuthController(ITasksHubRepository repo, OTPService otpService, Ema
         return Ok(new { AccessToken = accessToken });
     }
 
-    [HttpPost("auth/validate-refresh")]
+    // [HttpPost("auth/validate-refresh")]
+    // [ProducesResponseType(200)]
+    // [ProducesResponseType(401)]
+    // public async Task<IActionResult> ValidateRefresh()
+    // {
+    //     var cookie = Request.Cookies["refreshToken"];
+
+    //     if (string.IsNullOrEmpty(cookie))
+    //         return Unauthorized("No refresh token found");
+    //     ;
+    //     var refreshToken = Uri.UnescapeDataString(cookie);
+
+    //     ApplicationUser? user = await _repo.GetUserByRefreshTokenAsync(refreshToken);
+    //     if (user == null)
+    //         return Unauthorized("Invalid refresh token");
+
+    //     if (user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+    //         return Unauthorized("Refresh token has expired");
+
+    //     return Ok("Refresh token is valid");
+    // }
+
+    [HttpPost("auth/logout")]
     [ProducesResponseType(200)]
     [ProducesResponseType(401)]
-    public async Task<IActionResult> ValidateRefresh()
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> Logout()
     {
+        // Get and validate resfresh token from cookie
         var cookie = Request.Cookies["refreshToken"];
 
         if (string.IsNullOrEmpty(cookie))
-            return Unauthorized("No refresh token found");
-        ;
+            return Unauthorized("Refresh token Not found.");
+
+        // Decode and get user with the refresh token
         var refreshToken = Uri.UnescapeDataString(cookie);
 
         ApplicationUser? user = await _repo.GetUserByRefreshTokenAsync(refreshToken);
         if (user == null)
             return Unauthorized("Invalid refresh token");
 
-        if (user.RefreshTokenExpiryTime <= DateTime.UtcNow)
-            return Unauthorized("Refresh token has expired");
+        // Set refresh token to and empty string
+        Response.Cookies.Append("refreshToken", "", new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTimeOffset.UtcNow.AddDays(-1) // Expire immediately
+        });
 
-        return Ok("Refresh token is valid");
+        // modify user and update the database
+        user.RefreshToken = null;
+        user.RefreshTokenExpiryTime = null;
+
+        bool updated = await _repo.UpdateUserAsync(user);
+        if (!updated)
+            return BadRequest("Failed to update user refresh token");
+
+
+        return Ok();
+
     }
 
     [HttpPost("sendOTP")]
@@ -281,14 +328,16 @@ public class AuthController(ITasksHubRepository repo, OTPService otpService, Ema
         else if (model.Aim == "change password")
         {
             await _emailSender.SendEmail(model.Email, "Change Password", "Your Password has been successfully changed.");
-        } 
+        }
         else if (model.Aim == "forgot password")
         {
             await _emailSender.SendEmail(model.Email, "Forgot Password", "Your Password was resetted successfully.");
-        } 
+        }
 
 
         return Ok("OTP verified successfully.");
     }
+
+   
 
 }

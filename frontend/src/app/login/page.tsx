@@ -68,11 +68,11 @@ export default function page() {
     }
   };
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push("/home");
-    }
-  }, [isAuthenticated]);
+  // useEffect(() => {
+  //   if (isAuthenticated) {
+  //     router.push("/home");
+  //   }
+  // }, [isAuthenticated]);
 
   return (
     <div className="w-screen h-screen flex justify-center items-center">
@@ -149,7 +149,7 @@ export default function page() {
         </form>
 
         {/* external-auth */}
-        <GoogleLoginBtn text="Continue with google" />
+        <GoogleLoginBtn text="Continue with google" source="login" />
 
         <div className=" text-xs text-center">
           Don’t have an account?{" "}
