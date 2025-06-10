@@ -2,22 +2,20 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useAuth} from "../../../context/AuthContext";
+import { useAuth } from "../../../context/AuthContext";
 import { redirect } from "next/navigation";
+import { api } from "../../../services/axios";
 
-export default function page() {
-  
+export default function Page() {
+  const { userInfo, setUserInfo, isAuthenticated } = useAuth();
 
-  const {userInfo, isAuthenticated} = useAuth();
-  console.log(userInfo?.imageSrc)
-  console.log(userInfo?.email)
+  const [imgSrc, setImgSrc] = useState<string | undefined>(userInfo?.imageSrc);
 
   useEffect(() => {
     if (!isAuthenticated) {
       redirect("/login");
     }
-  }, [isAuthenticated])
-
+  }, [isAuthenticated]);
 
   return (
     <div className="px-10 pt-7 pb-20 md:pb-0 w-full h-auto md:h-full flex flex-col gap-3 items-center">
@@ -26,9 +24,9 @@ export default function page() {
       </h1>
 
       <div className="relative w-[60%] xxs:w-[42%] xs:w-[30%] sm:w-[36%] md:w-[28%] lmd:w-[25%] xl:w-[20%]  h-[25vh] sm:h-[33vh] md:h-[37vh] border-2 border-gray-300 rounded-full shadow-lg">
-        {userInfo?.imageSrc ? (
+        {imgSrc ? (
           <Image
-            src={userInfo?.imageSrc}
+            src={imgSrc}
             alt="User's image"
             width={100}
             height={100}
@@ -48,14 +46,26 @@ export default function page() {
             onChange={(e) => {
               if (e.target.files && e.target.files[0]) {
                 const reader = new FileReader();
-                reader.onload = (event) => {
-                  // setUsers({
-                  //   ...users,
-                  //   imageSrc: event.target?.result as string,
-                  // });
-                  
-                  // Call update image api here
-                  console.log(event.target?.result as string);
+                reader.onload = async (event) => {
+                  const prevImg: string | undefined = imgSrc;
+                  const base64Image = event.target?.result as string;
+                  console.log(`${base64Image} after the call`)
+                  setImgSrc(base64Image);
+                  try {
+                    const response = await api.post("/update-user-image", {
+                      Image: base64Image,
+                      Email: userInfo?.email,
+                    });
+
+                    if (response.status === 200) {
+                      setImgSrc(base64Image);
+                      setUserInfo((prev) => prev ? { ...prev, imageSrc: base64Image } : prev);
+                    } else {
+                      console.error("Update failed with status: ", response.status);
+                    }
+                  } catch (err: any) {
+                    console.error("Axios error:", err?.response || err);
+                  }
                 };
                 reader.readAsDataURL(e.target.files[0]);
               }
@@ -94,7 +104,7 @@ export default function page() {
       </div>
 
       <div className="flex flex-col items-center pb-[2.2rem] border-b-2 border-gray-400 border-dashed w-full">
-        <h2 className="font-bold text-xl">{userInfo?.userName}</h2>
+        <h2 className="font-bold text-xl">{userInfo?.fullName}</h2>
         <h2 className="font-medium text-[1.15rem]">{userInfo?.email}</h2>
       </div>
 
@@ -104,13 +114,13 @@ export default function page() {
           <p className="text-sm font-bold  ">1000</p>
         </div>
         <div className=" w-full md:w-[calc(1/4-1rem)] text-white text-center py-4 cursor-pointer bg-black rounded-2xl border">
-          <h2 className="font-extrabold md:text=[0.85rem] lmd:text-[1rem]">
+          <h2 className="font-extrabold md:text-[0.85rem] lmd:text-[1rem]">
             Completed Tasks
           </h2>
           <p className="text-sm font-bold ">1000</p>
         </div>
         <div className=" w-full md:w-[calc(1/4-1rem)] text-white text-center py-4 cursor-pointer bg-black rounded-2xl border">
-          <h2 className="font-extrabold md:text=[0.85rem] lmd:text-[1rem]">
+          <h2 className="font-extrabold md:text-[0.85rem] lmd:text-[1rem]">
             Pending Tasks
           </h2>
           <p className="text-sm font-bold ">1000</p>

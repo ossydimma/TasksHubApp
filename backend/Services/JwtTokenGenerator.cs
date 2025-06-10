@@ -18,9 +18,9 @@ public static class JwtTokenGenerator
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim("FullName", user.FullName),
-            new Claim("UserName", user.UserName ?? string.Empty),
-            new Claim ("ImageSrc", user.ProfilePicture ?? string.Empty)
+            new Claim("fullName", user.FullName),
+            new Claim("userName", user.UserName ?? string.Empty),
+            new Claim ("imageSrc", user.ProfilePicture ?? string.Empty)
         };
 
         var token = new JwtSecurityToken(

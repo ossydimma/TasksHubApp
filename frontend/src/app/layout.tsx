@@ -5,7 +5,6 @@ import "./globals.css";
 import { AuthProvider } from "../../context/AuthContext";
 import SessionProviderWrapper from "./components/SessionProviderWrapper";
 
-import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

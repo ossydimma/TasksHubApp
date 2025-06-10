@@ -95,4 +95,5 @@ export interface AuthContextType {
     setAccessToken : (token : string) => void;
     logout : () => void;
     userInfo : User | null
+    setUserInfo: React.Dispatch<React.SetStateAction<User | null>>;
 }

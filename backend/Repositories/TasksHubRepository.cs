@@ -77,6 +77,7 @@ public class TasksHubRepository(IDistributedCache distributedCache, ApplicationD
     {
         string key = $"TasksHUB_UserEmail_{email}";
         string? cachedUser = await _distributedCache.GetStringAsync(key);
+        string normalizedEmail = email.ToLower();
 
         if (cachedUser is not null)
         {
@@ -84,7 +85,7 @@ public class TasksHubRepository(IDistributedCache distributedCache, ApplicationD
         }
 
         ApplicationUser? user = await _db.ApplicationUsers
-            .FirstOrDefaultAsync(u => u.Email == email);
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail);
 
         if (user is null) return user;
 
@@ -108,19 +109,7 @@ public class TasksHubRepository(IDistributedCache distributedCache, ApplicationD
         }
 
         return false;
-
-        //_db.ApplicationUsers.Update(user);
-        //int affect = await _db.SaveChangesAsync();
-
-        //if (affect > 1)
-        //{
-        //    await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(user), _cacheOptions);
-        //    return true;
-        //}
-
-        //return false;
     }
-    // public async Task<string?> 
 
     public async Task<ApplicationUser?> GetUserByRefreshTokenAsync(string refreshToken)
     {

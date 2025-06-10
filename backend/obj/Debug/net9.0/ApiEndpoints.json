@@ -261,6 +261,37 @@
     ]
   },
   {
+    "ContainingType": "TasksHubServer.Controller.ProfileController",
+    "Method": "UpdateImage",
+    "RelativePath": "api/update-user-image",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "TasksHubServer.DTOs.UpdateImageDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      },
+      {
+        "Type": "Microsoft.AspNetCore.Mvc.ProblemDetails",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 400
+      }
+    ]
+  },
+  {
     "ContainingType": "TasksHubServer.Controllers.AuthController",
     "Method": "VerifyOTP",
     "RelativePath": "api/verifyOtp",
