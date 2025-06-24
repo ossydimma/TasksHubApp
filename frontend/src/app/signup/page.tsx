@@ -11,6 +11,7 @@ import {
 import { api } from "../../../services/axios";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function page() {
   const { isAuthenticated } = useAuth();
@@ -110,7 +111,17 @@ export default function page() {
   }, [isAuthenticated]);
 
   return (
-    <div className="w-screen h-screen flex justify-center items-center">
+    <div className="relative w-screen h-screen flex justify-center items-center">
+      {
+        isLoading && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
+            style={{cursor: "not-allowed"}}
+            >
+            <LoadingSpinner />
+          </div>
+        )
+      }
       {displayModal ? (
         <EnterOTP
           aim={`signup`}
@@ -118,6 +129,7 @@ export default function page() {
           timeLeft={timeLeft}
           setTimeLeft={setTimeLeft}
           userEmail={signupModel.email}
+          setLoading={setIsLoading}
         />
       ) : (
         <div className="relative w-[60%] sm:w-[50%] md:w-[40%] lg:w-[28%] rounded-[0.8rem] px-4 py-5 border border-gray-300 font-serif">
@@ -216,7 +228,7 @@ export default function page() {
             </button>
           </form>
 
-          <GoogleLoginBtn text={"Sign up with Google"} source="signup" />
+          <GoogleLoginBtn text={"Sign up with Google"} source="signup" setLoading={setIsLoading} />
 
           <div className=" text-xs text-center">
             Already have an account?{" "}

@@ -8,11 +8,13 @@ export default function enterOTP({
   aim,
   timeLeft,
   setTimeLeft,
+  setLoading,
 }: {
   userEmail: string;
   aim: string;
   timeLeft: number;
   setTimeLeft: React.Dispatch<React.SetStateAction<number>>;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
   handleCancel: () => void;
 }) {
   const [OTP, setOTP] = useState<string>("");
@@ -24,7 +26,7 @@ export default function enterOTP({
 
     if (userEmail !== "" && OTP !== "") {
       const payload = { email: userEmail, submittedOtp: OTP, Aim: aim };
-
+      setLoading(true);
       try {
         await api.post(`/verifyOtp`, payload);
         setIsVerified(true);
@@ -40,6 +42,8 @@ export default function enterOTP({
           setErrorMessage("Network error or server not reachable");
         }
         return;
+      } finally {
+        setLoading(false);
       }
     }
     // redirect("/login");

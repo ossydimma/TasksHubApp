@@ -26,6 +26,8 @@ builder.Services.AddStackExchangeRedisCache(options =>
     options.InstanceName = "SampleDb";
 });
 
+Console.WriteLine(builder.Configuration.GetConnectionString("RedisConnections"));
+
 builder.Services.AddScoped<ITasksHubRepository, TasksHubRepository>();
 builder.Services.AddSingleton<OTPService>();
 builder.Services.AddSingleton<EmailSender>();

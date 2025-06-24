@@ -56,13 +56,15 @@ export default function Page() {
                       Image: base64Image,
                       Email: userInfo?.email,
                     });
-
-                    if (response.status === 200) {
                       setImgSrc(base64Image);
                       setUserInfo((prev) => prev ? { ...prev, imageSrc: base64Image } : prev);
-                    } else {
-                      console.error("Update failed with status: ", response.status);
-                    }
+
+                    // if (response.status === 200) {
+                    //   setImgSrc(base64Image);
+                    //   setUserInfo((prev) => prev ? { ...prev, imageSrc: base64Image } : prev);
+                    // } else {
+                    //   console.error("Update failed with status: ", response.status);
+                    // }
                   } catch (err: any) {
                     console.error("Axios error:", err?.response || err);
                   }

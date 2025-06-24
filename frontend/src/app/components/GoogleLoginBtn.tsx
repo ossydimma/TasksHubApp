@@ -6,12 +6,13 @@ import { api } from "../../../services/axios";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-export default function GoogleLoginBtn({ text, source }: { text: string; source: "login" | "signup"; }) {
+export default function GoogleLoginBtn({ text, source, setLoading }: { text: string; source: "login" | "signup"; setLoading: React.Dispatch<React.SetStateAction<boolean>> }) {
   const { data: session } = useSession();
   const { setAccessToken } = useAuth();
   const router = useRouter();
 
  const handleGoogleSignIn = async () => {
+  setLoading(true);
   await signIn("google", {
     callbackUrl: `/${source}?postGoogleLogin=true`, // dynamic
   });
@@ -22,8 +23,8 @@ export default function GoogleLoginBtn({ text, source }: { text: string; source:
     const exchangeToken = async () => {
       const searchParams = new URLSearchParams(window.location.search); // move here
       const shouldExchange = searchParams.get("postGoogleLogin") === "true";
-
       if (session?.idToken && shouldExchange) {
+        setLoading(true);
         try {
           const res = await api.post(
             "/auth/google",
@@ -31,12 +32,13 @@ export default function GoogleLoginBtn({ text, source }: { text: string; source:
             { withCredentials: true }
           );
           setAccessToken(res.data.accessToken);
-          // console.log("done");
+          setLoading(false);
           router.replace("/home");
         } catch (err: any) {
           setAccessToken("");
           console.error(err.message);
-        }
+          setLoading(false);
+        } 
       }
     };
     exchangeToken();

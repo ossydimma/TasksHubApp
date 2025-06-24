@@ -6,6 +6,7 @@ import { api } from "../../../services/axios";
 import { useAuth } from "../../../context/AuthContext";
 import { useRouter } from "next/navigation";
 import GoogleLoginBtn from "../components/GoogleLoginBtn";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function page() {
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -75,7 +76,17 @@ export default function page() {
   // }, [isAuthenticated]);
 
   return (
-    <div className="w-screen h-screen flex justify-center items-center">
+    <div className="relative w-screen h-screen flex justify-center items-center">
+      {
+        isLoading && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
+            style={{cursor: "not-allowed"}}
+            >
+            <LoadingSpinner />
+          </div>
+        )
+      }
       <div className=" w-[60%] sm:w-[50%] md:w-[40%] lg:w-[28%] rounded-[0.8rem] px-4 py-8 border border-gray-300 font-serif">
         <h2 className=" text-2xl text-black font-semibold text-center">
           Login
@@ -149,7 +160,7 @@ export default function page() {
         </form>
 
         {/* external-auth */}
-        <GoogleLoginBtn text="Continue with google" source="login" />
+        <GoogleLoginBtn text="Continue with google" source="login" setLoading={setIsLoading} />
 
         <div className=" text-xs text-center">
           Don’t have an account?{" "}

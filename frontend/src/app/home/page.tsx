@@ -6,6 +6,7 @@ import "react-calendar/dist/Calendar.css";
 import { useState, useEffect } from "react";
 import { redirect } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function Home() {
   const [date, setDate] = useState<Date>(new Date());
@@ -20,6 +21,7 @@ export default function Home() {
   return (
     <main className="text-black">
       <Header />
+      {/* <LoadingSpinner /> */}
       <div className=" flex justify-center items-center border-dashed border-gray-500 border-b-2 pb-[2vh] pt-[-2vh]">
         <div className=" w-[60%] md:w-[50%] lg:w-[45%] flex sm:hidden items-center justify-between  px-3.5 border border-gray-600 rounded-3xl  ">
           <input
