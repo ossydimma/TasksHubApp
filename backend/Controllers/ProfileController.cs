@@ -28,11 +28,42 @@ public class ProfileController(ITasksHubRepository repo, IConfiguration config) 
 
         bool updated = await _repo.UpdateUserAsync(user);
         if (!updated)
-            return BadRequest("Failed to update user refresh token");
+            return BadRequest("Failed to update username");
 
         return Ok(new {newUserName = user.UserName});
 
 
+    }
+    
+    [HttpPost("change-password")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto model)
+    {
+        if (string.IsNullOrWhiteSpace(model.Email) && string.IsNullOrWhiteSpace(model.OldPassword) && string.IsNullOrWhiteSpace(model.NewPassword))
+            return BadRequest("Values can't be empty");
+
+        ApplicationUser? user = await _repo.GetUserByEmailAsync(model.Email);
+        if (user == null) return NotFound("User not found");
+
+        // Checking user auth provider
+        if (user.PasswordHash == null || user.PasswordSalt == null)
+            return BadRequest("You can't change password becuase you signed up with google");
+
+        if (!Hasher.VerifyPassword(model.OldPassword, user.PasswordHash, user.PasswordSalt))
+            return Unauthorized("Invalid password.");
+
+        Hasher.HashPassword(model.NewPassword, out byte[] passwordHash, out byte[] passwordSalt);
+
+        user.PasswordHash = passwordHash;
+        user.PasswordSalt = passwordSalt;
+
+        bool updated = await _repo.UpdateUserAsync(user);
+        if (!updated)
+            return BadRequest("Failed to change user's password, try again later.");
+
+        return Ok("Password changed succesfully.");
     }
 
     [HttpPost("update-user-image")]

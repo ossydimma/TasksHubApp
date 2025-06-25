@@ -95,9 +95,12 @@ export default function ChangeContact({
               Current {option === "number" ? "Phone Number" : "Email Address"}:
             </p>
             <div className=" border-2 border-gray-500 rounded-md px-3 py-2">
-              {option === "number"
+              {/* {option === "number"
                 ? UserDetails.PhoneNumber
-                : UserDetails.email}
+                : UserDetails.email} */}
+                {
+                  UserDetails.email
+                }
             </div>
           </div>
 

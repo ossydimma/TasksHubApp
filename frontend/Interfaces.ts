@@ -86,7 +86,7 @@ export interface ShowPasswordType {
 export interface PasswordValueType {
     oldPassword : string;
     newPassword : string;
-    confirmPassword : string;
+    // confirmPassword : string;
 }
 
 export interface AuthContextType {

@@ -116,7 +116,7 @@ public class AuthController(ITasksHubRepository repo, OTPService otpService, Ema
             return BadRequest("Please login with Google");
 
         if (!Hasher.VerifyPassword(model.Password, user.PasswordHash, user.PasswordSalt))
-            return Unauthorized("Invalid email or password");
+            return BadRequest("Invalid email or password");
 
         // 2. Generate new token
         string accessToken = JwtTokenGenerator.GenerateToken(user, HttpContext.RequestServices.GetRequiredService<IConfiguration>());

@@ -42,8 +42,10 @@ export default function page() {
   const [passwordValue, setPasswordValue] = useState<PasswordValueType>({
     oldPassword: "",
     newPassword: "",
-    confirmPassword: "",
+    // confirmPassword: "",
   });
+
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [selectedOption, setSelectedOption] = useState<
     "userName" | "email" | "password" | "number" | undefined
   >(undefined);
@@ -87,7 +89,7 @@ export default function page() {
     }
   };
   const ChangeEmail = () => {};
-  const ChangePassword = (e: React.FormEvent<HTMLFormElement>) => {
+  const ChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMessage("");
 
@@ -97,18 +99,48 @@ export default function page() {
     } else if (passwordValue.newPassword === "") {
       setMessage("New password cannot be empty");
       return;
-    } else if (passwordValue.confirmPassword === "") {
+    } else if (confirmPassword === "") {
       setMessage("Confirm password cannot be empty");
+      return;
+    } else if (passwordValue.newPassword === passwordValue.oldPassword){
+      setMessage("New and old password can't be the same");
       return;
     } else {
       console.log("old password", passwordValue.oldPassword);
       console.log("new password", passwordValue.newPassword);
-      console.log("confirm password", passwordValue.confirmPassword);
-      if (passwordValue.newPassword !== passwordValue.confirmPassword) {
+      console.log("confirm password", confirmPassword);
+      if (passwordValue.newPassword !== confirmPassword) {
         setMessage("New password and confirm password do not match");
       } else {
         // Call the API to change the password
-        alert("Password changed successfully");
+        const data = {
+          Email: userInfo?.email,
+          OldPassword: passwordValue.oldPassword,
+          NewPassword: passwordValue.newPassword
+        }
+        setIsLoading(true);
+        try {
+          await api.post("/change-password", data);
+          setIsSuccess(true);
+          setMessage("Password changed successfully");
+        } catch (err: any) {
+          console.error(err.response.data);
+          // Try to extract the first error message if available
+          const errorData = err.response?.data;
+          let errorMsg = "An error occurred";
+          if (errorData?.errors) {
+            // Get the first error message from the errors object
+            const firstKey = Object.keys(errorData.errors)[0];
+            errorMsg = errorData.errors[firstKey][0];
+          } else if (typeof errorData === "string") {
+            errorMsg = errorData;
+          }
+          setMessage(errorMsg);
+        } finally {
+          setIsLoading(false);
+        }
+
+        // alert("Password changed successfully");
       }
     }
   };
@@ -481,12 +513,9 @@ export default function page() {
                       id="confirm-password"
                       placeholder="Confirm your new password"
                       onChange={(e) =>
-                        setPasswordValue({
-                          ...passwordValue,
-                          confirmPassword: e.target.value,
-                        })
+                        setConfirmPassword(e.target.value)
                       }
-                      value={passwordValue.confirmPassword}
+                      value={confirmPassword}
                       className="w-[95%]  rounded-md px-3 py-2 outline-none "
                     />
                     {/* @* ICON *@  */}

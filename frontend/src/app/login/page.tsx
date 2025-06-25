@@ -58,12 +58,19 @@ export default function page() {
       setAccessToken(token);
 
       router.push("/home");
-    } catch (error: any) {
-      if (error.response && error.response.data?.message) {
-        setErrorMessage(error.response.data.message);
-      } else {
-        setErrorMessage("An unexpected error occurred");
+    } catch (err: any) {
+      console.error(err.response.data);
+      // Try to extract the first error message if available
+      const errorData = err.response?.data;
+      let errorMsg = "An error occurred";
+      if (errorData?.errors) {
+        // Get the first error message from the errors object
+        const firstKey = Object.keys(errorData.errors)[0];
+        errorMsg = errorData.errors[firstKey][0];
+      } else if (typeof errorData === "string") {
+        errorMsg = errorData;
       }
+      setErrorMessage(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -77,16 +84,14 @@ export default function page() {
 
   return (
     <div className="relative w-screen h-screen flex justify-center items-center">
-      {
-        isLoading && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
-            style={{cursor: "not-allowed"}}
-            >
-            <LoadingSpinner />
-          </div>
-        )
-      }
+      {isLoading && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
+          style={{ cursor: "not-allowed" }}
+        >
+          <LoadingSpinner />
+        </div>
+      )}
       <div className=" w-[60%] sm:w-[50%] md:w-[40%] lg:w-[28%] rounded-[0.8rem] px-4 py-8 border border-gray-300 font-serif">
         <h2 className=" text-2xl text-black font-semibold text-center">
           Login
@@ -160,7 +165,11 @@ export default function page() {
         </form>
 
         {/* external-auth */}
-        <GoogleLoginBtn text="Continue with google" source="login" setLoading={setIsLoading} />
+        <GoogleLoginBtn
+          text="Continue with google"
+          source="login"
+          setLoading={setIsLoading}
+        />
 
         <div className=" text-xs text-center">
           Don’t have an account?{" "}
