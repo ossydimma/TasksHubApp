@@ -5,8 +5,6 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const refreshToken = request.cookies.get("refreshToken")?.value;
 
-  console.log(refreshToken);
-
   const isAuthPage = ["/login", "/signup", "/forgetPassword"].some((path) =>
     pathname.startsWith(path)
   );

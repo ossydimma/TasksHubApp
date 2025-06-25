@@ -5,11 +5,14 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { redirect } from "next/navigation";
 import { api } from "../../../services/axios";
+import axios from "axios";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function Page() {
-  const { userInfo, setUserInfo, isAuthenticated } = useAuth();
+  const { userInfo, isAuthenticated } = useAuth();
 
   const [imgSrc, setImgSrc] = useState<string | undefined>(userInfo?.imageSrc);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -18,7 +21,16 @@ export default function Page() {
   }, [isAuthenticated]);
 
   return (
-    <div className="px-10 pt-7 pb-20 md:pb-0 w-full h-auto md:h-full flex flex-col gap-3 items-center">
+    <div className=" relative px-10 pt-7 pb-20 md:pb-0 w-full h-auto md:h-full flex flex-col gap-3 items-center">
+            {isLoading && (
+                <div 
+                  className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
+                  style={{cursor: "not-allowed"}}
+                  >
+                  <LoadingSpinner />
+                </div>
+              )
+            }
       <h1 className=" w-full text-center font-serif text-3xl font-bold border-b-2 border-gray-400 border-dashed pb-2 mb-4 md:mb-14">
         Profile
       </h1>
@@ -43,33 +55,30 @@ export default function Page() {
           <input
             type="file"
             accept="image/*"
-            onChange={(e) => {
+            onChange={async (e) => {
               if (e.target.files && e.target.files[0]) {
-                const reader = new FileReader();
-                reader.onload = async (event) => {
-                  const prevImg: string | undefined = imgSrc;
-                  const base64Image = event.target?.result as string;
-                  console.log(`${base64Image} after the call`)
-                  setImgSrc(base64Image);
-                  try {
-                    const response = await api.post("/update-user-image", {
-                      Image: base64Image,
-                      Email: userInfo?.email,
-                    });
-                      setImgSrc(base64Image);
-                      setUserInfo((prev) => prev ? { ...prev, imageSrc: base64Image } : prev);
+                // const reader = new FileReader();
+                const file = e.target.files[0];
 
-                    // if (response.status === 200) {
-                    //   setImgSrc(base64Image);
-                    //   setUserInfo((prev) => prev ? { ...prev, imageSrc: base64Image } : prev);
-                    // } else {
-                    //   console.error("Update failed with status: ", response.status);
-                    // }
-                  } catch (err: any) {
-                    console.error("Axios error:", err?.response || err);
+                const formData = new FormData();
+                formData.append("File", file);
+                userInfo?.email
+                  ? formData.append("Email", userInfo.email)
+                  : console.warn("Email is empty");
+                setIsLoading(true);
+                try {
+                  const res = await api.post("/update-user-image", formData);
+                  const data = res.data.imageUrl;
+                  setImgSrc(data);
+                }catch (err) {
+                  if (axios.isAxiosError(err)) {
+                    console.error("Upload failed:", err.response?.data || err.message);
+                  } else {
+                    console.error("Unexpected error:", err);
                   }
-                };
-                reader.readAsDataURL(e.target.files[0]);
+                } finally {
+                  setIsLoading(false);
+                }
               }
             }}
             className="hidden"

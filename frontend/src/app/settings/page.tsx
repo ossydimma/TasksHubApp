@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import EyeIcon from "../components/EyeIcon";
 import { UserDetails } from "../../../mock";
 import {
@@ -9,14 +9,29 @@ import {
 } from "../../../Interfaces";
 import ChangeContact from "../components/ChangeContact";
 import ModifyContact from "../components/ModifyContact";
+import { useAuth } from "../../../context/AuthContext";
+import { useRouter } from "next/navigation";
+import { api } from "../../../services/axios";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function page() {
+  const { userInfo, isAuthenticated, setUserInfo } = useAuth();
+
+  const router = useRouter();
+
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [disablePage, setDisablePage] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [message, setMessage] = useState<string>("");
+  const [isSuccess, setIsSuccess] = useState<boolean>(false)
   const [showChangeContact, setShowChangeContact] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<ShowPasswordType>({
     newPassword: true,
     confirmPassword: true,
+  });
+
+  const [edit, setEdit] = useState({
+    userName: userInfo?.userName,
+    email: userInfo?.email,
   });
 
   const [passwordType, setPasswordType] = useState<PasswordType>({
@@ -34,27 +49,63 @@ export default function page() {
   >(undefined);
 
   // functions
-  const EditUsername = () => {};
+  const EditUsername = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (edit.userName === "" || edit.email === "") return;
+
+    if (edit.userName === userInfo?.userName) {
+      setMessage("No changes was made");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await api.post("/update-username", edit);
+      setIsSuccess(true);
+
+      if (res.data.newUserName) {
+        setUserInfo((prev) =>
+          prev ? { ...prev, userName: res.data.newUserName } : prev
+        );
+      }
+
+      setMessage("username updated successfully.");
+      setTimeout(()=> {
+        setDisablePage(false);
+        setSelectedOption(undefined);
+        setMessage('');
+      }, 3000)
+
+      
+
+    } catch (err: any) {
+      console.error(err);
+      setMessage(err.data);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const ChangeEmail = () => {};
   const ChangePassword = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setErrorMessage("");
+    setMessage("");
 
     if (passwordValue.oldPassword === "") {
-      setErrorMessage("Old password cannot be empty");
+      setMessage("Old password cannot be empty");
       return;
     } else if (passwordValue.newPassword === "") {
-      setErrorMessage("New password cannot be empty");
+      setMessage("New password cannot be empty");
       return;
     } else if (passwordValue.confirmPassword === "") {
-      setErrorMessage("Confirm password cannot be empty");
+      setMessage("Confirm password cannot be empty");
       return;
     } else {
       console.log("old password", passwordValue.oldPassword);
       console.log("new password", passwordValue.newPassword);
       console.log("confirm password", passwordValue.confirmPassword);
       if (passwordValue.newPassword !== passwordValue.confirmPassword) {
-        setErrorMessage("New password and confirm password do not match");
+        setMessage("New password and confirm password do not match");
       } else {
         // Call the API to change the password
         alert("Password changed successfully");
@@ -90,8 +141,22 @@ export default function page() {
       confirmPassword: !showPassword.confirmPassword,
     });
   };
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated]);
   return (
-    <div className="px-10 pt-7 pb-20 md:pb-0 w-full h-auto md:h-full font-serif">
+    <div className="px-10 pt-7 pb-20 md:pb-0 w-full h-auto md:h-full font-serif relative">
+      {isLoading && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
+          style={{ cursor: "not-allowed" }}
+        >
+          <LoadingSpinner />
+        </div>
+      )}
       <h1 className=" w-full text-center font-serif text-3xl font-bold border-b-2 border-gray-400 border-dashed pb-2 mb-4 md:mb-8">
         Settings
       </h1>
@@ -104,7 +169,7 @@ export default function page() {
             }`}
             onClick={() => {
               setDisablePage(true);
-              setErrorMessage("");
+              setMessage("");
               setSelectedOption("userName");
             }}
           >
@@ -142,7 +207,7 @@ export default function page() {
             }`}
             onClick={() => {
               setDisablePage(true);
-              setErrorMessage("");
+              setMessage("");
               setSelectedOption("email");
             }}
           >
@@ -179,7 +244,7 @@ export default function page() {
             }`}
             onClick={() => {
               setDisablePage(true);
-              setErrorMessage("");
+              setMessage("");
               setSelectedOption("number");
             }}
           >
@@ -217,7 +282,7 @@ export default function page() {
             }`}
             onClick={() => {
               setDisablePage(true);
-              setErrorMessage("");
+              setMessage("");
               setSelectedOption("password");
             }}
           >
@@ -297,7 +362,7 @@ export default function page() {
               ? "Phone Number"
               : "Change Password"}
           </h1>
-          <p className="text-red-500 mb-2">{errorMessage}</p>
+          <p className={`${isSuccess ? "text-green-600" : "text-red-500"}  mb-2`}>{message}</p>
           {selectedOption === "userName" && (
             <div>
               <form action="" onSubmit={EditUsername}>
@@ -309,7 +374,10 @@ export default function page() {
                     type="text"
                     name="userName"
                     id="userName"
-                    defaultValue={"John Doe"}
+                    defaultValue={edit.userName}
+                    onChange={(e) =>
+                      setEdit({ ...edit, userName: e.target.value })
+                    }
                     className="border-2 border-gray-500 rounded-md px-3 py-2 outline-none focus:border-black"
                   />
                 </div>

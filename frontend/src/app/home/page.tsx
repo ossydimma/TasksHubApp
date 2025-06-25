@@ -4,7 +4,7 @@ import Calendar from "react-calendar";
 import Header from ".././components/header";
 import "react-calendar/dist/Calendar.css";
 import { useState, useEffect } from "react";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
 import LoadingSpinner from "../components/LoadingSpinner";
 
@@ -12,9 +12,11 @@ export default function Home() {
   const [date, setDate] = useState<Date>(new Date());
   const { isAuthenticated } = useAuth();
 
+  const router = useRouter();
+
   useEffect(() => {
     if (!isAuthenticated) {
-      redirect("/login");
+      router.push("/login");
     }
   }, [isAuthenticated]);
 
