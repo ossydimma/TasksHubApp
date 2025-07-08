@@ -5,13 +5,23 @@ import Link from "next/link";
 import moment from "moment";
 
 export default function header() {
-  const [showDate, setShowDate] = useState<boolean>(
-    window.innerWidth >= 640 ? true : false
-  );
+  const [showDate, setShowDate] = useState<boolean>(true);
+  const [formattedDate, setFormattedDate] = useState<string>('');
 
-  const formattedDate = moment().format("dddd, MMMM D");
+  // const formattedDate = moment().format("dddd, MMMM D");
+
+  const handleResize = () => {
+    const w = window.innerWidth;
+    if (w >= 640) {
+      setShowDate(true);
+    } else {
+      setShowDate(false);
+    }
+  };
 
   useEffect(() => {
+    handleResize();
+    setFormattedDate(moment().format("dddd, MMMM D"));
     window.addEventListener("resize", handleResize);
 
     return () => {
@@ -19,13 +29,6 @@ export default function header() {
     };
   }, []);
 
-  const handleResize = () => {
-    if (window.innerWidth >= 640) {
-      setShowDate(true);
-    } else {
-      setShowDate(false);
-    }
-  };
 
   return (
     <div className="  w-[100%] h-[8vh] px-2 md:px-6 sm:pt-[6vh] sm:pb-[4vh]  flex items-center justify-between border-dashed @GetResponsiveClass()">

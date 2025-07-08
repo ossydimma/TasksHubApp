@@ -9,20 +9,20 @@ import axios from "axios";
 import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function Page() {
-  const { userInfo, isAuthenticated } = useAuth();
+  const { userInfo, isAuthenticated, loading, setLoading } = useAuth();
 
   const [imgSrc, setImgSrc] = useState<string | undefined>(userInfo?.imageSrc);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  // const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated && !loading) {
       redirect("/login");
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, loading]);
 
   return (
     <div className=" relative px-10 pt-7 pb-20 md:pb-0 w-full h-auto md:h-full flex flex-col gap-3 items-center">
-            {isLoading && (
+            {/* {isLoading && (
                 <div 
                   className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
                   style={{cursor: "not-allowed"}}
@@ -30,7 +30,7 @@ export default function Page() {
                   <LoadingSpinner />
                 </div>
               )
-            }
+            } */}
       <h1 className=" w-full text-center font-serif text-3xl font-bold border-b-2 border-gray-400 border-dashed pb-2 mb-4 md:mb-14">
         Profile
       </h1>
@@ -43,6 +43,7 @@ export default function Page() {
             width={100}
             height={100}
             className="rounded-full w-full h-full object-cover"
+            priority
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-4xl font text-gray-500">
@@ -62,12 +63,13 @@ export default function Page() {
 
                 const formData = new FormData();
                 formData.append("File", file);
-                userInfo?.email
-                  ? formData.append("Email", userInfo.email)
+                console.log(userInfo?.id);
+                userInfo?.id
+                  ? formData.append("Id", userInfo.id)
                   : console.warn("Email is empty");
-                setIsLoading(true);
+                setLoading(true);
                 try {
-                  const res = await api.post("/update-user-image", formData);
+                  const res = await api.post("/settings/update-user-image", formData);
                   const data = res.data.imageUrl;
                   setImgSrc(data);
                 }catch (err) {
@@ -77,7 +79,7 @@ export default function Page() {
                     console.error("Unexpected error:", err);
                   }
                 } finally {
-                  setIsLoading(false);
+                  setLoading(false);
                 }
               }
             }}

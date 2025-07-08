@@ -3,14 +3,18 @@ import { api } from "../../../services/axios";
 import { redirect } from "next/navigation";
 
 export default function enterOTP({
+  className,
   handleCancel,
   userEmail,
+  newEmail,
   aim,
   timeLeft,
   setTimeLeft,
   setLoading,
 }: {
+  className: string;
   userEmail: string;
+  newEmail?: string;
   aim: string;
   timeLeft: number;
   setTimeLeft: React.Dispatch<React.SetStateAction<number>>;
@@ -21,7 +25,40 @@ export default function enterOTP({
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isVerified, setIsVerified] = useState<boolean>(false);
 
-  const handleVerifyCode = async (e: React.FormEvent<HTMLFormElement>) => {
+  const verifyChangeEmailCode = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (userEmail !== "" && OTP !== "" && newEmail !== "") {
+      const payload = {
+        OldEmail : userEmail,
+        NewEmail : newEmail,
+        Otp : OTP
+      };
+      setLoading(true);
+
+      try {
+        api.post("/settings/verify-new-email", payload);
+        setIsVerified(true);
+      } catch (err : any) {
+        console.error(err.response.data);
+        // Try to extract the first error message if available
+        const errorData = err.response?.data;
+        let errorMsg = "An error occurred";
+        if (errorData?.errors) {
+          // Get the first error message from the errors object
+          const firstKey = Object.keys(errorData.errors)[0];
+          errorMsg = errorData.errors[firstKey][0];
+        } else if (typeof errorData === "string") {
+          errorMsg = errorData;
+        }
+        setErrorMessage(errorMsg);
+        } finally {
+          setLoading(false);
+        }
+    }
+  };
+
+  const verifySignupCode = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (userEmail !== "" && OTP !== "") {
@@ -59,7 +96,7 @@ export default function enterOTP({
     return () => clearInterval(timer);
   }, [timeLeft]);
   return (
-    <div className="w-[60%] sm:w-[50%] md:w-[40%] lg:w-[28%] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-gray-300 p-4 rounded-lg shadow-lg">
+    <div className={` ${className}  absolute  left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-gray-300 p-4 rounded-lg shadow-lg`}>
       {!isVerified && (
         <>
           <div
@@ -99,13 +136,13 @@ export default function enterOTP({
           <p className="text-red-500 text-sm">{errorMessage}</p>
           <form
             action=""
-            onSubmit={handleVerifyCode}
+            onSubmit={ aim === "signup" ? verifySignupCode : verifyChangeEmailCode} 
             className="flex flex-col gap-2 mt-4"
           >
             <label htmlFor="otp" className="text-sm">
               {" "}
               Enter the verification code that was sent to your email.{" "}
-              <strong>{userEmail}</strong> <p>Check your spam mail</p>{" "}
+              <strong>{ aim === "signup" ? userEmail : newEmail}</strong> <p>Check your spam mail</p>{" "}
             </label>
             <input
               type="text"
@@ -137,22 +174,29 @@ export default function enterOTP({
                 onClick={async () => {
                   setTimeLeft(60);
                   setOTP("");
+
+                  const payload = aim === "signup" ? userEmail : newEmail;
+                  if (!payload) {
+                    setErrorMessage("Email is required");
+                    return;
+                  }
                   try {
                     await api.post(
-                      `/sendOTP?email=${encodeURIComponent(userEmail)}`
+                      `/sendOTP?email=${encodeURIComponent(payload)}`
                     );
                   } catch (err: any) {
-                    if (err.response) {
-                      console.log("Backend error:", err.response.data);
-                      setErrorMessage(
-                        err.response.data?.error ||
-                          err.response.data ||
-                          "Verification failed"
-                      );
-                    } else {
-                      console.log("Network or other error:", err.message);
-                      setErrorMessage("Network error or server not reachable");
+                    console.error(err.response.data);
+                    // Try to extract the first error message if available
+                    const errorData = err.response?.data;
+                    let errorMsg = "An error occurred";
+                    if (errorData?.errors) {
+                      // Get the first error message from the errors object
+                      const firstKey = Object.keys(errorData.errors)[0];
+                      errorMsg = errorData.errors[firstKey][0];
+                    } else if (typeof errorData === "string") {
+                      errorMsg = errorData;
                     }
+                    setErrorMessage(errorMsg);
                   }
                 }}
               >
@@ -167,12 +211,17 @@ export default function enterOTP({
       )}
       {isVerified && (
         <div className="py-6">
-          <h3 className="text-lg font-semibold text-center">Verification successful</h3>
+          <h3 className="text-lg font-semibold text-center">{aim === "signup" ? 'Verification successful' : 'Email changed successfully.\n You are now set to log in using your new email. '}</h3>
           <div className="flex justify-center items-center">
-            <button className="mt-4 bg-black text-white py-2 px-4 rounded-lg" onClick={(e)=>{
+            { aim === "signup" ? (
+              <button className="mt-4 bg-black text-white py-2 px-4 rounded-lg" onClick={(e)=>{
               e.preventDefault();
               redirect("/login");
             }}>Login</button>
+            ) : (
+              <button className="mt-4 bg-black text-white py-2 px-4 rounded-lg" onClick={handleCancel}>OK</button>
+            )}
+            
           </div>
           
         </div>

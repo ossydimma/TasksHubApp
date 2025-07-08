@@ -10,18 +10,9 @@ import { usePathname } from "next/navigation";
 export default function sideBar() {
   const pathname = usePathname();
   const { isAuthenticated } = useAuth();
-
-  // const isAuthPages =
-  //   pathname.startsWith("/login") ||
-  //   pathname.startsWith("/signup") ||
-  //   pathname.startsWith("/forgetPassword");
-
-  const [isMaximized, setIsMaximized] = useState<boolean>(
-    window.innerWidth <= 815 ? false : true
-  );
-  const [showSideBar, setShowSideBar] = useState<boolean>(
-    window.innerWidth >= 640 ? true : false
-  );
+  // const [width, setWidth] = useState<number>(0);
+  const [isMaximized, setIsMaximized] = useState<boolean>(true);
+  const [showSideBar, setShowSideBar] = useState<boolean>(true);
   const [showToolTips, setShowToolTips] = useState<NavBarToolTips>({
     createTask: false,
     home: false,
@@ -31,23 +22,28 @@ export default function sideBar() {
     logOut: false,
   });
 
+  const handleResize = () => {
+    const w = window.innerWidth;
+
+    if (w >= 600) {
+      setShowSideBar(true);
+      setIsMaximized(w > 815);
+      // window.innerWidth <= 815 ? setIsMaximized(false) : setIsMaximized(true);
+    } else {
+      setShowSideBar(false);
+      setIsMaximized(false);
+    }
+  };
+
   useEffect(() => {
+    handleResize();
+
     window.addEventListener("resize", handleResize);
 
     return () => {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
-
-  const handleResize = () => {
-    if (window.innerWidth >= 640) {
-      setShowSideBar(true);
-
-      window.innerWidth <= 815 ? setIsMaximized(false) : setIsMaximized(true);
-    } else {
-      setShowSideBar(false);
-    }
-  };
 
   return (
     <div className=" h-[96Vh] sm:my-[2vh] sm:ml-[0.5vh] sm:pt-2 pb-3.5 sm:px-3 md:px-2 text-black ">
@@ -217,7 +213,7 @@ export default function sideBar() {
                   }
                   className={clsx(
                     `${
-                      pathname === "/" ? "bg-black text-white fill-white" : ""
+                      pathname === "/home" ? "bg-black text-white fill-white" : ""
                     } flex  items-center p-2 gap-2.5 cursor-pointer rounded-full hover:bg-black hover:text-white fill-black hover:fill-white`,
                     {
                       "rounded-lg border-2 border-gray-600 ": isMaximized,

@@ -5,6 +5,7 @@ import { tokenService } from "../services/tokenService";
 import { api } from "../services/axios";
 import { jwtDecode } from "jwt-decode";
 import { useRouter } from "next/navigation";
+import LoadingSpinner from "@/app/components/LoadingSpinner";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -13,6 +14,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
   const [userInfo, setUserInfo] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const router = useRouter();
 
   const setAccessToken = (token: string) => {
@@ -50,7 +52,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setAccessToken(token);
       } catch (err: any) {
         console.log(err.message);
-        logout();
+        setAccessTokenState(null);
+        setUserInfo(null);
+        // logout();
+      } finally {
+        console.log("Setting loading to false...");
+        setLoading(false);
       }
     };
 
@@ -65,10 +72,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setAccessToken,
         logout,
         userInfo,
-        setUserInfo
+        setUserInfo,
+        loading, 
+        setLoading
       }}
     >
-      {children}
+      {loading ? (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
+          style={{ cursor: "not-allowed" }}
+        >
+          <LoadingSpinner />
+        </div>
+      ) : (
+        children
+
+      )}
     </AuthContext.Provider>
   );
 };

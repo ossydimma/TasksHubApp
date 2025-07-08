@@ -52,14 +52,22 @@ public class TasksHubRepository(IDistributedCache distributedCache, ApplicationD
         return users;
     }
 
-    public async Task<ApplicationUser?> GetUserByIdAsync(Guid userId)
+    public async Task<ApplicationUser?> GetUserByIdAsync(string userIdStr)
     {
+        Guid userId = Guid.Parse(userIdStr);
         string key = $"User_{userId}";
-        string? cachedUser = await _distributedCache.GetStringAsync(key);
-
-        if (cachedUser != null)
+        try
         {
-            return JsonConvert.DeserializeObject<ApplicationUser>(cachedUser);
+            string? cachedUser = await _distributedCache.GetStringAsync(key);
+
+            if (cachedUser != null)
+            {
+                return JsonConvert.DeserializeObject<ApplicationUser>(cachedUser);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Redis is not avaliable:" + ex.Message);
         }
 
         ApplicationUser? user = await _db.ApplicationUsers
@@ -67,7 +75,15 @@ public class TasksHubRepository(IDistributedCache distributedCache, ApplicationD
 
         if (user is null) return user;
 
-        await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(user), _cacheOptions);
+        try
+        {
+            await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(user), _cacheOptions);
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Data was not cached:" + ex.Message);
+        }
 
         return user;
 
@@ -90,6 +106,40 @@ public class TasksHubRepository(IDistributedCache distributedCache, ApplicationD
         if (user is null) return user;
 
         await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(user), _cacheOptions);
+
+        return user;
+    }
+
+    public async Task<ApplicationUser?> GetUserByGoogleSubAsync(string googleSub)
+    {
+         if (string.IsNullOrWhiteSpace(googleSub))
+        return null;
+
+        string key = $"TasksHUB_UserGoogleSub_{googleSub}";
+        try
+        {
+            string? cachedUser = await _distributedCache.GetStringAsync(key);
+            if (cachedUser is not null)
+                return JsonConvert.DeserializeObject<ApplicationUser>(cachedUser);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Redis is not avaliable:" + ex.Message);
+        }
+
+        ApplicationUser? user = await _db.ApplicationUsers
+            .FirstOrDefaultAsync(s => s.GoogleSub == googleSub);
+
+        if (user is null) return user;
+
+        try
+        {
+            await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(user), _cacheOptions);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Data was not cached:" + ex.Message);
+        }
 
         return user;
     }

@@ -1,6 +1,6 @@
 
 export interface User {
-    // id : string; 
+    id : string; 
     fullName : string;
     userName : string;
     email : string;
@@ -96,4 +96,6 @@ export interface AuthContextType {
     logout : () => void;
     userInfo : User | null
     setUserInfo: React.Dispatch<React.SetStateAction<User | null>>;
+    loading: boolean;
+    setLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }

@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useState, useEffect, useRef } from "react";
 import EyeIcon from "../components/EyeIcon";
-import { UserDetails } from "../../../mock";
 import {
   PasswordType,
   PasswordValueType,
@@ -12,18 +12,29 @@ import ModifyContact from "../components/ModifyContact";
 import { useAuth } from "../../../context/AuthContext";
 import { useRouter } from "next/navigation";
 import { api } from "../../../services/axios";
-import LoadingSpinner from "../components/LoadingSpinner";
+// import LoadingSpinner from "../components/LoadingSpinner";
+
+interface MsgType {
+  head?: string;
+  body: string;
+}
 
 export default function page() {
-  const { userInfo, isAuthenticated, setUserInfo } = useAuth();
-
+  const { userInfo, isAuthenticated, setAccessToken, setUserInfo, loading, setLoading, logout } =
+    useAuth();
+  const { data: session, status } = useSession();
+  const hasRunRef = useRef<boolean>(false);
   const router = useRouter();
 
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [disablePage, setDisablePage] = useState<boolean>(false);
-  const [message, setMessage] = useState<string>("");
-  const [isSuccess, setIsSuccess] = useState<boolean>(false)
+  const [isSuccess, setIsSuccess] = useState<boolean>(true);
   const [showChangeContact, setShowChangeContact] = useState<boolean>(false);
+  const [switchSuccess, setSwitchSuccess] = useState<string | null>(null);
+  const [switchError, setSwitchError] = useState<string | null>(null);
+  const [message, setMessage] = useState<MsgType>({
+    head: "",
+    body: "",
+  });
   const [showPassword, setShowPassword] = useState<ShowPasswordType>({
     newPassword: true,
     confirmPassword: true,
@@ -31,7 +42,7 @@ export default function page() {
 
   const [edit, setEdit] = useState({
     userName: userInfo?.userName,
-    email: userInfo?.email,
+    id: userInfo?.id,
   });
 
   const [passwordType, setPasswordType] = useState<PasswordType>({
@@ -50,20 +61,21 @@ export default function page() {
     "userName" | "email" | "password" | "number" | undefined
   >(undefined);
 
+
   // functions
   const EditUsername = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (edit.userName === "" || edit.email === "") return;
+    if (edit.userName === "") return;
 
     if (edit.userName === userInfo?.userName) {
-      setMessage("No changes was made");
+      setMessage({ ...message, body: "No changes was made" });
       return;
     }
 
-    setIsLoading(true);
+    setLoading(true);
     try {
-      const res = await api.post("/update-username", edit);
+      const res = await api.post("/settings/update-username", edit);
       setIsSuccess(true);
 
       if (res.data.newUserName) {
@@ -72,57 +84,60 @@ export default function page() {
         );
       }
 
-      setMessage("username updated successfully.");
-      setTimeout(()=> {
+      setMessage({ ...message, body: "username updated successfully." });
+      setTimeout(() => {
         setDisablePage(false);
         setSelectedOption(undefined);
-        setMessage('');
-      }, 3000)
-
-      
-
+        setMessage({ ...message, body: "" });
+      }, 3000);
     } catch (err: any) {
       console.error(err);
       setMessage(err.data);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
-  const ChangeEmail = () => {};
+
   const ChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setMessage("");
+    setMessage({ ...message, body: "" });
 
     if (passwordValue.oldPassword === "") {
-      setMessage("Old password cannot be empty");
+      setMessage({ ...message, body: "Old password cannot be empty." });
       return;
     } else if (passwordValue.newPassword === "") {
-      setMessage("New password cannot be empty");
+      setMessage({ ...message, body: "New password cannot be empty." });
       return;
     } else if (confirmPassword === "") {
-      setMessage("Confirm password cannot be empty");
+      setMessage({ ...message, body: "Confirm password cannot be empty." });
       return;
-    } else if (passwordValue.newPassword === passwordValue.oldPassword){
-      setMessage("New and old password can't be the same");
+    } else if (passwordValue.newPassword === passwordValue.oldPassword) {
+      setMessage({
+        ...message,
+        body: "New and old password can't be the same.",
+      });
       return;
     } else {
       console.log("old password", passwordValue.oldPassword);
       console.log("new password", passwordValue.newPassword);
       console.log("confirm password", confirmPassword);
       if (passwordValue.newPassword !== confirmPassword) {
-        setMessage("New password and confirm password do not match");
+        setMessage({
+          ...message,
+          body: "New password and confirm password do not match.",
+        });
       } else {
         // Call the API to change the password
-        const data = {
-          Email: userInfo?.email,
+        const payload = {
+          Id: userInfo?.id,
           OldPassword: passwordValue.oldPassword,
-          NewPassword: passwordValue.newPassword
-        }
-        setIsLoading(true);
+          NewPassword: passwordValue.newPassword,
+        };
+        setLoading(true);
         try {
-          await api.post("/change-password", data);
+          await api.post("/settings/change-password", payload);
           setIsSuccess(true);
-          setMessage("Password changed successfully");
+          setMessage({ ...message, body: "Password changed successfully" });
         } catch (err: any) {
           console.error(err.response.data);
           // Try to extract the first error message if available
@@ -135,9 +150,9 @@ export default function page() {
           } else if (typeof errorData === "string") {
             errorMsg = errorData;
           }
-          setMessage(errorMsg);
+          setMessage({ ...message, body: errorMsg });
         } finally {
-          setIsLoading(false);
+          setLoading(false);
         }
 
         // alert("Password changed successfully");
@@ -174,21 +189,130 @@ export default function page() {
     });
   };
 
+  console.log(new Date().getTime() + 24 * 60 * 60 * 1000);
+
+  const handleCancel = () => {
+    setDisablePage(false);
+    setSelectedOption(undefined);
+    setShowChangeContact(false);
+  };
+
   useEffect(() => {
-    if (!isAuthenticated) {
+    console.log("session", session);
+    if (hasRunRef.current) return;
+    const searchParams = new URLSearchParams(window.location.search);
+    const shouldExchange = searchParams.get("postSwitch") === "true";
+
+    if (!shouldExchange) {
+      return;
+    }
+    if (!session || !session.idToken ) {
+      console.log("token unavaliable");
+      setSwitchError("invalid session or token.");
+      return;
+    }
+
+    hasRunRef.current = true;
+    
+    setLoading(true);
+    const sendToken = async () => {
+      try {
+        const res = await api.post("/settings/change-google-account", {
+          Token: session.idToken,
+          Id: userInfo?.id,
+        });
+        // Update access token
+        setAccessToken(res.data.accessToken);
+
+        // Set 24hours for next email change
+        const ChangeNext = new Date().getTime() + 24 * 60 * 60 * 1000;
+        localStorage.setItem("changeNext", JSON.stringify(ChangeNext));
+
+        setSwitchSuccess("You are now set to log in using your new email.");
+
+        console.log("after a successful call.");
+      } catch (err: any) {
+        console.error("[GoogleLoginBtn] Failed to change Google account:", err);
+
+        if (err.response) {
+          // Check if it's a string
+          if (typeof err.response.data === "string") {
+            setSwitchError(err.response.data);
+          }
+          // If it's ModelState or another object
+          else if (typeof err.response.data === "object") {
+            // Try to build a string from ModelState errors
+            const errors = err.response.data.errors;
+            if (errors) {
+              setSwitchError(Object.values(errors).flat().join(" "));
+            } else {
+              setSwitchError(JSON.stringify(err.response.data));
+            }
+          }
+        }
+
+        setSwitchError("An unexpected error occured.");
+        
+      } finally {
+            // Remove param
+        const url = new URL(window.location.href);
+        url.searchParams.delete("postSwitch");
+        window.history.replaceState({}, "", url.toString());
+        
+        setLoading(false);
+      }
+    };
+
+    sendToken();
+  }, [session, status, userInfo?.id]);
+
+
+  useEffect(() => {
+    if (!isAuthenticated && !loading) {
       router.push("/login");
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, loading]);
+
   return (
     <div className="px-10 pt-7 pb-20 md:pb-0 w-full h-auto md:h-full font-serif relative">
-      {isLoading && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
-          style={{ cursor: "not-allowed" }}
-        >
-          <LoadingSpinner />
+      {switchSuccess && (
+        <div className="py-12 absolute  left-1/2 transform -translate-x-1/2 -translate-y-1/2 top-[18rem] w-[100%]  xs:w-[85%] h-auto bg-white border border-gray-500 shadow-2xl rounded-lg px-6 z-10">
+          <h3 className="text-xl font-bold text-center pb-4">Successfully changed</h3>
+          <p className="text-center text-lg pb-2">{switchSuccess}</p>
+          <div className="flex justify-center items-center">
+            <button
+              className="mt-4 bg-black text-white py-2 px-4 rounded-lg"
+              onClick={() => {
+                setSwitchSuccess(null);
+              }}
+            >
+              OK
+            </button>
+          </div>
         </div>
       )}
+      {switchError && (
+        <div className="py-12 absolute  left-1/2 transform -translate-x-1/2 -translate-y-1/2 top-[18rem] w-[100%]  xs:w-[85%] h-auto bg-white border border-gray-500 shadow-2xl rounded-lg px-6 z-10">
+          <h3 className="text-xl font-bold text-center pb-4">Google account change Failed</h3>
+          <div>
+            <p className="text-center text-lg pb-2">{switchError}</p>
+            <p>No change was made, click the button below to login with your current account {userInfo?.email}</p>
+          </div>
+
+          <div className="flex justify-center items-center">
+            <button
+              className="mt-4 bg-black text-white py-2 px-4 rounded-lg"
+              onClick={() => {
+                setSwitchError(null);
+                logout();
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
       <h1 className=" w-full text-center font-serif text-3xl font-bold border-b-2 border-gray-400 border-dashed pb-2 mb-4 md:mb-8">
         Settings
       </h1>
@@ -201,11 +325,11 @@ export default function page() {
             }`}
             onClick={() => {
               setDisablePage(true);
-              setMessage("");
+              setMessage({ ...message, body: "" });
               setSelectedOption("userName");
             }}
           >
-            <span className="font-semibold text-xl">Username</span>
+            <span className="font-semibold text-lg xs:text-xl">Username</span>
             <svg
               className="w-8 h-8"
               viewBox="0 0 24 24"
@@ -239,11 +363,13 @@ export default function page() {
             }`}
             onClick={() => {
               setDisablePage(true);
-              setMessage("");
+              setMessage({ ...message, body: "" });
               setSelectedOption("email");
             }}
           >
-            <span className="font-semibold text-xl">Email address</span>
+            <span className="font-semibold text-lg xs:text-xl">
+              Google Account
+            </span>
             <svg
               className="w-8 h-8"
               viewBox="0 0 24 24"
@@ -314,11 +440,13 @@ export default function page() {
             }`}
             onClick={() => {
               setDisablePage(true);
-              setMessage("");
+              setMessage({ ...message, body: "" });
               setSelectedOption("password");
             }}
           >
-            <span className="font-semibold text-xl">Change password</span>
+            <span className="font-semibold text-lg xs:text-xl">
+              Change password
+            </span>
             <svg
               className="w-8 h-8"
               viewBox="0 0 24 24"
@@ -349,14 +477,8 @@ export default function page() {
       {/* ------------------------Edit options------------------*/}
 
       {disablePage && (
-        <div className=" pt-8 pb-12 px-10 md:px-6 xl:px-10 mx-2 absolute  left-1/2 transform -translate-x-1/2 z-10 bg-white shadow-xl h-[33.5rem] md:h-auto top-3 md:top-8  w-[90%] md:w-[45%] rounded-2xl ">
-          <div
-            className="cursor-pointer"
-            onClick={() => {
-              setDisablePage(false);
-              setSelectedOption(undefined);
-            }}
-          >
+        <div className=" pt-8 pb-12 px-10 md:px-6 xl:px-10 absolute  left-1/2 transform -translate-x-1/2 z-10 bg-white shadow-xl h-auto top-3 md:top-8  w-[90%] md:w-[45%] rounded-2xl ">
+          <div className="cursor-pointer" onClick={handleCancel}>
             <svg
               className="w-8 md:w-10 ml-auto"
               viewBox="0 0 48 48"
@@ -389,12 +511,16 @@ export default function page() {
             {selectedOption === "userName"
               ? "Edit Username"
               : selectedOption === "email"
-              ? "Email Address"
+              ? "Google Account"
               : selectedOption === "number"
               ? "Phone Number"
               : "Change Password"}
           </h1>
-          <p className={`${isSuccess ? "text-green-600" : "text-red-500"}  mb-2`}>{message}</p>
+          <p
+            className={`${isSuccess ? "text-green-600" : "text-red-500"}  mb-2`}
+          >
+            {message.body}
+          </p>
           {selectedOption === "userName" && (
             <div>
               <form action="" onSubmit={EditUsername}>
@@ -426,6 +552,7 @@ export default function page() {
             <ModifyContact
               setShowChangeNumber={setShowChangeContact}
               option={selectedOption}
+              handleCancel={handleCancel}
             />
           )}
 
@@ -435,6 +562,7 @@ export default function page() {
             <ModifyContact
               setShowChangeNumber={setShowChangeContact}
               option={selectedOption}
+              handleCancel={handleCancel}
             />
           )}
 
@@ -512,9 +640,7 @@ export default function page() {
                       name="confirm-password"
                       id="confirm-password"
                       placeholder="Confirm your new password"
-                      onChange={(e) =>
-                        setConfirmPassword(e.target.value)
-                      }
+                      onChange={(e) => setConfirmPassword(e.target.value)}
                       value={confirmPassword}
                       className="w-[95%]  rounded-md px-3 py-2 outline-none "
                     />

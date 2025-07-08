@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import EyeIcon from "../components/EyeIcon";
 import EnterOTP from "../components/enterOTP";
 import GoogleLoginBtn from "../components/GoogleLoginBtn";
@@ -11,10 +11,13 @@ import {
 import { api } from "../../../services/axios";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
-import LoadingSpinner from "../components/LoadingSpinner";
+import { useSession } from "next-auth/react";
+// import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function page() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, setAccessToken, loading, setLoading } = useAuth();
+    const { data: session, status } = useSession();
+  const hasExchangedRef = useRef(false);
 
   const router = useRouter();
 
@@ -37,7 +40,6 @@ export default function page() {
     password: "",
   });
 
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [displayModal, setDisplayModal] = useState<boolean>(false);
   const [timeLeft, setTimeLeft] = useState<number>(0);
 
@@ -74,19 +76,19 @@ export default function page() {
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
+    setLoading(true);
     setErrorMessage("");
 
     // Check if the password and confirm password match
     if (signupModel.password !== confirmPasswordValue) {
       setErrorMessage("Passwords do not match");
-      setIsLoading(false);
+      setLoading(false);
       return;
     }
 
     // Calling the create user API
     try {
-      await api.post("/auth/signup", signupModel);
+      // await api.post("/auth/signup", signupModel);
       await api.post(`/sendOTP?email=${encodeURIComponent(signupModel.email)}`);
       setDisplayModal(true);
       setTimeLeft(60);
@@ -101,8 +103,44 @@ export default function page() {
       }
     }
 
-    setIsLoading(false);
+    setLoading(false);
   };
+
+   useEffect(() => {
+      const exchangeToken = async () => {
+        if (status !== "authenticated") return;
+  
+        const searchParams = new URLSearchParams(window.location.search); 
+        const shouldExchange = searchParams.get("postGoogleLogin") === "true";
+  
+        if (!shouldExchange) return;
+        if (hasExchangedRef.current) return;
+        hasExchangedRef.current = true;
+  
+        console.log("[GoogleLoginBtn] Detected postGoogleLogin flow.");
+  
+        setLoading(true);
+        // Login or Signup flow
+        try {
+          const res = await api.post(
+            "/auth/google",
+            { credential: session.idToken },
+            { withCredentials: true }
+          );
+          console.log("[GoogleLoginBtn] Google login/signup successful.");
+  
+          setAccessToken(res.data.accessToken);
+  
+          setLoading(false);
+  
+          router.replace("/home");
+        } catch (err: any) {
+          console.error("[GoogleLoginBtn] Failed to change Google account:", err);
+          setLoading(false);
+        }
+      };
+      exchangeToken();
+    }, [session, setAccessToken]); 
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -112,7 +150,7 @@ export default function page() {
 
   return (
     <div className="relative w-screen h-screen flex justify-center items-center">
-      {
+      {/* {
         isLoading && (
           <div 
             className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
@@ -121,15 +159,16 @@ export default function page() {
             <LoadingSpinner />
           </div>
         )
-      }
+      } */}
       {displayModal ? (
         <EnterOTP
+          className="w-[60%] sm:w-[50%] md:w-[40%] lg:w-[28%] top-1/2"
           aim={`signup`}
           handleCancel={() => setDisplayModal(false)}
           timeLeft={timeLeft}
           setTimeLeft={setTimeLeft}
           userEmail={signupModel.email}
-          setLoading={setIsLoading}
+          setLoading={setLoading}
         />
       ) : (
         <div className="relative w-[60%] sm:w-[50%] md:w-[40%] lg:w-[28%] rounded-[0.8rem] px-4 py-5 border border-gray-300 font-serif">
@@ -218,7 +257,7 @@ export default function page() {
               className="bg-black text-[1rem] text-white py-2 mt-3 w-[100%] rounded-lg"
               type="submit"
             >
-              {isLoading ? (
+              {loading ? (
                 <div className="flex justify-center items-center h-10">
                   <div className="animate-spin rounded-full h-4 w-4 border-t-4 border-white border-solid"></div>
                 </div>
@@ -228,7 +267,7 @@ export default function page() {
             </button>
           </form>
 
-          <GoogleLoginBtn text={"Sign up with Google"} source="signup" setLoading={setIsLoading} />
+          <GoogleLoginBtn styles=" border border-gray-300 py-2" text={"Sign up with Google"} source="signup" setLoading={setLoading} />
 
           <div className=" text-xs text-center">
             Already have an account?{" "}

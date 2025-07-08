@@ -1,18 +1,19 @@
 "use client"
 import { useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
-    if (isAuthenticated) {
-      redirect("/home");
+    if (isAuthenticated && !loading) {
+      router.push("/home");
     } else {
-      redirect("/login");
+      router.push("/login");
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, loading]);
 
 
 }

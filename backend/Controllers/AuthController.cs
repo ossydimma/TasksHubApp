@@ -44,16 +44,30 @@ public class AuthController(ITasksHubRepository repo, OTPService otpService, Ema
     [ProducesResponseType(400)]
     public async Task<IActionResult> GoogleAuth([FromBody] GoogleAuthDto model)
     {
+
         try
         {
             var payload = await GoogleJsonWebSignature.ValidateAsync(model.Credential);
+            var normalizedEmail = payload.Email.Trim().ToLower();
 
-            ApplicationUser? user = await _repo.GetUserByEmailAsync(payload.Email);
+            ApplicationUser? user = await _repo.GetUserByGoogleSubAsync(payload.Subject);
+
+            // Fallback to email lookup for first-time linking
+            if (user == null)
+            {
+                user = await _repo.GetUserByEmailAsync(normalizedEmail);
+                if (user != null)
+                {
+                    user.GoogleSub = payload.Subject;
+                    await _repo.UpdateUserAsync(user);
+                }
+            }
 
             if (user == null)
             {
                 user = new ApplicationUser
                 {
+                    GoogleSub = payload.Subject,
                     Email = payload.Email,
                     FullName = payload.Name,
                     UserName = payload.Name.Split(" ")[0],
@@ -61,6 +75,15 @@ public class AuthController(ITasksHubRepository repo, OTPService otpService, Ema
                 };
 
                 await _repo.CreateUserAsync(user);
+            }
+            else
+            {
+                // Update email if user changed it on Google
+                if (user.Email != payload.Email)
+                {
+                    user.Email = payload.Email;
+                    await _repo.UpdateUserAsync(user);
+                }
             }
 
             string accessToken = JwtTokenGenerator.GenerateToken(user, HttpContext.RequestServices.GetRequiredService<IConfiguration>());
@@ -91,7 +114,7 @@ public class AuthController(ITasksHubRepository repo, OTPService otpService, Ema
         }
         catch (InvalidJwtException)
         {
-            return Unauthorized("Invalid Goggle token.");
+            return Unauthorized("Invalid Google token.");
         }
         catch (Exception ex)
         {
@@ -281,18 +304,18 @@ public class AuthController(ITasksHubRepository repo, OTPService otpService, Ema
 
         string subject = "Confirm it's you";
         string body = $@"
-                <div style='font-size:18px;'>
-                    <h1 style='font-size:20px;'>Hi {email},</h1>
-                    <p>We're sending a security code to confirm that it's really you.</p>
-                    <p><strong style='font-size:20px;'> Code : <strong style='font-size:25px; word-spacing: 20px;'> {otp}</strong> </p>
-                    <p>This code will expire in 5 minutes.</p>
-                    <p>
-                        <span style='font-size:18px; font-weight: 700;'>Didn't request this? </span>
-                        If you got this email but didn't request for it, it's possible someone is trying to access your TasksHub account.
-                        As long as you don't share this code with anyone, you don't need to take any further step.
-                    </p>
-                    <p style='font-size:18px;'>Thanks,<br/> <span style='font-weight: 800;'>TasksHub </span></p>
-                </div>";
+            <div style='font-size:18px;'>
+                <h1 style='font-size:20px;'>Hi {email},</h1>yh
+                <p>We're sending a security code to confirm that it's really you.</p>
+                <p><strong style='font-size:20px;'> Code : <strong style='font-size:25px; word-spacing: 20px;'> {otp}</strong> </p>
+                <p>This code will expire in 5 minutes.</p>
+                <p>
+                    <span style='font-size:18px; font-weight: 700;'>Didn't request this? </span>
+                    If you got this email but didn't request for it, it's possible someone is trying to access your TasksHub account.
+                    As long as you don't share this code with anyone, you don't need to take any further step.
+                </p>
+                <p style='font-size:18px;'>Thanks,<br/> <span style='font-weight: 800;'>TasksHub </span></p>
+            </div>";
 
         try
         {

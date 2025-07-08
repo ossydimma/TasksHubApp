@@ -1,17 +1,19 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import EyeIcon from "../components/EyeIcon";
 import { LoginModelType } from "../../../Interfaces";
 import { api } from "../../../services/axios";
 import { useAuth } from "../../../context/AuthContext";
 import { useRouter } from "next/navigation";
 import GoogleLoginBtn from "../components/GoogleLoginBtn";
-import LoadingSpinner from "../components/LoadingSpinner";
+import { useSession } from "next-auth/react";
 
 export default function page() {
+  const { data: session, status } = useSession();
+  const hasExchangedRef = useRef(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(true);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  // const [Loading, setLoading] = useState<boolean>(false);
   const [passwordType, setPasswordType] = useState<"password" | "text">(
     "password"
   );
@@ -21,7 +23,7 @@ export default function page() {
     rememberMe: false,
   });
 
-  const { isAuthenticated, setAccessToken } = useAuth();
+  const { isAuthenticated, setAccessToken, loading, setLoading } = useAuth();
 
   const router = useRouter();
 
@@ -40,12 +42,12 @@ export default function page() {
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
+    setLoading(true);
     setErrorMessage("");
 
     if (!loginModal.email || !loginModal.password) {
       setErrorMessage("Please fill all the fields");
-      setIsLoading(false);
+      setLoading(false);
       return;
     }
 
@@ -72,7 +74,7 @@ export default function page() {
       }
       setErrorMessage(errorMsg);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -81,17 +83,52 @@ export default function page() {
   //     router.push("/home");
   //   }
   // }, [isAuthenticated]);
+   useEffect(() => {
+    const exchangeToken = async () => {
+      if (status !== "authenticated") return;
+
+      const searchParams = new URLSearchParams(window.location.search); 
+      const shouldExchange = searchParams.get("postGoogleLogin") === "true";
+
+      if (!shouldExchange) return;
+      if (hasExchangedRef.current) return;
+      hasExchangedRef.current = true;
+
+      console.log("[GoogleLoginBtn] Detected postGoogleLogin flow.");
+
+      setLoading(true);
+      // Login or Signup flow
+      try {
+        const res = await api.post(
+          "/auth/google",
+          { credential: session.idToken },
+          { withCredentials: true }
+        );
+        console.log("[GoogleLoginBtn] Google login/signup successful.");
+
+        setAccessToken(res.data.accessToken);
+
+        setLoading(false);
+
+        router.replace("/home");
+      } catch (err: any) {
+        console.error("[GoogleLoginBtn] Failed to change Google account:", err);
+        setLoading(false);
+      }
+    };
+    exchangeToken();
+  }, [session, setAccessToken]); 
 
   return (
     <div className="relative w-screen h-screen flex justify-center items-center">
-      {isLoading && (
+      {/* {Loading && (
         <div
           className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
           style={{ cursor: "not-allowed" }}
         >
           <LoadingSpinner />
         </div>
-      )}
+      )} */}
       <div className=" w-[60%] sm:w-[50%] md:w-[40%] lg:w-[28%] rounded-[0.8rem] px-4 py-8 border border-gray-300 font-serif">
         <h2 className=" text-2xl text-black font-semibold text-center">
           Login
@@ -154,7 +191,7 @@ export default function page() {
             type="submit"
             className="bg-black text-[1rem] text-white py-2 w-[100%] rounded-lg"
           >
-            {isLoading ? (
+            {loading ? (
               <div className="flex justify-center items-center h-10">
                 <div className="animate-spin rounded-full h-4 w-4 border-t-4 border-white border-solid"></div>
               </div>
@@ -166,9 +203,10 @@ export default function page() {
 
         {/* external-auth */}
         <GoogleLoginBtn
+          styles=" border border-gray-300 py-2"
           text="Continue with google"
           source="login"
-          setLoading={setIsLoading}
+          setLoading={setLoading}
         />
 
         <div className=" text-xs text-center">

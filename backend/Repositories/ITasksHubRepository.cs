@@ -7,8 +7,9 @@ namespace TasksHubServer.Repositories
     {
         Task<ApplicationUser?> CreateUserAsync(ApplicationUser user);
         Task<IEnumerable<ApplicationUser>> GetAllUsersAsync();
-        Task<ApplicationUser?> GetUserByIdAsync(Guid userId);
+        Task<ApplicationUser?> GetUserByIdAsync(string userId);
         Task<ApplicationUser?> GetUserByEmailAsync(string email);
+        Task<ApplicationUser?> GetUserByGoogleSubAsync(string googleSub);
         Task<ApplicationUser?> GetUserByRefreshTokenAsync(string refreshToken);
         Task<bool> UpdateUserAsync(ApplicationUser user);
         Task<IEnumerable<UserTasks>> GetAllUserTasksAsync(Guid userId);

@@ -35,7 +35,7 @@ export default function RootLayout({
         <SessionProviderWrapper>
           <AuthProvider>
             <SideBar />
-            <div className="relative bg-[#f6f5f5] h-[98Vh] ) overflow-x-hidden overflow-y-scroll md:overflow-hidden my-0 sm:my-[1vh]  w-screen sm:rounded-[2rem]">
+            <div className="relative bg-[#f6f5f5] h-[98Vh]  overflow-x-hidden overflow-y-scroll md:overflow-hidden my-0 sm:my-[1vh]  w-screen sm:rounded-[2rem]">
               {children}
             </div>
           </AuthProvider>

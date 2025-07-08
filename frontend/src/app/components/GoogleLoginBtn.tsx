@@ -1,54 +1,35 @@
 "use client";
 
-import { signIn, signOut, useSession } from "next-auth/react";
-import { useAuth } from "../../../context/AuthContext";
-import { api } from "../../../services/axios";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
-export default function GoogleLoginBtn({ text, source, setLoading }: { text: string; source: "login" | "signup"; setLoading: React.Dispatch<React.SetStateAction<boolean>> }) {
-  const { data: session } = useSession();
-  const { setAccessToken } = useAuth();
-  const router = useRouter();
+export default function GoogleLoginBtn({
+  text,
+  source,
+  styles,
+  setLoading,
+}: {
+  text: string;
+  source: "login" | "signup" | "email";
+  styles: string;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
 
- const handleGoogleSignIn = async () => {
-  setLoading(true);
-  await signIn("google", {
-    callbackUrl: `/${source}?postGoogleLogin=true`, // dynamic
-  });
-};
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    let callbackUrl = `/${source}?postGoogleLogin=true`;
+
+    await signIn("google", {
+      callbackUrl,
+    });
+  };
 
 
-  useEffect(() => {
-    const exchangeToken = async () => {
-      const searchParams = new URLSearchParams(window.location.search); // move here
-      const shouldExchange = searchParams.get("postGoogleLogin") === "true";
-      if (session?.idToken && shouldExchange) {
-        setLoading(true);
-        try {
-          const res = await api.post(
-            "/auth/google",
-            { credential: session.idToken },
-            { withCredentials: true }
-          );
-          setAccessToken(res.data.accessToken);
-          setLoading(false);
-          router.replace("/home");
-        } catch (err: any) {
-          setAccessToken("");
-          console.error(err.message);
-          setLoading(false);
-        } 
-      }
-    };
-    exchangeToken();
-  }, [session, setAccessToken]);
 
   return (
     <>
       <div
         onClick={handleGoogleSignIn}
-        className="border border-gray-300 w-[100%] py-2 rounded-lg flex justify-center items-center gap-7 my-4 cursor-pointer"
+        className={`${styles} w-[100%] rounded-lg flex justify-center items-center gap-7 my-4 cursor-pointer`}
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {

@@ -14,38 +14,9 @@ namespace TasksHubServer.Services
     public class EmailSender(IConfiguration config)
     {
         private readonly IConfiguration _config = config;
-        // static string[] Scopes = { GmailService.Scope.GmailSend };
-        // static string ApplicationName = "TasksHub";
 
         public async Task SendEmail(string userEmail, string subject, string body)
         {
-            //UserCredential credential;
-
-            //using FileStream? stream = new ("credential.json", FileMode.Open, FileAccess.Read);
-            //credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-            //    GoogleClientSecrets.FromStream(stream).Secrets,
-            //    Scopes,
-            //    "user",
-            //    CancellationToken.None,
-            //    new FileDataStore("token.json", true)
-            //);
-
-            //GmailService? service = new (new BaseClientService.Initializer()
-            //{
-            //    HttpClientInitializer = credential,
-            //    ApplicationName = ApplicationName,
-            //});
-
-
-            //create the email MialMessage
-
-            //MailMessage message = new()
-            //{
-            //    From = new MailAddress("innovationjaygroup@gmail.com"),
-            //    Subject = subject,
-            //    Body = body,
-            //    IsBodyHtml = false
-            //};
 
             string? email = _config["EmailSettings:Email"];
             string? password = _config["EmailSettings:Password"];
@@ -82,30 +53,9 @@ namespace TasksHubServer.Services
                 // Disconnect from the SMTP server
                 await client.DisconnectAsync(true);
             }
-            
-            //message.To.Add(userEmail);
-
-            ////Convert the email to a raw message
-            //var mimeMessage = MimeMessage.CreateFromMailMessage(message);
-            //Message rawMessage = new()
-            //{
-            //    Raw = Base64UrlEncode(mimeMessage.ToString())
-            //};
-
-            ////SendAs the email
-            //service.Users.Messages.Send(rawMessage, "me").Execute();
 
 
         }
-
-        //private static string Base64UrlEncode(string input)
-        //{
-        //    var bytes = Encoding.UTF8.GetBytes(input);
-        //    return Convert.ToBase64String(bytes)
-        //        .Replace("+", "-")
-        //        .Replace("/", "_")
-        //        .Replace("=", "");
-        //}
 
         
     }

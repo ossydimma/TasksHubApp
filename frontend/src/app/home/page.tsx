@@ -9,21 +9,24 @@ import { useAuth } from "../../../context/AuthContext";
 import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function Home() {
-  const [date, setDate] = useState<Date>(new Date());
-  const { isAuthenticated } = useAuth();
+  const [date, setDate] = useState<Date | null>(null);
+  const { isAuthenticated, loading } = useAuth();
 
   const router = useRouter();
 
+  useEffect(()=> {
+    setDate(new Date());
+  }, [])
+
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated && !loading) {
       router.push("/login");
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, loading]);
 
   return (
     <main className="text-black">
       <Header />
-      {/* <LoadingSpinner /> */}
       <div className=" flex justify-center items-center border-dashed border-gray-500 border-b-2 pb-[2vh] pt-[-2vh]">
         <div className=" w-[60%] md:w-[50%] lg:w-[45%] flex sm:hidden items-center justify-between  px-3.5 border border-gray-600 rounded-3xl  ">
           <input
