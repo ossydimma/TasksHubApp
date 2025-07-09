@@ -82,7 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
           style={{ cursor: "not-allowed" }}
         >
-          <LoadingSpinner />
+          <LoadingSpinner styles={ {svg:" h-10 w-10", span: "text-[1.2rem]"}} text="Loading..." />
         </div>
       ) : (
         children

@@ -60,7 +60,7 @@ export interface FilterByType {
     category : string | undefined;
 }
 
-export interface DocummentType {
+export interface DocumentType {
     id : string;
     title : string;
     content : string;

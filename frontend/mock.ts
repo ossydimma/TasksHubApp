@@ -1,11 +1,11 @@
-  import { DocummentType, User, UserTask } from "./Interfaces";
+  import { DocumentType, User, UserTask } from "./Interfaces";
 
-  export const UserDetails : User = {
-    userName : "John Doe",
-    email : "text_example@gamil.com",
-    imageSrc : "https://images.unsplash.com/photo-1677631231234-1234567890ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60",
-    PhoneNumber : "+1 123 456 7890"
-  }
+  // export const UserDetails : User = {
+  //   userName : "John Doe",
+  //   email : "text_example@gamil.com",
+  //   imageSrc : "https://images.unsplash.com/photo-1677631231234-1234567890ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60",
+  //   // PhoneNumber : "+1 123 456 7890"
+  // }
   
   export const categories = [
     "Category",
@@ -24,24 +24,24 @@
     return `${month}/${day}/${year}`;
   };
 
-  export const documents : DocummentType[] = [
+  export const ment : DocumentType[] = [
     {
       id : "1",
-      title : "Aglorthim of ",
+      title : "Document of life ",
       formattedDate : formatDate(new Date()),
       isHovered : false,
       content : "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
     },
     {
       id : "2",
-      title : "Aglorthim of ",
+      title : "Tasks to complete ",
       formattedDate : formatDate(new Date()),
       isHovered : false,
       content : "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
     },
     {
       id : "3",
-      title : "Aglorthim  Calculation",
+      title : "Aglorthim of Calculation",
       formattedDate : formatDate(new Date()),
       isHovered : false,
       content : "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
