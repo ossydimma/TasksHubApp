@@ -374,6 +374,57 @@
         }
       }
     },
+    "/api/document/get-documents-by-title": {
+      "post": {
+        "tags": [
+          "Document"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetDocusByTitleDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetDocusByTitleDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetDocusByTitleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/settings/update-username": {
       "post": {
         "tags": [
@@ -1011,14 +1062,14 @@
           "userDocument": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/UserDocuments"
+              "$ref": "#/components/schemas/UserDocument"
             },
             "nullable": true
           },
           "userTasks": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/UserTasks"
+              "$ref": "#/components/schemas/UserTask"
             },
             "nullable": true
           }
@@ -1063,6 +1114,20 @@
             "minLength": 1,
             "pattern": "^(?=.*[A-Z])(?=.*\\d).{6,}$",
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetDocusByTitleDto": {
+        "type": "object",
+        "properties": {
+          "userIdStr": {
+            "type": "string",
+            "nullable": true
+          },
+          "queryText": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -1158,7 +1223,7 @@
         },
         "additionalProperties": false
       },
-      "UserDocuments": {
+      "UserDocument": {
         "required": [
           "title"
         ],
@@ -1191,7 +1256,7 @@
         },
         "additionalProperties": false
       },
-      "UserTasks": {
+      "UserTask": {
         "required": [
           "category",
           "description",

@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TasksHubServer.Models;
-public class UserDocuments
+public class UserDocument
 {
     public Guid Id {get; set;} = Guid.NewGuid();
     [Required]

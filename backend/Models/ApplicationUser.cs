@@ -23,8 +23,8 @@ namespace TasksHubServer.Models;
         public DateTime? RefreshTokenExpiryTime { get; set; } = null;
 
         [JsonIgnore]
-        public virtual List<UserDocuments>UserDocument { get; set; } = [];
+        public virtual List<UserDocument>UserDocument { get; set; } = [];
         [JsonIgnore]
-        public virtual List<UserTasks> UserTasks { get; set; } = [];
+        public virtual List<UserTask> UserTasks { get; set; } = [];
 
     }

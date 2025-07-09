@@ -182,24 +182,24 @@ public class TasksHubRepository(IDistributedCache distributedCache, ApplicationD
     }
 
 
-    public async Task<IEnumerable<UserTasks>> GetAllUserTasksAsync(Guid userId)
-    {
-        var cacheKey = $"UserTasks_{userId}";
-        var cachedTasks = await _distributedCache.GetStringAsync(cacheKey);
+    // public async Task<IEnumerable<UserTask>> GetAllUserTasksAsync(Guid userId)
+    // {
+    //     var cacheKey = $"UserTasks_{userId}";
+    //     var cachedTasks = await _distributedCache.GetStringAsync(cacheKey);
 
-        if (cachedTasks != null)
-        {
-            return JsonConvert.DeserializeObject<IEnumerable<UserTasks>>(cachedTasks) ?? Enumerable.Empty<UserTasks>();
-        }
+    //     if (cachedTasks != null)
+    //     {
+    //         return JsonConvert.DeserializeObject<IEnumerable<UserTask>>(cachedTasks) ?? Enumerable.Empty<UserTasks>();
+    //     }
 
-        var tasks = await _db.UserTasks
-            .Where(t => t.UserId == userId)
-            .ToListAsync();
+    //     var tasks = await _db.UserTasks
+    //         .Where(t => t.UserId == userId)
+    //         .ToListAsync();
 
-        await _distributedCache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(tasks), _cacheOptions);
+    //     await _distributedCache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(tasks), _cacheOptions);
 
-        return tasks;
-    }
+    //     return tasks;
+    // }
 
     public async Task<bool> DeleteUserAsync(Guid id)
     {

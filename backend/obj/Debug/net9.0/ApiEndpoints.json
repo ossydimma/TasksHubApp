@@ -170,6 +170,37 @@
     ]
   },
   {
+    "ContainingType": "TasksHubServer.Controllers.DocumentController",
+    "Method": "GetDocumentByTitle",
+    "RelativePath": "api/document/get-documents-by-title",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "TasksHubServer.DTOs.GetDocusByTitleDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      },
+      {
+        "Type": "Microsoft.AspNetCore.Mvc.ProblemDetails",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 400
+      }
+    ]
+  },
+  {
     "ContainingType": "TasksHubServer.Controllers.AuthController",
     "Method": "SendOTP",
     "RelativePath": "api/sendOTP",
@@ -201,7 +232,7 @@
     ]
   },
   {
-    "ContainingType": "TasksHubServer.Controller.ProfileController",
+    "ContainingType": "TasksHubServer.Controllers.ProfileController",
     "Method": "ChangeGoogleAccount",
     "RelativePath": "api/settings/change-google-account",
     "HttpMethod": "POST",
@@ -255,7 +286,7 @@
     ]
   },
   {
-    "ContainingType": "TasksHubServer.Controller.ProfileController",
+    "ContainingType": "TasksHubServer.Controllers.ProfileController",
     "Method": "ChangePassword",
     "RelativePath": "api/settings/change-password",
     "HttpMethod": "POST",
@@ -295,7 +326,7 @@
     ]
   },
   {
-    "ContainingType": "TasksHubServer.Controller.ProfileController",
+    "ContainingType": "TasksHubServer.Controllers.ProfileController",
     "Method": "UpdateImage",
     "RelativePath": "api/settings/update-user-image",
     "HttpMethod": "POST",
@@ -331,7 +362,7 @@
     ]
   },
   {
-    "ContainingType": "TasksHubServer.Controller.ProfileController",
+    "ContainingType": "TasksHubServer.Controllers.ProfileController",
     "Method": "UpdateUsername",
     "RelativePath": "api/settings/update-username",
     "HttpMethod": "POST",
@@ -371,7 +402,7 @@
     ]
   },
   {
-    "ContainingType": "TasksHubServer.Controller.ProfileController",
+    "ContainingType": "TasksHubServer.Controllers.ProfileController",
     "Method": "VerifyEmailChange",
     "RelativePath": "api/settings/verify-email-change",
     "HttpMethod": "POST",
@@ -411,7 +442,7 @@
     ]
   },
   {
-    "ContainingType": "TasksHubServer.Controller.ProfileController",
+    "ContainingType": "TasksHubServer.Controllers.ProfileController",
     "Method": "VerifyNewEmail",
     "RelativePath": "api/settings/verify-new-email",
     "HttpMethod": "POST",
@@ -442,7 +473,7 @@
     ]
   },
   {
-    "ContainingType": "TasksHubServer.Controller.ProfileController",
+    "ContainingType": "TasksHubServer.Controllers.ProfileController",
     "Method": "VerifyOldEmail",
     "RelativePath": "api/settings/verify-old-email",
     "HttpMethod": "POST",

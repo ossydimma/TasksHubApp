@@ -99,3 +99,8 @@ export interface AuthContextType {
     loading: boolean;
     setLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
+
+export interface DocumentInputType{
+    title: string;
+    body: string;
+}

@@ -46,9 +46,9 @@ export default function page() {
 
   return (
     <main className="text-xs xs:text-sm md:text-[1rem] border-gray-500 ">
-      <section className="flex justify-between items-center px-6 mt-5 lmd:mt-8 -mb-2 border-b-2 border-dashed border-gray-500 pb-4">
-        <div className=" flex gap-2 items-center text-sm">
-          <div className="py-2 px-4 bg-black text-white rounded-md cursor-pointer">
+      <header className="flex justify-between items-center px-6 mt-5 lmd:mt-8 -mb-2 border-b-2 border-dashed border-gray-500 pb-4">
+        <div className="  ">
+          <div className="py-2 px-4 text-sm bg-black text-white rounded-md cursor-pointer">
             All Tasks
           </div>
         </div>
@@ -261,7 +261,7 @@ export default function page() {
             Filter
           </div>
         </div>
-      </section>
+      </header>
 
       <section className="h-[85vh] w-[98%] md:h-[90vh] overflow-hidden pt-4 mx-2  mb-[3rem] overflow-y-hidde">
         <div className="w-full h-[90%] pb-10 overflow-y-hidde ">

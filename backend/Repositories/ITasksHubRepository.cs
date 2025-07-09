@@ -12,7 +12,7 @@ namespace TasksHubServer.Repositories
         Task<ApplicationUser?> GetUserByGoogleSubAsync(string googleSub);
         Task<ApplicationUser?> GetUserByRefreshTokenAsync(string refreshToken);
         Task<bool> UpdateUserAsync(ApplicationUser user);
-        Task<IEnumerable<UserTasks>> GetAllUserTasksAsync(Guid userId);
+        // Task<IEnumerable<UserTask>> GetAllUserTasksAsync(Guid userId);
         Task<bool> DeleteUserAsync(Guid id);
         // Task<UserTasks?> GetUserTaskByIdAsync(Guid taskId, Guid userId);
         // Task<UserTasks> CreateUserTaskAsync(UserTasks task);

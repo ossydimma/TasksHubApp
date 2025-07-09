@@ -1,7 +1,7 @@
 
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
-namespace TasksHubServer.Controller;
+namespace TasksHubServer.Controllers;
 
 [Route("api/settings/")]
 [ApiController]

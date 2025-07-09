@@ -10,8 +10,8 @@ public class ApplicationDbContext : DbContext
     }
 
     public DbSet<ApplicationUser> ApplicationUsers { get; set; } = null!;
-    public DbSet<UserTasks> UserTasks { get; set; } = null!;
-    public DbSet<UserDocuments> UserDocuments { get; set; } = null!;
+    public DbSet<UserTask> UserTasks { get; set; } = null!;
+    public DbSet<UserDocument> UserDocuments { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

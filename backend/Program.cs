@@ -29,6 +29,7 @@ builder.Services.AddStackExchangeRedisCache(options =>
 Console.WriteLine(builder.Configuration.GetConnectionString("RedisConnections"));
 
 builder.Services.AddScoped<ITasksHubRepository, TasksHubRepository>();
+builder.Services.AddScoped<IDocumentRepo, DocumentRepo>();
 builder.Services.AddSingleton<OTPService>();
 builder.Services.AddSingleton<EmailSender>();
 
