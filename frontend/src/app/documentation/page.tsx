@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ment } from "../../../mock";
+import { formatDate } from "../../../mock";
 import { DocumentType, DocumentInputType } from "../../../Interfaces";
 import { useAuth } from "../../../context/AuthContext";
 import { api } from "../../../services/axios";
@@ -16,16 +16,20 @@ export default function page() {
   const { userInfo } = useAuth();
 
   const [showFilter, setShowFilter] = useState<boolean>(false);
-  const [isFilter, setIsFilter] = useState<boolean>(false);
+  const [validate, setValidate] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<null | string>(null);
+  const [Searching, setSearching] = useState<boolean>(false);
+  const [docId, setDocId] = useState<string>('');
   const [showForm, setShowForm] = useState<boolean>(false);
   const [showDocus, setShowDocus] = useState<boolean>(true);
   const [isReadOnly, setIsReadOnly] = useState<boolean>();
   const [isFeedBack, setIsFeedBack] = useState<boolean>();
   const [query, setQuery] = useState<string>("");
   const [documents, setDocuments] = useState<DocumentType[]>([]);
-  const [filteredDocuments, setFilteredDocuments] = useState<DocumentType[]>([]);
+  const [btnText, setBtnText] = useState<string>("Create");
+  const [filteredDocuments, setFilteredDocuments] = useState<DocumentType[]>(
+    []
+  );
   const [IsDisabled, setIsDisabled] = useState({
     saveBtn: true,
     discardBtn: true,
@@ -34,6 +38,7 @@ export default function page() {
     undefined
   );
   const [content, setContent] = useState<DocumentInputType>({
+    id: "",
     title: "",
     body: "",
   });
@@ -63,12 +68,16 @@ export default function page() {
   //   //   : console.log(`${document} not found`);
   // };
 
-  const ReadDocument = (id: string): void => {
+  const readDocument = (id: string): void => {
     const document: DocumentType | undefined = documents.find(
       (d) => d.id === id
     );
     if (document !== undefined) {
-      setContent({ title: document.title, body: document.content });
+      setContent({
+        id: document.id,
+        title: document.title,
+        body: document.content,
+      });
       if (!showForm) {
         setShowDocus(false);
         setShowForm(true);
@@ -80,12 +89,17 @@ export default function page() {
     }
   };
 
-  const EditDocument = (id: string) => {
+  const editDocument = (id: string) => {
     const document: DocumentType | undefined = documents.find(
       (d) => d.id === id
     );
     if (document !== undefined) {
-      setContent({ title: document.title, body: document.content });
+      setContent({
+        id: document.id,
+        title: document.title,
+        body: document.content,
+      });
+      setBtnText("Update");
       if (!showForm) {
         setShowDocus(false);
         setShowForm(true);
@@ -95,6 +109,42 @@ export default function page() {
       setIsDisabled({ saveBtn: false, discardBtn: false });
     } else console.log(`${document} not found `);
   };
+
+  const deleteDocument = async (id: string) => {
+    const document: DocumentType | undefined = documents.find(
+      (d) => d.id === id
+    );
+
+    if (document === undefined) {
+      console.error(`Document ${id} not found. `);
+      setIsFeedBack(!isFeedBack);
+      setFeedbackText("Fail to delete document");
+      return;
+    }
+
+    setSearching(true);
+    try {
+      const res = await api.delete(
+        `document/delete?documentIdStr=${document.id}`
+      );
+      const docs = res.data.allDocuments;
+      setDocuments(docs);
+      setFilteredDocuments(docs);
+      setIsFeedBack(!isFeedBack);
+      setFeedbackText("Dcument deleted Successfully.");
+
+      if (document.id === content.id) {
+        setContent({ title: "", body: "", id: "" });
+      }
+    } catch (err) {
+      console.error(err);
+      setIsFeedBack(!isFeedBack);
+      setFeedbackText("Server error, Fail to delete document");
+    } finally {
+      setSearching(false);
+    }
+  };
+
   const handleResize = () => {
     const valueFromStorage = localStorage.getItem("showDocuForm");
     const w = window.innerWidth;
@@ -115,25 +165,119 @@ export default function page() {
     const darft = localStorage.getItem("inputContent");
     if (darft) {
       const draftData = JSON.parse(darft) as DocumentInputType;
-      setContent({ title: draftData.title ?? "", body: draftData.body ?? "" });
+      setContent({
+        id: draftData.id ?? "",
+        title: draftData.title ?? "",
+        body: draftData.body ?? "",
+      });
+      draftData.id ? setBtnText("Update") : setBtnText("Create");
     }
   };
 
   const getAllDocuments = async () => {
-    setDocuments(ment);
-    setFilteredDocuments(ment);
+
+    setIsLoading(true);
+
+    try {
+      const res = await api.post("document/get-documents");
+      console.log(res);
+      const docs = res.data.allDocuments;
+      setDocuments(docs);
+      setFilteredDocuments(docs);
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setSearching(false);
+      setIsLoading(false);
+    }
+  };
+
+  const createDocument = async (e: React.FormEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+
+    if (content.body.length < 2 && content.title.length < 2) {
+      setIsFeedBack(!isFeedBack);
+      setFeedbackText(
+        "Title or content body can't contain less that two characters"
+      );
+      return;
+    }
+    setIsLoading(true);
+
+    try {
+      const res = await api.post("document/create", {
+        Title: content.title,
+        Body: content.body,
+      });
+      const docs = res.data.allDocuments;
+      setDocuments(docs);
+      setFilteredDocuments(docs);
+      setContent({ title: "", body: "", id: "" });
+      setIsFeedBack(!isFeedBack);
+      setFeedbackText("Document created Successfully");
+    } catch (err: any) {
+      console.error(err);
+      setIsFeedBack(!isFeedBack);
+      setFeedbackText("Failed to create document");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateDocument = async (e: React.FormEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+
+    if (content.body === "" && content.title === "") {
+      setIsFeedBack(!isFeedBack);
+      setFeedbackText("Document content can't be empty. ");
+      return;
+    }
+
+    if (content.body.length < 2 && content.title.length < 2) {
+      setIsFeedBack(!isFeedBack);
+      setFeedbackText(
+        "Title or content body of Document can't contain less that two characters. "
+      );
+      return;
+    }
+
+    if (content.id === "") {
+      setIsFeedBack(!isFeedBack);
+      setFeedbackText("Document id is missing");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const res = await api.post("document/update", {
+        Title: content.title,
+        Body: content.body,
+        DocumentIdStr: content.id,
+      });
+      const docs = res.data.allDocuments;
+      setDocuments(docs);
+      setFilteredDocuments(docs);
+      setContent({ title: "", body: "", id: "" });
+      setIsFeedBack(!isFeedBack);
+      setFeedbackText("updated Successfully.");
+    } catch (err: any) {
+      console.error(err);
+      setIsFeedBack(!isFeedBack);
+      setFeedbackText("Fail to update.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getDocumentsByTitle = async () => {
-    if (!userInfo?.id || query.trim() === "") {
+    if (query.trim() === "") {
       setIsLoading(false);
       return;
     }
-    console.log(query, userInfo.id);
     try {
       const res = await api.post("/document/get-documents-by-title", {
         QueryText: query,
-        UserIdStr: userInfo.id,
       });
 
       setDocuments(res.data.docs);
@@ -164,30 +308,44 @@ export default function page() {
   }, [content]);
 
   useEffect(() => {
-    setIsLoading(true);
+    setSearching(true);
 
-    const handler = setTimeout(()=> {
-      setIsFilter(query.length > 0);
-      if (query.trim() === ""){
+    const handler = setTimeout(() => {
+      if (query.trim() === "") {
         getAllDocuments();
-        setIsLoading(false);
         return;
       }
-      
-      const filtered : DocumentType[] = documents.filter(docs => docs.title.toLowerCase().includes(query.toLowerCase()));
-      setIsLoading(false);
-      setFilteredDocuments(filtered);
-    }, 300)
 
-     return () => {
+      const filtered: DocumentType[] = documents.filter((docs) =>
+        docs.title.toLowerCase().includes(query.toLowerCase())
+      );
+      setSearching(false);
+      setFilteredDocuments(filtered);
+    }, 300);
+
+    return () => {
       clearTimeout(handler);
     };
-    
   }, [query]);
 
   return (
     <>
-      <header className={`flex ${documents.length > 0 ? "justify-between" : "gap-[15%]" }  items-center px-4 sm:px-6 mt-5 lmd:mt-6 -mb-2 border-b-2 border-dashed border-gray-500 pb-4`}>
+      {isLoading && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
+          style={{ cursor: "not-allowed" }}
+        >
+          <LoadingSpinner
+            styles={{ svg: " h-10 w-10", span: "text-[1.2rem]" }}
+            text="Loading..."
+          />
+        </div>
+      )}
+      <header
+        className={`flex ${
+          documents.length > 0 ? "justify-between" : "gap-[15%]"
+        }  items-center px-4 sm:px-6 mt-5 lmd:mt-6 -mb-2 border-b-2 border-dashed border-gray-500 pb-4`}
+      >
         <div className="py-3 px-4 text-sm md:text-lg bg-black text-white rounded-md cursor-pointer">
           Document
         </div>
@@ -197,8 +355,11 @@ export default function page() {
             !showDocus ? "w-[50%]" : "w-[40%]"
           }  lg:w-[45%] flex items-center justify-between  border border-gray-600 rounded-3xl overflow-hidden`}
         >
-           {query && (
-            <div className="border-r-2 w-[15%] md:w-[10%] py-3 cursor-pointer" onClick={()=> setQuery("")}>
+          {query && (
+            <div
+              className="border-r-2 w-[15%] md:w-[13.5%] lmd:w-[10%] py-3 cursor-pointer"
+              onClick={() => setQuery("")}
+            >
               <svg
                 className="w-5 lmd:w-7 mx-auto"
                 viewBox="0 0 48 48"
@@ -232,18 +393,18 @@ export default function page() {
             placeholder="Search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-[77.5%] bg-inherit py-2 outline-none pl-3 lmd:pl-5 text-sm sm:text-[0.92rem] md:text-[1rem]"
+            className="w-[77.5%] bg-inherit py-2 outline-none pl-3 pr-1 lmd:pl-5 text-sm sm:text-[0.92rem] md:text-[1rem]"
           />
-         
-          <div 
-            className="bg-gray-700 hover:bg-black w-[18%] md:w-[12.5%] py-3 cursor-pointer "
+
+          <div
+            className="bg-gray-700 hover:bg-black w-[18%] md:w-[15%] lmd:w-[12.5%] py-3 cursor-pointer "
             onClick={getDocumentsByTitle}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === "Enter") getDocumentsByTitle();
             }}
-            >
+          >
             <svg
               className="w-5 lmd:w-7 mx-auto"
               viewBox="0 0 24 24"
@@ -389,7 +550,50 @@ export default function page() {
           </div>
         )}
       </header>
-      <main className="flex justify-between items-center flex-col gap-1 md:gap-2 md:flex-row h-[85%] pt-4 md:pt-5 pb-[3.6rem] sm:pb-0">
+      <main className="relative flex justify-between items-center flex-col gap-1 md:gap-2 md:flex-row h-[85%] pt-4 md:pt-5 pb-[3.6rem] sm:pb-0">
+        {validate && (
+          <div
+            className={`px-6 bg-red-600 border w-[80%] h-fit py-10 flex flex-col gap-4 justify-center items-center rounded-2xl absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20`}
+          >
+            <p className=" text-center text-xl text-white font-mono font-semibold">
+              Are you sure you want to delete this document?
+            </p>
+            <div className="w-[80%] flex justify-between items-center">
+              <button 
+                className="bg-white text-black py-3 px-10 rounded-2xl font-bold hover:scale-90 transition-transform duration-300"
+                onClick={()=> {
+                  setValidate(!validate);
+                  deleteDocument(docId);
+                }}
+                >Yes</button>
+              <button 
+                className="bg-white text-black py-3 px-10 rounded-2xl font-bold hover:scale-90 transition-transform duration-300"
+                onClick={()=> setValidate(!validate)}
+              >No</button>
+            </div>
+          </div>
+        )}
+        {isFeedBack && (
+          <div
+            className={` bg-black border w-[80%] h-fit py-10 flex flex-col gap-4 justify-center items-center rounded-2xl absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20`}
+          >
+            <p className=" text-2xl text-white font-mono font-semibold">
+              {feedbackText}
+            </p>
+            <button
+              className="bg-white text-black py-3 px-10 rounded-2xl font-bold hover:scale-90 transition-transform duration-300"
+              onClick={() => {
+                setIsFeedBack(!isFeedBack);
+                if (feedbackText?.endsWith("Successfully")) {
+                  setContent({ id: "", body: "", title: "" });
+                  setIsDisabled({ saveBtn: true, discardBtn: true });
+                }
+              }}
+            >
+              Ok
+            </button>
+          </div>
+        )}
         {showForm && (
           <>
             {!showDocus && (
@@ -474,20 +678,22 @@ export default function page() {
                 <div className=" flex md:mt-4 pb-1 sm:py-2 text-xs md:text-[1rem] h-[12%] ">
                   {!isReadOnly && (
                     <>
-                      <button
-                        disabled={IsDisabled.discardBtn}
-                        className={` ${
-                          IsDisabled.discardBtn
-                            ? `bg-gray-400 cursor-not-allowed `
-                            : `bg-black hover:text-black hover:bg-white hover:border border-black cursor-pointer  `
-                        } text-white py-2  md:py-3 px-8 rounded-xl  `}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setContent({ body: "", title: "" });
-                        }}
-                      >
-                        Discard
-                      </button>
+                      {(content.title !== "" || content.body !== "") && (
+                        <button
+                          // disabled={IsDisabled.discardBtn}
+                          className={` 
+                           
+                           text-white py-2  md:py-3 px-8 rounded-xl bg-black hover:text-black hover:bg-white hover:border border-black cursor-pointer `}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setContent({ id: "", body: "", title: "" });
+                            setBtnText("Create");
+                          }}
+                        >
+                          Discard
+                        </button>
+                      )}
+
                       <button
                         disabled={IsDisabled.saveBtn}
                         type="submit"
@@ -496,21 +702,11 @@ export default function page() {
                             ? `bg-gray-400 cursor-not-allowed `
                             : `bg-black hover:text-black hover:bg-white hover:border border-black cursor-pointer  `
                         }  `}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (
-                            content.body.length > 2 &&
-                            content.title.length > 2
-                          ) {
-                            setIsFeedBack(!isFeedBack);
-                            setFeedbackText("Document Saved Successfully");
-                          } else {
-                            setIsFeedBack(!isFeedBack);
-                            setFeedbackText("Please Fill All Fields");
-                          }
-                        }}
+                        onClick={
+                          btnText === "Create" ? createDocument : updateDocument
+                        }
                       >
-                        Save
+                        {btnText}
                       </button>
                     </>
                   )}
@@ -521,7 +717,7 @@ export default function page() {
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
                       onClick={() => {
-                        setContent({ body: "", title: "" });
+                        setContent({ id: "", body: "", title: "" });
                         setIsDisabled({ saveBtn: true, discardBtn: true });
                         setIsReadOnly(false);
                       }}
@@ -549,32 +745,6 @@ export default function page() {
                   )}
                 </div>
               </form>
-
-              {isFeedBack && (
-                <div
-                  className={` ${
-                    feedbackText?.endsWith("Successfully")
-                      ? `bg-green-500`
-                      : `bg-red-500`
-                  }   border w-[80%] h-fit py-10 flex flex-col gap-4 justify-center items-center rounded-2xl absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2`}
-                >
-                  <p className=" text-2xl text-white font-mono font-semibold">
-                    {feedbackText}
-                  </p>
-                  <button
-                    className="bg-white text-black py-3 px-10 rounded-2xl font-bold hover:scale-90 transition-transform duration-300"
-                    onClick={() => {
-                      setIsFeedBack(!isFeedBack);
-                      if (feedbackText?.endsWith("Successfully")) {
-                        setContent({ body: "", title: "" });
-                        setIsDisabled({ saveBtn: true, discardBtn: true });
-                      }
-                    }}
-                  >
-                    Ok
-                  </button>
-                </div>
-              )}
             </section>
           </>
         )}
@@ -586,7 +756,7 @@ export default function page() {
                 onClick={() => {
                   setShowForm(true);
                   setShowDocus(false);
-                  setContent({ title: "", body: "" });
+                  setContent({ id: "", title: "", body: "" });
                   localStorage.setItem("showDocuForm", "true");
                 }}
                 className="ml-auto my-1 mr-[1.4rem] border text-sm border-gray-600 rounded-md py-2 px-4 flex items-center gap-2 cursor-pointer hover:bg-black hover:text-white stroke-black hover:stroke-white"
@@ -628,7 +798,7 @@ export default function page() {
             )}
 
             <section className="  h-full w-full pb-[4rem] sm:pb-0 md:w-[38%]  overflow-y-scroll">
-              {isLoading ? (
+              {Searching ? (
                 <div className="h-full w-full flex justify-center items-center">
                   <LoadingSpinner
                     styles={{
@@ -638,17 +808,13 @@ export default function page() {
                     text="Searching..."
                   />
                 </div>
-              ) : error ? (
-                <div className="h-full w-full flex justify-center items-center text-sm sm:text-[1.1rem] lmd:text-sm">
-                  <p>{error}</p>
-                </div>
               ) : documents.length === 0 ? (
-                <div className="h-full w-full flex justify-center items-center text-[0.910rem] sm:text-[1.2rem] lmd:text-[0.910rem]">
-                  {isFilter ? (
-                    <p>No matching documents found for "{query}".</p>
-                  ) : (
-                    <p>You have no documents yet.</p>
-                  )}
+                <div className="h-full w-full flex justify-center items-center text-[0.910rem] sm:text-[1.2rem] md:text-[0.8rem] lmd:text-[0.910rem]">
+                  <p>You have no documents yet.</p>
+                </div>
+              ) : filteredDocuments.length === 0 ? (
+                <div className="h-full w-full flex justify-center items-center text-[0.910rem] sm:text-[1.2rem] md:text-[0.8rem] lmd:text-[0.910rem]">
+                  <p>No matching documents found for "{query}".</p>
                 </div>
               ) : (
                 <div className="flex flex-col md:mb-0 gap-[1.1rem]  sm:gap-[1rem] md:gap-[1.4rem]  px-4 md:px-2 h-full w-full md:w-[100%] ">
@@ -666,7 +832,7 @@ export default function page() {
                             : document.title}
                         </h1>
                         <p className="ml-auto text-xs   font-mono font-semibold pl-1">
-                          {document.formattedDate}
+                          {formatDate(document.date)}
                         </p>
                       </div>
 
@@ -681,17 +847,24 @@ export default function page() {
                       >
                         <li
                           className="hover:bg-black hover:text-white rounded-xl px-4 py-1 cursor-pointer"
-                          onClick={() => ReadDocument(document.id)}
+                          onClick={() => readDocument(document.id)}
                         >
                           Read Document{" "}
                         </li>
                         <li
                           className="hover:bg-black hover:text-white rounded-xl px-4 py-1 cursor-pointer"
-                          onClick={() => EditDocument(document.id)}
+                          onClick={() => editDocument(document.id)}
                         >
                           Edit Document
                         </li>
-                        <li className="hover:bg-red-600 hover:text-white rounded-xl px-4 py-1 cursor-pointer">
+                        <li
+                          className="hover:bg-red-600 hover:text-white rounded-xl px-4 py-1 cursor-pointer"
+                          onClick={() => {
+                            setValidate(!validate)
+                            setDocId(document.id)
+                            // deleteDocument(document.id)
+                          }}
+                        >
                           Delete Document
                         </li>
                       </ul>

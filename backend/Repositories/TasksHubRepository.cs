@@ -55,7 +55,7 @@ public class TasksHubRepository(IDistributedCache distributedCache, ApplicationD
     public async Task<ApplicationUser?> GetUserByIdAsync(string userIdStr)
     {
         Guid userId = Guid.Parse(userIdStr);
-        string key = $"User_{userId}";
+        string key = $"TasksHub_User_{userId}";
         try
         {
             string? cachedUser = await _distributedCache.GetStringAsync(key);

@@ -1,3 +1,4 @@
+// import { formatDate } from "../mock";
 
 export interface User {
     id : string; 
@@ -64,7 +65,7 @@ export interface DocumentType {
     id : string;
     title : string;
     content : string;
-    formattedDate : string;
+    date : string;
     isHovered : boolean;
 }
 
@@ -101,6 +102,7 @@ export interface AuthContextType {
 }
 
 export interface DocumentInputType{
+    id: string;
     title: string;
     body: string;
 }
