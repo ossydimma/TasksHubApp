@@ -12,11 +12,11 @@ import { api } from "../../../services/axios";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
 import { useSession } from "next-auth/react";
-// import LoadingSpinner from "../components/LoadingSpinner";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function page() {
-  const { isAuthenticated, setAccessToken, loading, setLoading } = useAuth();
-    const { data: session, status } = useSession();
+  const { isAuthenticated, setAccessToken } = useAuth();
+  const { data: session, status } = useSession();
   const hasExchangedRef = useRef(false);
 
   const router = useRouter();
@@ -26,6 +26,8 @@ export default function page() {
     newPassword: true,
     confirmPassword: true,
   });
+
+  const [loading, setLoading] = useState<boolean>(false);
 
   const [passwordType, setPasswordType] = useState<PasswordType>({
     newPassword: "password",
@@ -88,7 +90,7 @@ export default function page() {
 
     // Calling the create user API
     try {
-      // await api.post("/auth/signup", signupModel);
+      await api.post("/auth/signup", signupModel);
       await api.post(`/sendOTP?email=${encodeURIComponent(signupModel.email)}`);
       setDisplayModal(true);
       setTimeLeft(60);
@@ -106,41 +108,41 @@ export default function page() {
     setLoading(false);
   };
 
-   useEffect(() => {
-      const exchangeToken = async () => {
-        if (status !== "authenticated") return;
-  
-        const searchParams = new URLSearchParams(window.location.search); 
-        const shouldExchange = searchParams.get("postGoogleLogin") === "true";
-  
-        if (!shouldExchange) return;
-        if (hasExchangedRef.current) return;
-        hasExchangedRef.current = true;
-  
-        console.log("[GoogleLoginBtn] Detected postGoogleLogin flow.");
-  
-        setLoading(true);
-        // Login or Signup flow
-        try {
-          const res = await api.post(
-            "/auth/google",
-            { credential: session.idToken },
-            { withCredentials: true }
-          );
-          console.log("[GoogleLoginBtn] Google login/signup successful.");
-  
-          setAccessToken(res.data.accessToken);
-  
-          setLoading(false);
-  
-          router.replace("/home");
-        } catch (err: any) {
-          console.error("[GoogleLoginBtn] Failed to change Google account:", err);
-          setLoading(false);
-        }
-      };
-      exchangeToken();
-    }, [session, setAccessToken]); 
+  useEffect(() => {
+    const exchangeToken = async () => {
+      if (status !== "authenticated") return;
+
+      const searchParams = new URLSearchParams(window.location.search);
+      const shouldExchange = searchParams.get("postGoogleLogin") === "true";
+
+      if (!shouldExchange) return;
+      if (hasExchangedRef.current) return;
+      hasExchangedRef.current = true;
+
+      console.log("[GoogleLoginBtn] Detected postGoogleLogin flow.");
+
+      setLoading(true);
+      // Login or Signup flow
+      try {
+        const res = await api.post(
+          "/auth/google",
+          { credential: session.idToken },
+          { withCredentials: true }
+        );
+        console.log("[GoogleLoginBtn] Google login/signup successful.");
+
+        setAccessToken(res.data.accessToken);
+
+        setLoading(false);
+
+        router.replace("/home");
+      } catch (err: any) {
+        console.error("[GoogleLoginBtn] Failed to change Google account:", err);
+        setLoading(false);
+      }
+    };
+    exchangeToken();
+  }, [session, setAccessToken]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -150,16 +152,17 @@ export default function page() {
 
   return (
     <div className="relative w-screen h-screen flex justify-center items-center">
-      {/* {
-        isLoading && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
-            style={{cursor: "not-allowed"}}
-            >
-            <LoadingSpinner />
-          </div>
-        )
-      } */}
+      {loading && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
+          style={{ cursor: "not-allowed" }}
+        >
+          <LoadingSpinner
+            styles={{ svg: " h-10 w-10", span: "text-[1.2rem]" }}
+            text="Loading..."
+          />
+        </div>
+      )}
       {displayModal ? (
         <EnterOTP
           className="w-[60%] sm:w-[50%] md:w-[40%] lg:w-[28%] top-1/2"
@@ -267,7 +270,12 @@ export default function page() {
             </button>
           </form>
 
-          <GoogleLoginBtn styles=" border border-gray-300 py-2" text={"Sign up with Google"} source="signup" setLoading={setLoading} />
+          <GoogleLoginBtn
+            styles=" border border-gray-300 py-2"
+            text={"Sign up with Google"}
+            source="signup"
+            setLoading={setLoading}
+          />
 
           <div className=" text-xs text-center">
             Already have an account?{" "}

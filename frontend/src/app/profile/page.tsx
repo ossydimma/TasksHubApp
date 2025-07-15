@@ -9,10 +9,10 @@ import axios from "axios";
 import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function Page() {
-  const { userInfo, isAuthenticated, loading, setLoading } = useAuth();
+  const { userInfo, isAuthenticated } = useAuth();
 
   const [imgSrc, setImgSrc] = useState<string | undefined>(userInfo?.imageSrc);
-  // const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (!isAuthenticated && !loading) {
@@ -22,15 +22,17 @@ export default function Page() {
 
   return (
     <div className=" relative px-10 pt-7 pb-20 md:pb-0 w-full h-auto md:h-full flex flex-col gap-3 items-center">
-            {/* {isLoading && (
-                <div 
-                  className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
-                  style={{cursor: "not-allowed"}}
-                  >
-                  <LoadingSpinner />
-                </div>
-              )
-            } */}
+      {loading && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
+          style={{ cursor: "not-allowed" }}
+        >
+          <LoadingSpinner
+            styles={{ svg: " h-10 w-10", span: "text-[1.2rem]" }}
+            text="Loading..."
+          />
+        </div>
+      )}
       <h1 className=" w-full text-center font-serif text-3xl font-bold border-b-2 border-gray-400 border-dashed pb-2 mb-4 md:mb-14">
         Profile
       </h1>
@@ -58,23 +60,25 @@ export default function Page() {
             accept="image/*"
             onChange={async (e) => {
               if (e.target.files && e.target.files[0]) {
-                // const reader = new FileReader();
                 const file = e.target.files[0];
-
                 const formData = new FormData();
-                formData.append("File", file);
-                console.log(userInfo?.id);
-                userInfo?.id
-                  ? formData.append("Id", userInfo.id)
-                  : console.warn("Email is empty");
+                formData.append("File", file); // ✅ matches C# DTO property
+
                 setLoading(true);
                 try {
-                  const res = await api.post("/settings/update-user-image", formData);
+                  const res = await api.post(
+                    "/settings/update-user-image",
+                    formData
+                  );
                   const data = res.data.imageUrl;
                   setImgSrc(data);
-                }catch (err) {
+                  e.target.value = ""; // optional: reset input to allow same file again
+                } catch (err) {
                   if (axios.isAxiosError(err)) {
-                    console.error("Upload failed:", err.response?.data || err.message);
+                    console.error(
+                      "Upload failed:",
+                      err.response?.data || err.message
+                    );
                   } else {
                     console.error("Unexpected error:", err);
                   }
@@ -83,6 +87,35 @@ export default function Page() {
                 }
               }
             }}
+            // onChange={async (e) => {
+            //   if (e.target.files && e.target.files[0]) {
+            //     // const reader = new FileReader();
+            //     const file = e.target.files[0];
+
+            //     const formData = new FormData();
+            //     formData.append("File", file);
+            //     setLoading(true);
+            //     try {
+            //       const res = await api.post(
+            //         "/settings/update-user-image",
+            //         formData
+            //       );
+            //       const data = res.data.imageUrl;
+            //       setImgSrc(data);
+            //     } catch (err) {
+            //       if (axios.isAxiosError(err)) {
+            //         console.error(
+            //           "Upload failed:",
+            //           err.response?.data || err.message
+            //         );
+            //       } else {
+            //         console.error("Unexpected error:", err);
+            //       }
+            //     } finally {
+            //       setLoading(false);
+            //     }
+            //   }
+            // }}
             className="hidden"
             id="fileInput"
           />

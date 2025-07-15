@@ -226,28 +226,6 @@ public class AuthController(ITasksHubRepository repo, OTPService otpService, Ema
         return Ok(new { AccessToken = accessToken });
     }
 
-    // [HttpPost("auth/validate-refresh")]
-    // [ProducesResponseType(200)]
-    // [ProducesResponseType(401)]
-    // public async Task<IActionResult> ValidateRefresh()
-    // {
-    //     var cookie = Request.Cookies["refreshToken"];
-
-    //     if (string.IsNullOrEmpty(cookie))
-    //         return Unauthorized("No refresh token found");
-    //     ;
-    //     var refreshToken = Uri.UnescapeDataString(cookie);
-
-    //     ApplicationUser? user = await _repo.GetUserByRefreshTokenAsync(refreshToken);
-    //     if (user == null)
-    //         return Unauthorized("Invalid refresh token");
-
-    //     if (user.RefreshTokenExpiryTime <= DateTime.UtcNow)
-    //         return Unauthorized("Refresh token has expired");
-
-    //     return Ok("Refresh token is valid");
-    // }
-
     [HttpPost("auth/logout")]
     [ProducesResponseType(200)]
     [ProducesResponseType(401)]

@@ -12,7 +12,7 @@ import ModifyContact from "../components/ModifyContact";
 import { useAuth } from "../../../context/AuthContext";
 import { useRouter } from "next/navigation";
 import { api } from "../../../services/axios";
-// import LoadingSpinner from "../components/LoadingSpinner";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 interface MsgType {
   head?: string;
@@ -20,14 +20,15 @@ interface MsgType {
 }
 
 export default function page() {
-  const { userInfo, isAuthenticated, setAccessToken, setUserInfo, loading, setLoading, logout } =
+  const { userInfo, isAuthenticated, setAccessToken, setUserInfo, logout } =
     useAuth();
   const { data: session, status } = useSession();
   const hasRunRef = useRef<boolean>(false);
   const router = useRouter();
 
   const [disablePage, setDisablePage] = useState<boolean>(false);
-  const [isSuccess, setIsSuccess] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false)
+  const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [showChangeContact, setShowChangeContact] = useState<boolean>(false);
   const [switchSuccess, setSwitchSuccess] = useState<string | null>(null);
   const [switchError, setSwitchError] = useState<string | null>(null);
@@ -40,10 +41,7 @@ export default function page() {
     confirmPassword: true,
   });
 
-  const [edit, setEdit] = useState({
-    userName: userInfo?.userName,
-    id: userInfo?.id,
-  });
+  const [edited, setEdited] = useState<string | undefined>(userInfo?.userName);
 
   const [passwordType, setPasswordType] = useState<PasswordType>({
     newPassword: "password",
@@ -66,16 +64,17 @@ export default function page() {
   const EditUsername = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (edit.userName === "") return;
+    if (edited === undefined) return;
 
-    if (edit.userName === userInfo?.userName) {
+    if (edited === userInfo?.userName) {
+      setIsSuccess(false);
       setMessage({ ...message, body: "No changes was made" });
       return;
     }
 
     setLoading(true);
     try {
-      const res = await api.post("/settings/update-username", edit);
+      const res = await api.post("/settings/update-username", {Username: edited});
       setIsSuccess(true);
 
       if (res.data.newUserName) {
@@ -92,6 +91,7 @@ export default function page() {
       }, 3000);
     } catch (err: any) {
       console.error(err);
+      setIsSuccess(false);
       setMessage(err.data);
     } finally {
       setLoading(false);
@@ -101,6 +101,7 @@ export default function page() {
   const ChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMessage({ ...message, body: "" });
+    setIsSuccess(false);
 
     if (passwordValue.oldPassword === "") {
       setMessage({ ...message, body: "Old password cannot be empty." });
@@ -129,7 +130,6 @@ export default function page() {
       } else {
         // Call the API to change the password
         const payload = {
-          Id: userInfo?.id,
           OldPassword: passwordValue.oldPassword,
           NewPassword: passwordValue.newPassword,
         };
@@ -137,8 +137,11 @@ export default function page() {
         try {
           await api.post("/settings/change-password", payload);
           setIsSuccess(true);
+          setPasswordValue({oldPassword: "", newPassword: ""});
+          setConfirmPassword("");
           setMessage({ ...message, body: "Password changed successfully" });
         } catch (err: any) {
+          setIsSuccess(false);
           console.error(err.response.data);
           // Try to extract the first error message if available
           const errorData = err.response?.data;
@@ -189,8 +192,6 @@ export default function page() {
     });
   };
 
-  console.log(new Date().getTime() + 24 * 60 * 60 * 1000);
-
   const handleCancel = () => {
     setDisablePage(false);
     setSelectedOption(undefined);
@@ -198,7 +199,6 @@ export default function page() {
   };
 
   useEffect(() => {
-    console.log("session", session);
     if (hasRunRef.current) return;
     const searchParams = new URLSearchParams(window.location.search);
     const shouldExchange = searchParams.get("postSwitch") === "true";
@@ -219,7 +219,6 @@ export default function page() {
       try {
         const res = await api.post("/settings/change-google-account", {
           Token: session.idToken,
-          Id: userInfo?.id,
         });
         // Update access token
         setAccessToken(res.data.accessToken);
@@ -234,24 +233,38 @@ export default function page() {
       } catch (err: any) {
         console.error("[GoogleLoginBtn] Failed to change Google account:", err);
 
-        if (err.response) {
-          // Check if it's a string
-          if (typeof err.response.data === "string") {
-            setSwitchError(err.response.data);
+         console.error(err.response.data);
+          // Try to extract the first error message if available
+          const errorData = err.response?.data;
+          let errorMsg = "An error occurred";
+          if (errorData?.errors) {
+            // Get the first error message from the errors object
+            const firstKey = Object.keys(errorData.errors)[0];
+            errorMsg = errorData.errors[firstKey][0];
+          } else if (typeof errorData === "string") {
+            errorMsg = errorData;
           }
-          // If it's ModelState or another object
-          else if (typeof err.response.data === "object") {
-            // Try to build a string from ModelState errors
-            const errors = err.response.data.errors;
-            if (errors) {
-              setSwitchError(Object.values(errors).flat().join(" "));
-            } else {
-              setSwitchError(JSON.stringify(err.response.data));
-            }
-          }
-        }
 
-        setSwitchError("An unexpected error occured.");
+          setSwitchError(errorMsg)
+
+        // if (err.response) {
+        //   // Check if it's a string
+        //   if (typeof err.response.data === "string") {
+        //     setSwitchError(err.response.data);
+        //   }
+        //   // If it's ModelState or another object
+        //   else if (typeof err.response.data === "object") {
+        //     // Try to build a string from ModelState errors
+        //     const errors = err.response.data.errors;
+        //     if (errors) {
+        //       setSwitchError(Object.values(errors).flat().join(" "));
+        //     } else {
+        //       setSwitchError(JSON.stringify(err.response.data));
+        //     }
+        //   }
+        // }
+
+        // setSwitchError("An unexpected error occured.");
         
       } finally {
             // Remove param
@@ -275,13 +288,24 @@ export default function page() {
 
   return (
     <div className="px-10 pt-7 pb-20 md:pb-0 w-full h-auto md:h-full font-serif relative">
+      {loading && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
+            style={{ cursor: "not-allowed" }}
+          >
+            <LoadingSpinner
+              styles={{ svg: " h-10 w-10", span: "text-[1.2rem]" }}
+              text="Loading..."
+            />
+          </div>
+        )}
       {switchSuccess && (
-        <div className="py-12 absolute  left-1/2 transform -translate-x-1/2 -translate-y-1/2 top-[18rem] w-[100%]  xs:w-[85%] h-auto bg-white border border-gray-500 shadow-2xl rounded-lg px-6 z-10">
+        <div className="py-12 absolute  left-1/2 transform -translate-x-1/2 -translate-y-1/2 top-[18rem] w-[100%]  xs:w-[85%] h-auto bg-black text-white border border-gray-500 shadow-2xl rounded-lg px-6 z-10">
           <h3 className="text-xl font-bold text-center pb-4">Successfully changed</h3>
-          <p className="text-center text-lg pb-2">{switchSuccess}</p>
+          <p className="text-center text-[1rem] pb-2">{switchSuccess}</p>
           <div className="flex justify-center items-center">
             <button
-              className="mt-4 bg-black text-white py-2 px-4 rounded-lg"
+              className="mt-4 bg-white text-black py-2 px-4 rounded-lg"
               onClick={() => {
                 setSwitchSuccess(null);
               }}
@@ -292,19 +316,18 @@ export default function page() {
         </div>
       )}
       {switchError && (
-        <div className="py-12 absolute  left-1/2 transform -translate-x-1/2 -translate-y-1/2 top-[18rem] w-[100%]  xs:w-[85%] h-auto bg-white border border-gray-500 shadow-2xl rounded-lg px-6 z-10">
-          <h3 className="text-xl font-bold text-center pb-4">Google account change Failed</h3>
-          <div>
-            <p className="text-center text-lg pb-2">{switchError}</p>
+        <div className="py-12 absolute bg-black left-1/2 transform -translate-x-1/2 -translate-y-1/2 top-[18rem] w-[100%]  xs:w-[85%] h-auto text-white border border-gray-500 shadow-2xl rounded-lg px-6 z-10">
+          <h3 className="text-xl font-bold text-center pb-4">Failed</h3>
+          <p className="text-center text-[1rem] pb-2">{switchError}</p>
+          {/* <div>
             <p>No change was made, click the button below to login with your current account {userInfo?.email}</p>
-          </div>
+          </div> */}
 
           <div className="flex justify-center items-center">
             <button
-              className="mt-4 bg-black text-white py-2 px-4 rounded-lg"
+              className="mt-4 bg-white text-black py-2 px-4 rounded-lg"
               onClick={() => {
                 setSwitchError(null);
-                logout();
               }}
             >
               OK
@@ -532,9 +555,9 @@ export default function page() {
                     type="text"
                     name="userName"
                     id="userName"
-                    defaultValue={edit.userName}
+                    defaultValue={edited}
                     onChange={(e) =>
-                      setEdit({ ...edit, userName: e.target.value })
+                      setEdited(e.target.value )
                     }
                     className="border-2 border-gray-500 rounded-md px-3 py-2 outline-none focus:border-black"
                   />

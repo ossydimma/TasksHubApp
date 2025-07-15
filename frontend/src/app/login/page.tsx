@@ -7,13 +7,14 @@ import { useAuth } from "../../../context/AuthContext";
 import { useRouter } from "next/navigation";
 import GoogleLoginBtn from "../components/GoogleLoginBtn";
 import { useSession } from "next-auth/react";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function page() {
   const { data: session, status } = useSession();
   const hasExchangedRef = useRef(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(true);
-  // const [Loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [passwordType, setPasswordType] = useState<"password" | "text">(
     "password"
   );
@@ -23,7 +24,7 @@ export default function page() {
     rememberMe: false,
   });
 
-  const { isAuthenticated, setAccessToken, loading, setLoading } = useAuth();
+  const { isAuthenticated, setAccessToken } = useAuth();
 
   const router = useRouter();
 
@@ -83,11 +84,11 @@ export default function page() {
   //     router.push("/home");
   //   }
   // }, [isAuthenticated]);
-   useEffect(() => {
+  useEffect(() => {
     const exchangeToken = async () => {
       if (status !== "authenticated") return;
 
-      const searchParams = new URLSearchParams(window.location.search); 
+      const searchParams = new URLSearchParams(window.location.search);
       const shouldExchange = searchParams.get("postGoogleLogin") === "true";
 
       if (!shouldExchange) return;
@@ -117,18 +118,21 @@ export default function page() {
       }
     };
     exchangeToken();
-  }, [session, setAccessToken]); 
+  }, [session, setAccessToken]);
 
   return (
     <div className="relative w-screen h-screen flex justify-center items-center">
-      {/* {Loading && (
+      {loading && (
         <div
           className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
           style={{ cursor: "not-allowed" }}
         >
-          <LoadingSpinner />
+          <LoadingSpinner
+            styles={{ svg: " h-10 w-10", span: "text-[1.2rem]" }}
+            text="Loading..."
+          />
         </div>
-      )} */}
+      )}
       <div className=" w-[60%] sm:w-[50%] md:w-[40%] lg:w-[28%] rounded-[0.8rem] px-4 py-8 border border-gray-300 font-serif">
         <h2 className=" text-2xl text-black font-semibold text-center">
           Login

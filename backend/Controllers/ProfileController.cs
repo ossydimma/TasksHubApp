@@ -3,6 +3,7 @@ using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 namespace TasksHubServer.Controllers;
 
+[Authorize]
 [Route("api/settings/")]
 [ApiController]
 // []
@@ -20,12 +21,15 @@ public class ProfileController(ITasksHubRepository repo, IConfiguration config, 
     [ProducesResponseType(404)]
     public async Task<IActionResult> UpdateUsername([FromBody] UpdateUsernameDto model)
     {
-        if (string.IsNullOrEmpty(model.Id)) return Unauthorized();
+        string? userIdStr = User.FindFirst("id")?.Value;
+
+        if (userIdStr == null)
+            return BadRequest("unauthenticated user");
 
         if (string.IsNullOrWhiteSpace(model.Username))
             return BadRequest("Value can't be empty");
 
-        ApplicationUser? user = await _repo.GetUserByIdAsync(model.Id);
+        ApplicationUser? user = await _repo.GetUserByIdAsync(userIdStr);
         if (user == null) return NotFound("User not found");
 
         user.UserName = model.Username;
@@ -47,7 +51,12 @@ public class ProfileController(ITasksHubRepository repo, IConfiguration config, 
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        ApplicationUser? user = await _repo.GetUserByIdAsync(model.Id);
+        string? userIdStr = User.FindFirst("id")?.Value;
+
+        if (userIdStr == null)
+            return BadRequest("unauthenticated user");
+
+        ApplicationUser? user = await _repo.GetUserByIdAsync(userIdStr);
         if (user == null) return NotFound("User not found");
 
         // Checking user auth provider
@@ -55,7 +64,7 @@ public class ProfileController(ITasksHubRepository repo, IConfiguration config, 
             return BadRequest("You can't change password becuase you signed up with google");
 
         if (!Hasher.VerifyPassword(model.OldPassword, user.PasswordHash, user.PasswordSalt))
-            return Unauthorized("Invalid password.");
+            return Unauthorized("Old password is invalid.");
 
         Hasher.HashPassword(model.NewPassword, out byte[] passwordHash, out byte[] passwordSalt);
 
@@ -74,10 +83,12 @@ public class ProfileController(ITasksHubRepository repo, IConfiguration config, 
     [ProducesResponseType(400)]
     public async Task<IActionResult> UpdateImage([FromForm] UpdateImageDto model)
     {
-        if (string.IsNullOrWhiteSpace(model.Id))
-            return Unauthorized();
+        string? userIdStr = User.FindFirst("id")?.Value;
 
-        ApplicationUser? user = await _repo.GetUserByIdAsync(model.Id);
+        if (userIdStr == null)
+            return BadRequest("unauthenticated user");
+
+        ApplicationUser? user = await _repo.GetUserByIdAsync(userIdStr);
         if (user == null) return NotFound("User not found");
 
         //  Delete previous image if exists
@@ -85,7 +96,7 @@ public class ProfileController(ITasksHubRepository repo, IConfiguration config, 
         {
             Cloudinary? cloudinary = GetCloudinaryInstance();
             DeletionParams deletionParams = new(user.ProfileImagePublicId);
-            var deletionResult = await cloudinary.DestroyAsync(deletionParams);
+            await cloudinary.DestroyAsync(deletionParams);
         }
 
         //  Upload new image
@@ -125,74 +136,6 @@ public class ProfileController(ITasksHubRepository repo, IConfiguration config, 
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
-
-        // try
-        // {
-        //     // Validate the new Google ID token
-        //     var payload = await GoogleJsonWebSignature.ValidateAsync(model.Token);
-
-        //     ApplicationUser? user = await _repo.GetUserByIdAsync(model.Id);
-        //     if (user is null) return NotFound("User not found.");
-
-        //     // Check if this Google account is already linked to another user
-        //     ApplicationUser? existing = await _repo.GetUserByGoogleSubAsync(payload.Subject);
-        //     if (existing != null && existing.Id != user.Id)
-        //     {
-        //         return BadRequest("This Google account is already in use.");
-        //     }
-
-        //     ApplicationUser? emailExists = await _repo.GetUserByEmailAsync(payload.Email);
-        //     if (emailExists != null && emailExists.Id != user.Id)
-        //     {
-        //         return BadRequest("This email is already in use by another account.");
-        //     }
-
-        //     string oldEmail = user.Email;
-
-        //     user.GoogleSub = payload.Subject;
-        //     user.Email = payload.Email;
-
-        //     bool updated = await _repo.UpdateUserAsync(user);
-        //     if (!updated)
-        //         return BadRequest("Failed to change user email.");
-
-        //     string oldEmailSubject = "Your TasksHub email has been changed";
-        //     string oldEmailBody = $@"
-        //         <div style='font-size:16px;'>
-        //             <p>Hi {user.UserName},</p>
-        //             <p>We wanted to let you know that the email address associated with your <strong>TasksHub</strong> account was successfully changed.</p>
-        //             <p>If you made this change, no further action is needed.</p>
-        //             <p>If you didn’t request this change, please contact our support team immediately — your account may be at risk.</p>
-        //             <p style='margin-top: 20px;'>Thanks,<br/><strong>TasksHub Team</strong></p>
-        //         </div>
-
-        //     ";
-
-        //     string newEmailSubject = "You've successfully updated your email on TasksHub";
-        //     string newEmailBody = $@"
-        //         <div style='font-size:16px;'>
-        //             <p>Hi {user.UserName},</p>
-        //             <p>Your email address on <strong>TasksHub</strong> has been successfully updated to this address.</p>
-        //             <p>You're now all set to log in using your new email.</p>
-        //             <p>If you didn't request this change, please contact support immediately.</p>
-        //             <p style='margin-top: 20px;'>Thanks,<br/><strong>TasksHub Team</strong></p>
-        //         </div>
-
-        //     ";
-        //     try
-        //     {
-        //         await _emailSender.SendEmail(user.Email, newEmailSubject, newEmailBody);
-        //         await _emailSender.SendEmail(oldEmail, oldEmailSubject, oldEmailBody);
-
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         Console.WriteLine(ex.Message);
-        //     }
-
-        //     return Ok( new { newEmail = user.Email } );
-
-        // }
         GoogleJsonWebSignature.Payload? payload = null;
         try
         {
@@ -208,18 +151,25 @@ public class ProfileController(ITasksHubRepository repo, IConfiguration config, 
         {
             // Check if user exist
             ApplicationUser? existingUser = await _repo.GetUserByGoogleSubAsync(payload.Subject);
-            Guid id = Guid.Parse(model.Id);
-            if (existingUser != null )
+            string? userIdStr = User.FindFirst("id")?.Value;
+
+            if (userIdStr == null)
+                return BadRequest("unauthenticated user");
+
+            if (!Guid.TryParse(userIdStr, out var userId))
+                throw new ArgumentException("Invalid user ID format.", nameof(userIdStr));
+            
+            if (existingUser != null)
             {
-                if (existingUser.Id != id)
+                if (existingUser.Id != userId)
                 {
                     return BadRequest("Your account is current linked to this Google account.");
                 }
 
                 return BadRequest("This Google account is already linked to another user.");
             }
-            Console.WriteLine(model.Id);
-            ApplicationUser? user = await _repo.GetUserByIdAsync(model.Id);
+            Console.WriteLine(userId);
+            ApplicationUser? user = await _repo.GetUserByIdAsync(userIdStr);
             if (user == null) return BadRequest("User not found");
 
             // Generate tokens

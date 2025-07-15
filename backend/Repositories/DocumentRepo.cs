@@ -1,5 +1,6 @@
 
 using System;
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
@@ -71,6 +72,7 @@ public class DocumentRepo(IDistributedCache distributedCache, ApplicationDbConte
         List<UserDocument> docs = await _db.UserDocuments
             .AsNoTracking()
             .Where(d => d.UserId == user.Id)
+            .OrderByDescending(d => d.Date)
             .ToListAsync();
 
         return docs;
@@ -78,9 +80,9 @@ public class DocumentRepo(IDistributedCache distributedCache, ApplicationDbConte
 
     public async Task<UserDocument> GetDocumentByIdAsync(string documentIdStr)
     {
-        if (!Guid.TryParse(documentIdStr, out var documentId))
-            throw new ArgumentException("Invalid user ID format.", nameof(documentIdStr));
-
+        Guid? documentId = ParseStringToGuid(documentIdStr)
+            ?? throw new ArgumentException("Invalid Document ID format.", nameof(documentIdStr));
+        
         string key = $"TasksHub_Document_{documentIdStr}";
         UserDocument? doc = null;
 
@@ -116,10 +118,34 @@ public class DocumentRepo(IDistributedCache distributedCache, ApplicationDbConte
         return doc;
     }
 
+    public async Task<List<UserDocument>> FilterByDateAndTitleAsync(string userIdStr, string dateStr, string title)
+    {
+        (DateTime start, DateTime end)? range = GetDateRangeForDay(dateStr)
+            ?? throw new ArgumentException("Invalid Date format.", nameof(dateStr));
+
+        var (start, end) = range.Value;
+
+        Guid? userId = ParseStringToGuid(userIdStr)
+            ?? throw new ArgumentException("Invalid user ID format.", nameof(userIdStr));
+
+        List<UserDocument> docs = await _db.UserDocuments
+            .Where(d =>
+                d.UserId == userId &&
+                d.Title.ToLower().Contains(title) &&
+                d.Date >= start && d.Date < end
+            )
+            .OrderByDescending(d => d.Date)
+            .ToListAsync();
+
+
+
+        return docs;
+    }
+
     public async Task<List<UserDocument>> GetDocumentByTitleAsync(string userIdStr, string queryText)
     {
-        if (!Guid.TryParse(userIdStr, out var userId))
-            throw new ArgumentException("Invalid user ID format.", nameof(userIdStr));
+       Guid? userId = ParseStringToGuid(userIdStr)
+            ?? throw new ArgumentException("Invalid user ID format.", nameof(userIdStr));
 
         List<UserDocument> docus = await _db.UserDocuments
             .AsNoTracking()
@@ -128,6 +154,27 @@ public class DocumentRepo(IDistributedCache distributedCache, ApplicationDbConte
 
         return docus;
     }
+
+    public async Task<List<UserDocument>> FilterByDateAsync(string userIdStr, string date)
+    {
+        (DateTime start, DateTime end)? range = GetDateRangeForDay(date)
+            ?? throw new ArgumentException("Invalid Date format.", nameof(date));
+
+        var (start, end) = range.Value;
+
+        Guid? userId = ParseStringToGuid(userIdStr)
+            ?? throw new ArgumentException("Invalid user ID format.", nameof(userIdStr));
+
+        List<UserDocument> docs = await _db.UserDocuments
+            .Where(d => d.UserId == userId && d.Date >= start && d.Date < end)
+            .OrderByDescending(d => d.Date)
+            .ToListAsync();
+
+
+
+        return docs;
+    }
+
 
     public async Task<bool> DeleteDocumentAsync(Guid userId, Guid documentId)
     {
@@ -155,5 +202,30 @@ public class DocumentRepo(IDistributedCache distributedCache, ApplicationDbConte
         }
 
         return false;
+    }
+
+    private static (DateTime start, DateTime end)? GetDateRangeForDay(string dateStr)
+    {
+        Console.WriteLine($"[FilterByDateAsync] Raw date: {dateStr}");
+
+        if (DateTime.TryParse(dateStr, null, DateTimeStyles.AdjustToUniversal, out DateTime parsedDate))
+        {
+            DateTime start = parsedDate.Date;
+            DateTime end = start.AddDays(1);
+
+            return (start, end);
+
+        }
+
+        return null;
+
+    }
+
+    private static Guid? ParseStringToGuid(string dataStr)
+    {
+        if (!Guid.TryParse(dataStr, out var parsedGuid))
+            return null;
+
+        return parsedGuid;
     }
 }

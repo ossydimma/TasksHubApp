@@ -6,6 +6,7 @@ import { DocumentType, DocumentInputType } from "../../../Interfaces";
 import { useAuth } from "../../../context/AuthContext";
 import { api } from "../../../services/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
+import {useRouter} from "next/navigation";
 
 interface FilterByType {
   title: string | undefined;
@@ -13,7 +14,8 @@ interface FilterByType {
 }
 
 export default function page() {
-  const { userInfo } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+  const router = useRouter();
 
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [validate, setValidate] = useState<boolean>(false);
@@ -22,7 +24,7 @@ export default function page() {
   const [docId, setDocId] = useState<string>('');
   const [showForm, setShowForm] = useState<boolean>(false);
   const [showDocus, setShowDocus] = useState<boolean>(true);
-  const [isReadOnly, setIsReadOnly] = useState<boolean>();
+  const [isReadOnly, setIsReadOnly] = useState<boolean>(false);
   const [isFeedBack, setIsFeedBack] = useState<boolean>();
   const [query, setQuery] = useState<string>("");
   const [documents, setDocuments] = useState<DocumentType[]>([]);
@@ -49,24 +51,47 @@ export default function page() {
 
   // functions
 
-  const handleFilterBy = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleFilterBy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(filterBy);
+    const payload = {
+      Date: filterBy.date ? filterBy.date?.toISOString() : "",
+      Title: filterBy.title ? filterBy.title : ""
+    }
+
+    if (payload.Date === "" && payload.Title === "") {
+      setIsFeedBack(true);
+      setFeedbackText("Try filtering by either date or title");
+      return;
+    }
+
+    try {
+      const res = await api.post("document/filter-documents", payload)
+      setFilteredDocuments(res.data.docs);
+    } catch (err: any) {
+      console.error(err.response.data);
+      // Try to extract the first error message if available
+      const errorData = err.response?.data;
+      let errorMsg = "An error occurred";
+      if (errorData?.errors) {
+        // Get the first error message from the errors object
+        const firstKey = Object.keys(errorData.errors)[0];
+        errorMsg = errorData.errors[firstKey][0];
+      } else if (typeof errorData === "string") {
+        errorMsg = errorData;
+      }
+
+      setIsFeedBack(true);
+      setFeedbackText(errorMsg);
+    }
+
+   
+    console.log(payload);
   };
 
-  // const HandleDisplayMore = (id: string) => {
-  //   const document = documents.find((d) => d.id === id);
-  //   // document !== undefined
-  //   //   ? document.isHovered === true
-  //   //   : console.log(`${document} not found`);
-  // };
-
-  // const HandleHideMore = (id: string) => {
-  //   const document = documents.find((d) => d.id === id);
-  //   // document !== undefined
-  //   //   ? document.isHovered === false
-  //   //   : console.log(`${document} not found`);
-  // };
+  const resetFilterBy = () => {
+    setFilterBy({title: undefined, date: undefined});
+    setFilteredDocuments(documents);
+  }
 
   const readDocument = (id: string): void => {
     const document: DocumentType | undefined = documents.find(
@@ -82,8 +107,10 @@ export default function page() {
         setShowDocus(false);
         setShowForm(true);
         localStorage.setItem("showDocuForm", "true");
+
       }
       setIsReadOnly(true);
+      localStorage.setItem("isReadonly", "true");
     } else {
       console.log(`${document} not found `);
     }
@@ -105,6 +132,7 @@ export default function page() {
         setShowForm(true);
         localStorage.setItem("showDocuForm", "true");
       }
+      localStorage.removeItem("isReadonly");
       setIsReadOnly(false);
       setIsDisabled({ saveBtn: false, discardBtn: false });
     } else console.log(`${document} not found `);
@@ -163,6 +191,7 @@ export default function page() {
 
   const draftingInput = () => {
     const darft = localStorage.getItem("inputContent");
+    const isReadonly = localStorage.getItem("isReadonly");
     if (darft) {
       const draftData = JSON.parse(darft) as DocumentInputType;
       setContent({
@@ -170,7 +199,30 @@ export default function page() {
         title: draftData.title ?? "",
         body: draftData.body ?? "",
       });
-      draftData.id ? setBtnText("Update") : setBtnText("Create");
+
+      if (draftData.id){
+
+        if (isReadonly) {
+          setIsReadOnly(true);
+          console.log("isReadonly", isReadonly)
+        } else {
+          setIsReadOnly(false);
+          setBtnText("Update");
+          console.log("isReadonly", isReadonly)
+        }
+
+      } else {
+        setBtnText("Create")
+      }
+
+      if (!draftData.id ) {
+        setBtnText("Create");
+      } else if (draftData.id && isReadonly === null) {
+        setBtnText("Update")
+      } else if (draftData.id && isReadonly === "true") {
+        setIsReadOnly(true);
+      }
+      // draftData.id  ? setBtnText("Update") : setBtnText("Create");
     }
   };
 
@@ -180,7 +232,6 @@ export default function page() {
 
     try {
       const res = await api.post("document/get-documents");
-      console.log(res);
       const docs = res.data.allDocuments;
       setDocuments(docs);
       setFilteredDocuments(docs);
@@ -192,7 +243,7 @@ export default function page() {
     }
   };
 
-  const createDocument = async (e: React.FormEvent<HTMLButtonElement>) => {
+  const createDocument = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (content.body.length < 2 && content.title.length < 2) {
@@ -224,7 +275,7 @@ export default function page() {
     }
   };
 
-  const updateDocument = async (e: React.FormEvent<HTMLButtonElement>) => {
+  const updateDocument = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (content.body === "" && content.title === "") {
@@ -260,6 +311,7 @@ export default function page() {
       setFilteredDocuments(docs);
       setContent({ title: "", body: "", id: "" });
       setIsFeedBack(!isFeedBack);
+      setBtnText("Create");
       setFeedbackText("updated Successfully.");
     } catch (err: any) {
       console.error(err);
@@ -280,7 +332,7 @@ export default function page() {
         QueryText: query,
       });
 
-      setDocuments(res.data.docs);
+      setFilteredDocuments(res.data.docs);
       console.log(res.data.docs);
     } catch (err: any) {
       console.error(err);
@@ -312,9 +364,13 @@ export default function page() {
 
     const handler = setTimeout(() => {
       if (query.trim() === "") {
-        getAllDocuments();
+        setFilteredDocuments(documents);
         return;
       }
+
+      setShowForm(false);
+      setShowDocus(true);
+      localStorage.removeItem("showDocuForm");
 
       const filtered: DocumentType[] = documents.filter((docs) =>
         docs.title.toLowerCase().includes(query.toLowerCase())
@@ -327,6 +383,12 @@ export default function page() {
       clearTimeout(handler);
     };
   }, [query]);
+
+   useEffect(() => {
+    if (!isAuthenticated && !loading) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, loading]);
 
   return (
     <>
@@ -508,9 +570,11 @@ export default function page() {
 
               <form
                 action=""
-                onSubmit={handleFilterBy}
                 className="flex flex-col gap-4"
-                // onSubmit={handleFilterBy}
+                onSubmit={handleFilterBy}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleFilterBy(e)
+                }}
               >
                 <div className={`flex flex-col text-sm w-[100%]`}>
                   <label className=" font-medium">Title</label>
@@ -541,10 +605,15 @@ export default function page() {
                     className="border border-gray-600 text-black rounded-lg outline-none py-2 px-2 w-full"
                   />
                 </div>
-
-                <div className="py-2 px-4 rounded-md cursor-pointer text-sm text-black hover:text-white  bg-white hover:bg-black border my-2 ml-auto">
-                  <button type="submit">Confirm</button>
+                <div className="my-2 flex justify-between items-center">
+                  <div onClick={resetFilterBy} className="py-2 px-4 rounded-md cursor-pointer text-sm text-black hover:text-white  bg-white hover:bg-black border">
+                    <button>Reset</button>
+                  </div>
+                  <div className="py-2 px-4 rounded-md cursor-pointer text-sm text-black hover:text-white  bg-white hover:bg-black border">
+                    <button type="submit">Confirm</button>
+                  </div>
                 </div>
+                
               </form>
             </div>
           </div>
@@ -629,8 +698,19 @@ export default function page() {
                 View Documents
               </div>
             )}
-            <section className="w-[94%] md:w-[60%] h-[100%] md:h-full mx-3 md:mx-4 shadow-2xl rounded-2xl border py-4 md:py-6 px-2 md:px-6 relative">
-              <form action="" className="h-[100%] w-full">
+            <section className="w-[94%] md:w-[60%] h-[97%] md:-mt-5  mx-3 md:mx-4 shadow-2xl rounded-2xl border-2 py-3 md:py-6 px-2 md:px-6 relative">
+              <form 
+                action="" 
+                className="h-[100%]  w-full"
+                onSubmit={
+                  btnText === "Create" ? createDocument : updateDocument
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    btnText === "Create" ? createDocument(e) : updateDocument(e)
+                  }
+                }}  
+              >
                 <div className="flex items-center justify-between">
                   <input
                     placeholder="Enter Title"
@@ -680,7 +760,6 @@ export default function page() {
                     <>
                       {(content.title !== "" || content.body !== "") && (
                         <button
-                          // disabled={IsDisabled.discardBtn}
                           className={` 
                            
                            text-white py-2  md:py-3 px-8 rounded-xl bg-black hover:text-black hover:bg-white hover:border border-black cursor-pointer `}
@@ -695,16 +774,16 @@ export default function page() {
                       )}
 
                       <button
-                        disabled={IsDisabled.saveBtn}
+                        disabled={content.title.length < 2 || content.body.length < 2}
                         type="submit"
                         className={` ml-auto py-2 px-8  text-white rounded-xl  ${
-                          IsDisabled.saveBtn
+                          content.title.length < 2 || content.body.length < 2
                             ? `bg-gray-400 cursor-not-allowed `
                             : `bg-black hover:text-black hover:bg-white hover:border border-black cursor-pointer  `
                         }  `}
-                        onClick={
-                          btnText === "Create" ? createDocument : updateDocument
-                        }
+                        // onClick={
+                        //   btnText === "Create" ? createDocument : updateDocument
+                        // }
                       >
                         {btnText}
                       </button>
@@ -712,7 +791,7 @@ export default function page() {
                   )}
                   {isReadOnly && (
                     <svg
-                      className="w-8 cursor-pointer "
+                      className="w-8 cursor-pointer ml-auto mr-[2rem]"
                       viewBox="0 0 48 48"
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
@@ -720,6 +799,7 @@ export default function page() {
                         setContent({ id: "", body: "", title: "" });
                         setIsDisabled({ saveBtn: true, discardBtn: true });
                         setIsReadOnly(false);
+                        localStorage.removeItem("isReadyonly");
                       }}
                     >
                       <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>

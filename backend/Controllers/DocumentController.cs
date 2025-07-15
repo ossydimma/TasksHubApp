@@ -97,6 +97,40 @@ public class DocumentController(IDocumentRepo repo, ITasksHubRepository userRepo
         return Ok(new { allDocuments = docs });
     }
 
+    [HttpPost("Filter-documents")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(401)]
+    public async Task<IActionResult> FilterDocs(FilterDocsDto model)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        string? userIdStr = User.FindFirst("id")?.Value;
+
+        if (string.IsNullOrWhiteSpace(userIdStr))
+            return Unauthorized("unauthenticated user");
+
+        Console.WriteLine("Model" + model);
+
+        if (!string.IsNullOrWhiteSpace(model.Title) && !string.IsNullOrWhiteSpace(model.Date))
+        {
+            return Ok(new { docs = await _repo.FilterByDateAndTitleAsync(userIdStr, model.Date, model.Title) });
+        }
+        else if (!string.IsNullOrWhiteSpace(model.Title) && string.IsNullOrWhiteSpace(model.Date))
+        {
+            return Ok(new { docs = await _repo.GetDocumentByTitleAsync(userIdStr, model.Title) });
+        }
+        else if (string.IsNullOrWhiteSpace(model.Title) && !string.IsNullOrWhiteSpace(model.Date))
+        {
+            return Ok(new { docs = await _repo.FilterByDateAsync(userIdStr, model.Date) });
+        }
+        else
+        {
+            return BadRequest("Both title and date can't be empty.");
+        } 
+
+    }
+
     [HttpPost("get-documents-by-title")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]

@@ -7,9 +7,6 @@ public class UpdateImageDto
     [Required]
     public IFormFile File { get; set; } = null!;
 
-    [Required]
-    public string? Id { get; set; } = null!;
-
 }
 
 public class UpdateUsernameDto 
@@ -17,14 +14,10 @@ public class UpdateUsernameDto
     [Required]
     public string Username { get; set; } = null!;
 
-    [Required]
-    public string Id { get; set; } = null!;
 }
 
 public class ChangePasswordDto
 {
-    [Required]
-    public string Id { get; set; } = null!;
 
     [Required]
     public string OldPassword { get; set; } = null!;
@@ -36,8 +29,6 @@ public class ChangePasswordDto
 
 public class ChangeGoogleAccountDto
 {
-    [Required]
-    public string Id { get; set; } = null!;
     [Required]
     public string Token { get; set; } = null!;
 }
@@ -62,17 +53,3 @@ public class VerifyEmailDto
     [Required]
     public string Otp { get; set; } = null!;
 }
-
-// public class VerifyNewEmailDto
-// {
-//     [Required]
-//     [EmailAddress (ErrorMessage = "Invalid Email Address")]
-//     public string NewEmail { get; set; } = null!;
-
-//     [Required]
-//     [EmailAddress (ErrorMessage = "Invalid Email Address")]
-//     public string OldEmail { get; set; } = null!;
-
-//     [Required]
-//     public string Otp { get; set; } = null!;
-// }

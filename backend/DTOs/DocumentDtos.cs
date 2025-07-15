@@ -15,10 +15,14 @@ public class UpdateDocumentDto
     public string? Body { get; set; } = null;
 }
 
-
-
 public class GetDocusByTitleDto
 {
     public string? QueryText { get; set; } = null;
 
+}
+
+public class FilterDocsDto 
+{
+    public string? Title { get; set; } = null;
+    public string? Date { get; set; } = null;
 }
