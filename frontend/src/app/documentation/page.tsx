@@ -6,10 +6,10 @@ import { DocumentType, DocumentInputType } from "../../../Interfaces";
 import { useAuth } from "../../../context/AuthContext";
 import { api } from "../../../services/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
-import {useRouter} from "next/navigation";
+import { useRouter } from "next/navigation";
 
 interface FilterByType {
-  title: string | undefined;
+  title: string;
   date: Date | undefined;
 }
 
@@ -21,7 +21,8 @@ export default function page() {
   const [validate, setValidate] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [Searching, setSearching] = useState<boolean>(false);
-  const [docId, setDocId] = useState<string>('');
+  const [docId, setDocId] = useState<string>("");
+  const [match, setMatch] = useState<string>("");
   const [showForm, setShowForm] = useState<boolean>(false);
   const [showDocus, setShowDocus] = useState<boolean>(true);
   const [isReadOnly, setIsReadOnly] = useState<boolean>(false);
@@ -32,10 +33,10 @@ export default function page() {
   const [filteredDocuments, setFilteredDocuments] = useState<DocumentType[]>(
     []
   );
-  const [IsDisabled, setIsDisabled] = useState({
-    saveBtn: true,
-    discardBtn: true,
-  });
+  // const [IsDisabled, setIsDisabled] = useState({
+  //   saveBtn: true,
+  //   discardBtn: true,
+  // });
   const [feedbackText, setFeedbackText] = useState<string | undefined>(
     undefined
   );
@@ -45,7 +46,7 @@ export default function page() {
     body: "",
   });
   const [filterBy, setFilterBy] = useState<FilterByType>({
-    title: undefined,
+    title: '',
     date: undefined,
   });
 
@@ -53,19 +54,29 @@ export default function page() {
 
   const handleFilterBy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    query ? setQuery("") : null;
     const payload = {
       Date: filterBy.date ? filterBy.date?.toISOString() : "",
-      Title: filterBy.title ? filterBy.title : ""
-    }
+      Title: filterBy.title ?? "",
+    };
 
-    if (payload.Date === "" && payload.Title === "") {
-      setIsFeedBack(true);
-      setFeedbackText("Try filtering by either date or title");
-      return;
-    }
+  if (!payload.Date && !payload.Title) {
+    setIsFeedBack(true);
+    setFeedbackText("Please provide a title or date to filter.");
+    return;
+  }
 
+  if (payload.Date && payload.Title) {
+    setMatch(`${payload.Title} & ${payload.Date.split("T")[0]}`);
+  } else if (payload.Date) {
+    setMatch(payload.Date.split("T")[0]);
+  } else if (payload.Title) {
+    setMatch(payload.Title);
+  }
+
+    setSearching(true);
     try {
-      const res = await api.post("document/filter-documents", payload)
+      const res = await api.post("document/filter-documents", payload);
       setFilteredDocuments(res.data.docs);
     } catch (err: any) {
       console.error(err.response.data);
@@ -82,16 +93,16 @@ export default function page() {
 
       setIsFeedBack(true);
       setFeedbackText(errorMsg);
+    } finally {
+      setSearching(false);
     }
 
-   
-    console.log(payload);
   };
 
   const resetFilterBy = () => {
-    setFilterBy({title: undefined, date: undefined});
+    setFilterBy({ title: '', date: undefined });
     setFilteredDocuments(documents);
-  }
+  };
 
   const readDocument = (id: string): void => {
     const document: DocumentType | undefined = documents.find(
@@ -107,7 +118,6 @@ export default function page() {
         setShowDocus(false);
         setShowForm(true);
         localStorage.setItem("showDocuForm", "true");
-
       }
       setIsReadOnly(true);
       localStorage.setItem("isReadonly", "true");
@@ -134,7 +144,7 @@ export default function page() {
       }
       localStorage.removeItem("isReadonly");
       setIsReadOnly(false);
-      setIsDisabled({ saveBtn: false, discardBtn: false });
+      // setIsDisabled({ saveBtn: false, discardBtn: false });
     } else console.log(`${document} not found `);
   };
 
@@ -200,25 +210,23 @@ export default function page() {
         body: draftData.body ?? "",
       });
 
-      if (draftData.id){
-
+      if (draftData.id) {
         if (isReadonly) {
           setIsReadOnly(true);
-          console.log("isReadonly", isReadonly)
+          console.log("isReadonly", isReadonly);
         } else {
           setIsReadOnly(false);
           setBtnText("Update");
-          console.log("isReadonly", isReadonly)
+          console.log("isReadonly", isReadonly);
         }
-
       } else {
-        setBtnText("Create")
+        setBtnText("Create");
       }
 
-      if (!draftData.id ) {
+      if (!draftData.id) {
         setBtnText("Create");
       } else if (draftData.id && isReadonly === null) {
-        setBtnText("Update")
+        setBtnText("Update");
       } else if (draftData.id && isReadonly === "true") {
         setIsReadOnly(true);
       }
@@ -227,7 +235,6 @@ export default function page() {
   };
 
   const getAllDocuments = async () => {
-
     setIsLoading(true);
 
     try {
@@ -360,6 +367,8 @@ export default function page() {
   }, [content]);
 
   useEffect(() => {
+    if (documents.length < 1) return;
+
     setSearching(true);
 
     const handler = setTimeout(() => {
@@ -368,13 +377,18 @@ export default function page() {
         return;
       }
 
-      setShowForm(false);
-      setShowDocus(true);
-      localStorage.removeItem("showDocuForm");
+      setFilterBy({title: "", date : undefined});
+      setShowFilter(false);
+      if (!showDocus && showForm ) {
+        setShowForm(false);
+        setShowDocus(true);
+        localStorage.removeItem("showDocuForm");
+      }
 
       const filtered: DocumentType[] = documents.filter((docs) =>
         docs.title.toLowerCase().includes(query.toLowerCase())
       );
+      setMatch(query);
       setSearching(false);
       setFilteredDocuments(filtered);
     }, 300);
@@ -384,7 +398,7 @@ export default function page() {
     };
   }, [query]);
 
-   useEffect(() => {
+  useEffect(() => {
     if (!isAuthenticated && !loading) {
       router.push("/login");
     }
@@ -573,7 +587,7 @@ export default function page() {
                 className="flex flex-col gap-4"
                 onSubmit={handleFilterBy}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") handleFilterBy(e)
+                  if (e.key === "Enter") handleFilterBy(e);
                 }}
               >
                 <div className={`flex flex-col text-sm w-[100%]`}>
@@ -582,7 +596,7 @@ export default function page() {
                     type="text"
                     id="title"
                     placeholder="Title"
-                    // defaultChecked={filterBy.allTask}
+                    value={filterBy.title}
                     onChange={(e) =>
                       setFilterBy({ ...filterBy, title: e.target.value })
                     }
@@ -595,10 +609,17 @@ export default function page() {
                   <input
                     id="deadline"
                     type="date"
+                    value={
+                      filterBy.date
+                        ? filterBy.date.toISOString().split("T")[0]
+                        : ""
+                    }
                     onChange={(e) =>
                       setFilterBy({
                         ...filterBy,
-                        date: new Date(e.target.value),
+                        date: e.target.value
+                          ? new Date(e.target.value)
+                          : undefined,
                       })
                     }
                     placeholder="DD/MM/YYYY"
@@ -606,14 +627,16 @@ export default function page() {
                   />
                 </div>
                 <div className="my-2 flex justify-between items-center">
-                  <div onClick={resetFilterBy} className="py-2 px-4 rounded-md cursor-pointer text-sm text-black hover:text-white  bg-white hover:bg-black border">
-                    <button>Reset</button>
+                  <div
+                    onClick={resetFilterBy}
+                    className="py-2 px-4 rounded-md cursor-pointer text-sm text-black hover:text-white  bg-white hover:bg-black border"
+                  >
+                    <button type="button">Reset</button>
                   </div>
                   <div className="py-2 px-4 rounded-md cursor-pointer text-sm text-black hover:text-white  bg-white hover:bg-black border">
                     <button type="submit">Confirm</button>
                   </div>
                 </div>
-                
               </form>
             </div>
           </div>
@@ -628,17 +651,21 @@ export default function page() {
               Are you sure you want to delete this document?
             </p>
             <div className="w-[80%] flex justify-between items-center">
-              <button 
+              <button
                 className="bg-white text-black py-3 px-10 rounded-2xl font-bold hover:scale-90 transition-transform duration-300"
-                onClick={()=> {
+                onClick={() => {
                   setValidate(!validate);
                   deleteDocument(docId);
                 }}
-                >Yes</button>
-              <button 
+              >
+                Yes
+              </button>
+              <button
                 className="bg-white text-black py-3 px-10 rounded-2xl font-bold hover:scale-90 transition-transform duration-300"
-                onClick={()=> setValidate(!validate)}
-              >No</button>
+                onClick={() => setValidate(!validate)}
+              >
+                No
+              </button>
             </div>
           </div>
         )}
@@ -646,7 +673,7 @@ export default function page() {
           <div
             className={` bg-black border w-[80%] h-fit py-10 flex flex-col gap-4 justify-center items-center rounded-2xl absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20`}
           >
-            <p className=" text-2xl text-white font-mono font-semibold">
+            <p className="text-center text-xl text-white font-mono font-semibold">
               {feedbackText}
             </p>
             <button
@@ -655,7 +682,7 @@ export default function page() {
                 setIsFeedBack(!isFeedBack);
                 if (feedbackText?.endsWith("Successfully")) {
                   setContent({ id: "", body: "", title: "" });
-                  setIsDisabled({ saveBtn: true, discardBtn: true });
+                  // setIsDisabled({ saveBtn: true, discardBtn: true });
                 }
               }}
             >
@@ -699,17 +726,19 @@ export default function page() {
               </div>
             )}
             <section className="w-[94%] md:w-[60%] h-[97%] md:-mt-5  mx-3 md:mx-4 shadow-2xl rounded-2xl border-2 py-3 md:py-6 px-2 md:px-6 relative">
-              <form 
-                action="" 
+              <form
+                action=""
                 className="h-[100%]  w-full"
                 onSubmit={
                   btnText === "Create" ? createDocument : updateDocument
                 }
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    btnText === "Create" ? createDocument(e) : updateDocument(e)
+                    btnText === "Create"
+                      ? createDocument(e)
+                      : updateDocument(e);
                   }
-                }}  
+                }}
               >
                 <div className="flex items-center justify-between">
                   <input
@@ -719,16 +748,16 @@ export default function page() {
                     onChange={(e) => {
                       setContent({ ...content, title: e.target.value });
                     }}
-                    onFocus={() =>
-                      content.body.length > 2
-                        ? setIsDisabled({ discardBtn: false, saveBtn: false })
-                        : setIsDisabled({ discardBtn: true, saveBtn: true })
-                    }
-                    onMouseOut={() =>
-                      content.title.length > 2
-                        ? setIsDisabled({ discardBtn: false, saveBtn: false })
-                        : setIsDisabled({ discardBtn: true, saveBtn: true })
-                    }
+                    // onFocus={() =>
+                    //   content.body.length > 2
+                    //     ? setIsDisabled({ discardBtn: false, saveBtn: false })
+                    //     : setIsDisabled({ discardBtn: true, saveBtn: true })
+                    // }
+                    // onMouseOut={() =>
+                    //   content.title.length > 2
+                    //     ? setIsDisabled({ discardBtn: false, saveBtn: false })
+                    //     : setIsDisabled({ discardBtn: true, saveBtn: true })
+                    // }
                     className="w-[100%] h-[13%] outline-none border-b border-gray-700  py-4 px-4 bg-transparent font-serif font-bold "
                   />
                 </div>
@@ -741,16 +770,16 @@ export default function page() {
                     onChange={(e) => {
                       setContent({ ...content, body: e.target.value });
                     }}
-                    onFocus={() =>
-                      content.title.length > 2
-                        ? setIsDisabled({ discardBtn: false, saveBtn: false })
-                        : setIsDisabled({ discardBtn: true, saveBtn: true })
-                    }
-                    onMouseLeave={() =>
-                      content.body.length > 2
-                        ? setIsDisabled({ discardBtn: false, saveBtn: false })
-                        : setIsDisabled({ discardBtn: true, saveBtn: true })
-                    }
+                    // onFocus={() =>
+                    //   content.title.length > 2
+                    //     ? setIsDisabled({ discardBtn: false, saveBtn: false })
+                    //     : setIsDisabled({ discardBtn: true, saveBtn: true })
+                    // }
+                    // onMouseLeave={() =>
+                    //   content.body.length > 2
+                    //     ? setIsDisabled({ discardBtn: false, saveBtn: false })
+                    //     : setIsDisabled({ discardBtn: true, saveBtn: true })
+                    // }
                     className="w-full p-4 bg-transparent outline-none h-full"
                   ></textarea>
                 </div>
@@ -774,7 +803,9 @@ export default function page() {
                       )}
 
                       <button
-                        disabled={content.title.length < 2 || content.body.length < 2}
+                        disabled={
+                          content.title.length < 2 || content.body.length < 2
+                        }
                         type="submit"
                         className={` ml-auto py-2 px-8  text-white rounded-xl  ${
                           content.title.length < 2 || content.body.length < 2
@@ -797,7 +828,7 @@ export default function page() {
                       xmlns="http://www.w3.org/2000/svg"
                       onClick={() => {
                         setContent({ id: "", body: "", title: "" });
-                        setIsDisabled({ saveBtn: true, discardBtn: true });
+                        // setIsDisabled({ saveBtn: true, discardBtn: true });
                         setIsReadOnly(false);
                         localStorage.removeItem("isReadyonly");
                       }}
@@ -894,7 +925,7 @@ export default function page() {
                 </div>
               ) : filteredDocuments.length === 0 ? (
                 <div className="h-full w-full flex justify-center items-center text-[0.910rem] sm:text-[1.2rem] md:text-[0.8rem] lmd:text-[0.910rem]">
-                  <p>No matching documents found for "{query}".</p>
+                  <p>No matching documents found for "{match}".</p>
                 </div>
               ) : (
                 <div className="flex flex-col md:mb-0 gap-[1.1rem]  sm:gap-[1rem] md:gap-[1.4rem]  px-4 md:px-2 h-full w-full md:w-[100%] ">
@@ -940,8 +971,8 @@ export default function page() {
                         <li
                           className="hover:bg-red-600 hover:text-white rounded-xl px-4 py-1 cursor-pointer"
                           onClick={() => {
-                            setValidate(!validate)
-                            setDocId(document.id)
+                            setValidate(!validate);
+                            setDocId(document.id);
                             // deleteDocument(document.id)
                           }}
                         >
