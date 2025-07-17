@@ -106,3 +106,10 @@ export interface DocumentInputType{
     title: string;
     body: string;
 }
+
+export interface TaskValuesType {
+  title: string,
+  deadline: string,
+  description: string,
+  category: string
+}
