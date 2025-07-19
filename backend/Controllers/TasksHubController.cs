@@ -4,9 +4,9 @@ namespace TasksHubServer.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class TasksHubController(ITasksHubRepository repo, OTPService otpService, EmailSender emailSender) : ControllerBase
+    public class TasksHubController(IUserRepo repo, OTPService otpService, EmailSender emailSender) : ControllerBase
     {
-        private readonly ITasksHubRepository _repo = repo;
+        private readonly IUserRepo _repo = repo;
         private readonly OTPService _otpService = otpService;
         private readonly EmailSender _emailSender = emailSender;
 

@@ -28,7 +28,7 @@ public class TaskRepo(IDistributedCache distributedCache, ApplicationDbContext D
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Data was not cached:" + ex);
+                Console.WriteLine($"[Cache Error] Task not cached: {ex.Message}");
             }
             return true;
         }

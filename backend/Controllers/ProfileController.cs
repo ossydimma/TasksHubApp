@@ -7,9 +7,9 @@ namespace TasksHubServer.Controllers;
 [Route("api/settings/")]
 [ApiController]
 // []
-public class ProfileController(ITasksHubRepository repo, IConfiguration config, OTPService otpService, EmailSender emailSender) : ControllerBase
+public class ProfileController(IUserRepo repo, IConfiguration config, OTPService otpService, EmailSender emailSender) : ControllerBase
 {
-    private readonly ITasksHubRepository _repo = repo;
+    private readonly IUserRepo _repo = repo;
     private readonly IConfiguration _config = config;
     private readonly OTPService _otpService = otpService;
     private readonly EmailSender _emailSender = emailSender;
