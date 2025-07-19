@@ -19,6 +19,7 @@ public class UserTask
     [Required]
     public string Description { get; set; } = string.Empty;
     public DateOnly? Deadline { get; set; } = null;
+    public DateTime CreationDate { get; set; } = DateTime.UtcNow;
     public bool Status { get; set; } = false;
 
     [ForeignKey("UserId")]

@@ -7,7 +7,7 @@ using StackExchange.Redis;
 
 namespace TasksHubServer.Repositories;
 
-public class TasksHubRepository(IDistributedCache distributedCache, ApplicationDbContext Db) : ITasksHubRepository
+public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext Db) : IUserRepo
 {
     private readonly ApplicationDbContext _db = Db;
     private readonly IDistributedCache _distributedCache = distributedCache;

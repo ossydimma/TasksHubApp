@@ -5,10 +5,10 @@ namespace TasksHubServer.Controllers;
 [Route("api/document/")]
 [ApiController]
 
-public class DocumentController(IDocumentRepo repo, ITasksHubRepository userRepo) : ControllerBase
+public class DocumentController(IDocumentRepo repo, IUserRepo userRepo) : ControllerBase
 {
     private readonly IDocumentRepo _repo = repo;
-    private readonly ITasksHubRepository _userRepo = userRepo;
+    private readonly IUserRepo _userRepo = userRepo;
 
     [HttpPost("create")]
     [ProducesResponseType(200)]
