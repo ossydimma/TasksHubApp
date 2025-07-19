@@ -103,12 +103,12 @@ export default function sideBar() {
 
             {/* ----------------- CREATE TASK------------------ */}
             <li className=" my-4">
-              <Link href={"/createtask"}>
+              <Link href={"/mytasks/createtask"}>
                 <div>
                   {isMaximized && (
                     <div
                       className={`${
-                        pathname === "/createtask"
+                        pathname === "/mytasks/createtask"
                           ? "bg-black text-white fill-white"
                           : "bg-white fill-black"
                       }  flex items-center pl-2 gap-2 border-2 hover:border-black py-2 rounded-lg cursor-pointer`}
@@ -153,7 +153,7 @@ export default function sideBar() {
                     <div className=" h-[3.25rem]">
                       <div
                         className={`${
-                          pathname === "/createtask"
+                          pathname === "/mytasks/createtask"
                             ? "bg-black text-white stroke-white"
                             : ""
                         } cursor-pointer p-2.5 rounded-full  hover:bg-black hover:text-white stroke-black  hover:stroke-white`}
@@ -492,10 +492,10 @@ export default function sideBar() {
           <div className=" w-full fixed bottom-0 bg-[#dadde2] z-50">
             <ul className="flex justify-between items-center  text-xs xxs:text-sm px-6 xxs:px-8 pt-2  ">
               {/* --------------- HOME -------------- */}
-              <li className="p-2 rounded-2xl  hover:bg-black">
+              <li className="p-2 rounded-2xl  hover:bg-black hover:text-white fill-black hover:fill-white">
                 <Link
                   href="/"
-                  className=" hover:text-white fill-black hover:fill-white"
+                  className=" "
                 >
                   <svg
                     className="w-5 xxs:w-6 mx-auto mb-1 "
@@ -520,10 +520,10 @@ export default function sideBar() {
               </li>
 
               {/* ---------- MY TASK ----------- */}
-              <li className="p-3 rounded-2xl  hover:bg-black">
+              <li className="p-3 rounded-2xl  hover:bg-black hover:text-white fill-black hover:fill-white">
                 <Link
                   href="/mytasks"
-                  className=" hover:text-white fill-black hover:fill-white"
+                  className=""
                 >
                   <svg
                     className="w-5 xxs:w-6 mx-auto mb-1"
@@ -552,9 +552,9 @@ export default function sideBar() {
               </li>
 
               {/* -------------- CREATE TASK --------------- */}
-              <li className="ml-3 mb-2 p-2 rounded-2xl cursor-pointer hover:bg-black">
-                <Link href={"/createtask"}>
-                  <div className=" fill-black hover:fill-white">
+              <li className="ml-3 mb-2 p-2 rounded-2xl cursor-pointer hover:bg-black fill-black hover:fill-white">
+                <Link href={"/mytasks/createtask"}>
+                  <div className="">
                     <svg
                       className=" w-8 xxs:w-10 "
                       viewBox="0 0 32 32"
@@ -609,10 +609,10 @@ export default function sideBar() {
               </li>
 
               {/* ----------- SETTINGS ------------ */}
-              <li className="p-2 rounded-2xl  hover:bg-black">
+              <li className="p-2 rounded-2xl  hover:bg-black hover:text-white stroke-black hover:stroke-white">
                 <Link
                   href="/settings"
-                  className=" hover:text-white stroke-black hover:stroke-white"
+                  className=""
                 >
                   <svg
                     className=" w-5 xxs:w-7 mx-auto mb-1 "
