@@ -1,4 +1,5 @@
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using TasksHubServer.Data;
@@ -35,5 +36,16 @@ public class TaskRepo(IDistributedCache distributedCache, ApplicationDbContext D
 
 
         return false;
+    }
+
+    public async Task<List<UserTask>> GetAllTasksAsync(Guid userId)
+    {
+        List<UserTask> tasks = await _db.UserTasks
+            .AsNoTracking()
+            .Where(t => t.UserId == userId)
+            .OrderByDescending(t => t.CreationDate)
+            .ToListAsync();
+
+        return tasks;
     }
 }

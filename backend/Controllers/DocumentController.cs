@@ -78,7 +78,7 @@ public class DocumentController(IDocumentRepo repo, IUserRepo userRepo) : Contro
         return Ok(new { allDocuments = docs });
     }
 
-    [HttpPost("get-documents")]
+    [HttpGet("get-documents")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
     public async Task<IActionResult> GetAllDocuments()

@@ -17,7 +17,7 @@ public class TaskController(ITaskRepo repo, IUserRepo userRepo) : ControllerBase
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        
+
         string? userIdStr = User.FindFirst("id")?.Value;
 
         if (userIdStr == null)
@@ -45,5 +45,24 @@ public class TaskController(ITaskRepo repo, IUserRepo userRepo) : ControllerBase
 
 
         return Ok("Task Created Successfully.");
+    }
+
+    [HttpGet("get-tasks")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(401)]
+    public async Task<IActionResult> GetAllUserTasks()
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+
+        string? userIdStr = User.FindFirst("id")?.Value;
+
+        if (string.IsNullOrWhiteSpace(userIdStr) || !Guid.TryParse(userIdStr, out Guid userId))
+            return Unauthorized("Invalid or missing user ID in token.");
+
+        List<UserTask> tasks = await _repo.GetAllTasksAsync(userId);
+
+        return Ok(new { success = true, data = tasks });
     }
 }
