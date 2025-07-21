@@ -29,29 +29,29 @@ export interface NavBarToolTips {
     logOut : boolean;
 }
 
-export interface UserTask {
-    Id : string;
-    Title : string;
-    Description : string;
-    Category : string;
-    Deadline : Date;
-    Status : boolean;
+export interface UserTaskType {
+    id : string;
+    title : string;
+    description : string;
+    category : string;
+    deadline : string;
+    status : boolean;
 }
 
 export interface modifyTaskParams {
     option : "Details" | "Edit" | "Delete" | undefined;
     setOption : (value : "Details" | "Edit" | "Delete" | undefined) => void;
-    selectedTask : UserTask | undefined;
-    setSelectedTask : (value : UserTask | undefined) => void;
+    selectedTask : UserTaskType | undefined;
+    setSelectedTask : (value : UserTaskType | undefined) => void;
     setDisplayMoreOptions : (value : boolean) => void;
 }
 
 export interface TaskModel {
-    Title: string | undefined;
-    Description: string | undefined;
-    Deadline: Date | undefined;
-    Category: string | undefined;
-    Status: boolean | undefined;
+    title: string | undefined;
+    description: string | undefined;
+    deadline: string | undefined;
+    category: string | undefined;
+    status: boolean | undefined;
 }
 
 export interface FilterByType {

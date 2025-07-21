@@ -13,11 +13,11 @@ export default function modifyTask({
 }: modifyTaskParams) {
 
   const initialTaskState: TaskModel = {
-    Title: "",
-    Description: "",
-    Deadline: new Date(),
-    Category: "",
-    Status: false,
+    title: "",
+    description: "",
+    deadline: '',
+    category: "",
+    status: false,
   };
 
   const [editedTask, setEditedTask] = useState<TaskModel>(
@@ -88,35 +88,35 @@ export default function modifyTask({
             <>
               <dl
                 className={`flex flex-col gap-2 px-4 ${
-                  selectedTask.Description.length > 200
+                  selectedTask.description.length > 200
                     ? "mt-[1rem]"
                     : "mt-[2rem]"
                 }`}
               >
                 <div className="flex items-center  gap-[7rem] border border-gray-300 p-3">
                   <dt className="font-bold font-mono text-lg">Task Name:</dt>
-                  <dd className="">{selectedTask.Title}</dd>
+                  <dd className="">{selectedTask.title}</dd>
                 </div>
 
                 <div className="flex gap-[5.5rem] border border-gray-300  p-3">
                   <dt className="font-bold font-mono text-lg">Description:</dt>
-                  <dd className="">{selectedTask.Description}</dd>
+                  <dd className="">{selectedTask.description}</dd>
                 </div>
 
                 <div className="flex items-center  gap-[7.5rem] border border-gray-300  p-3">
                   <dt className="font-bold font-mono text-lg">Deadline:</dt>
-                  <dd className="">{formatDate(selectedTask.Deadline)}</dd>
+                  <dd className="">{formatDate(selectedTask.deadline)}</dd>
                 </div>
 
                 <div className="flex items-center  gap-[7.5rem] border border-gray-300  p-3  ">
                   <dt className="font-bold font-mono text-lg">Category:</dt>
-                  <dd className=" ">{selectedTask.Category}</dd>
+                  <dd className=" ">{selectedTask.category}</dd>
                 </div>
 
                 <div className="flex items-center  gap-[9rem] border border-gray-300  p-3">
                   <dt className="font-bold font-mono text-lg">Status:</dt>
                   <dd className="">
-                    {selectedTask.Status == true ? "Completed" : "Pending"}
+                    {selectedTask.status == true ? "Completed" : "Pending"}
                   </dd>
                 </div>
               </dl>
@@ -159,7 +159,7 @@ export default function modifyTask({
                 <input
                   id="title"
                   placeholder="Enter Project Title"
-                  defaultValue={selectedTask.Title}
+                  defaultValue={selectedTask.title}
                   onChange={(e) =>
                     setEditedTask((prev) => ({
                       ...prev,
@@ -173,7 +173,7 @@ export default function modifyTask({
               <div className="flex justify-between items-center">
                 <div
                   className={`flex flex-col ${
-                    selectedTask.Status ? "w-[100%]" : "w-[45%]"
+                    selectedTask.status ? "w-[100%]" : "w-[45%]"
                   }`}
                 >
                   <label className="text-lg font-medium">
@@ -183,7 +183,7 @@ export default function modifyTask({
                     id="deadline"
                     type="date"
                     defaultValue={
-                      selectedTask.Deadline.toISOString().split("T")[0]
+                      selectedTask.deadline
                     }
                     onChange={(e) =>
                       setEditedTask((prev) => ({
@@ -196,7 +196,7 @@ export default function modifyTask({
                   />
                 </div>
 
-                {!selectedTask.Status && (
+                {!selectedTask.status && (
                   <div className="w-[45%] relative checkBox-conatiner">
                     <label className="text-lg font-medium">Status</label>
                     <div className=" checkBox-tooltip bg-blue-600 text-white border border-white px-4 py-2 rounded-lg absolute">
@@ -207,7 +207,7 @@ export default function modifyTask({
                       <input
                         type="checkbox"
                         id="status"
-                        defaultChecked={selectedTask.Status}
+                        defaultChecked={selectedTask.status}
                         onChange={(e) =>
                           setEditedTask((prev) => ({
                             ...prev,
@@ -225,7 +225,7 @@ export default function modifyTask({
                 <label className="text-lg font-medium ">Description</label>
                 <textarea
                   id="description"
-                  defaultValue={selectedTask.Description}
+                  defaultValue={selectedTask.description}
                   onChange={(e) =>
                     setEditedTask((prev) => ({
                       ...prev,
@@ -241,7 +241,7 @@ export default function modifyTask({
                 <label className="text-lg font-medium">Category</label>
                 <select
                   id="category"
-                  defaultValue={selectedTask.Category}
+                  defaultValue={selectedTask.category}
                   onChange={(e) =>
                     setEditedTask((prev) => ({
                       ...prev,

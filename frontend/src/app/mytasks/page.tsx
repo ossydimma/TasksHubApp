@@ -1,13 +1,24 @@
 "use client";
 
-import { tasks, categories } from "../../../mock";
+import { categories } from "../../../mock";
 import ModifyTask from "../components/modifyTask";
-import { useState } from "react";
-import { FilterByType, UserTask } from "../../../Interfaces";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../../../context/AuthContext";
+import { FilterByType, UserTaskType } from "../../../Interfaces";
+import LoadingSpinner from "../components/LoadingSpinner";
+import { api } from "../../../services/axios";
 
 export default function page() {
+  const router = useRouter();
+  const { loading, isAuthenticated } = useAuth();
+
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [tasks, setTasks] = useState<UserTaskType[]>([]);
+  const [filteredTasks, setFilteredTasks] = useState<UserTaskType[]>([]);
+  const [match, setMatch] = useState<string>("");
   const [displayMoreOptions, setDisplayMoreOptions] = useState<boolean>();
-  const [selectedTask, setSelectedTask] = useState<undefined | UserTask>(
+  const [selectedTask, setSelectedTask] = useState<undefined | UserTaskType>(
     undefined
   );
   const [option, setOption] = useState<
@@ -27,7 +38,7 @@ export default function page() {
     id: string,
     SelectedOption: "Details" | "Edit" | "Delete"
   ) => {
-    setSelectedTask(tasks.find((task) => task.Id == id));
+    setSelectedTask(tasks.find((task) => task.id == id));
 
     if (selectedTask !== undefined) {
       setDisplayMoreOptions(true);
@@ -44,8 +55,46 @@ export default function page() {
     console.log(filterBy);
   };
 
+async function getAllTasks() {
+  setIsLoading(true);
+
+  try {
+    const res = await api.get("/task/get-tasks");
+    const allTasks = res.data.tasks;
+    console.log(allTasks);
+    setTasks(allTasks);
+    setFilteredTasks(allTasks);
+  } catch (err: any) {
+    console.error("Failed to fetch tasks:", err);
+  } finally {
+    setIsLoading(false);
+  }
+}
+
+useEffect(() => {
+  getAllTasks();
+}, []);
+
+
+  useEffect(() => {
+    if (!isAuthenticated && !loading) {
+      router.push("/login");
+    }
+  }, [loading, isAuthenticated]);
+
   return (
-    <main className="text-xs xs:text-sm md:text-[1rem] border-gray-500 ">
+    <main className="text-xs xs:text-sm md:text-[1rem] border-gray-500 h-full w-full overflow-hidden ">
+      {isLoading && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
+          style={{ cursor: "not-allowed" }}
+        >
+          <LoadingSpinner
+            styles={{ svg: " h-10 w-10", span: "text-[1.2rem]" }}
+            text="Loading..."
+          />
+        </div>
+      )}
       <header className="flex justify-between items-center px-6 mt-5 lmd:mt-8 -mb-2 border-b-2 border-dashed border-gray-500 pb-4">
         <div className="  ">
           <div className="py-2 px-4 text-sm bg-black text-white rounded-md cursor-pointer">
@@ -264,69 +313,97 @@ export default function page() {
       </header>
 
       <section className="h-[85vh] w-[98%] md:h-[90vh] overflow-hidden pt-4 mx-2  mb-[3rem] overflow-y-hidde">
-        <div className="w-full h-[90%] pb-10 overflow-y-hidde ">
-          <div className="grid grid-cols-7 gap-4 font-bold py-2 border-b-2 border-gray-500 mr-4">
-            {categories.map((category, index) => (
-              <h1
-                key={index}
-                className={`border-gray-400 p-2 text-center ${
-                  category === "Description" ? "col-span-2" : ""
-                }`}
-              >
-                {category}
-              </h1>
-            ))}
+        {isLoading ? (
+          <div className="h-full w-full flex justify-center items-center">
+            <LoadingSpinner
+              styles={{
+                svg: "h-6 w-6 sm:h-9 sm:w-9  lmd:h-6 lmd:w-6",
+                span: "text-sm sm:text-[1.1rem] lmd:text-sm",
+              }}
+              text="Searching..."
+            />
           </div>
-          <div className="h-[100%] overflow-y-scroll pb-6">
-            {tasks.map((task) => (
-              <ul key={task.Id} className="grid grid-cols-7">
-                <li className="border border-gray-400 text-center py-10 sm:py-7">
-                  {task.Category}
-                </li>
-                <li className="border border-gray-400 text-center py-10 sm:py-7">
-                  {task.Title}
-                </li>
-                <li className="text-xs md:text-sm col-span-2 border border-gray-400 px-1 sm:px-2 py-2.5 sm:py-4">
-                  {task.Description.length > 95
-                    ? task.Description.substring(0, 98) + `...`
-                    : task.Description}
-                </li>
-                <li className="border border-gray-400 text-center py-10 sm:py-7">
-                  {task.Deadline.toDateString()}
-                </li>
-                <li
-                  className={`border border-gray-400 text-center py-10 sm:py-7 ${
-                    task.Status === true ? "text-green-500" : "text-orange-600"
+        ) : tasks.length === 0 ? (
+          <div className="h-full w-full flex justify-center items-center text-[0.910rem] sm:text-[1.2rem] md:text-[0.8rem] lmd:text-[0.910rem]">
+            <p>You have no task yet.</p>
+          </div>
+        ) : filteredTasks.length === 0 ? (
+          <div className="h-full w-full flex justify-center items-center text-[0.910rem] sm:text-[1.2rem] md:text-[0.8rem] lmd:text-[0.910rem]">
+            <p>No matching tasks found for "{match}".</p>
+          </div>
+        ) : (
+          <div className="w-full h-[90%] pb-10 overflow-y-hidde ">
+            <div className="grid grid-cols-7 gap-4 font-bold py-2 border-b-2 border-gray-500 mr-4">
+              {categories.map((category, index) => (
+                <h1
+                  key={index}
+                  className={`border-gray-400 p-2 text-center ${
+                    category === "Description" ? "col-span-2" : ""
                   }`}
                 >
-                  {task.Status === true ? `Completed` : `Pending`}
-                </li>
-                <li className=" text-center py-10 sm:py-7 tooltip-container border border-gray-400 cursor-pointer">
-                  <div className="tooltip">
-                    <span>Options</span>
-                    <div className="tooltiptext text-sm">
-                      <ul>
-                        <li
-                          onClick={() => handleSelectedTask(task.Id, "Details")}
-                        >
-                          Details
-                        </li>
-                        <li onClick={() => handleSelectedTask(task.Id, "Edit")}>
-                          Edit
-                        </li>
-                        <li
-                          onClick={() => handleSelectedTask(task.Id, "Delete")}
-                        >
-                          Delete
-                        </li>
-                      </ul>
+                  {category}
+                </h1>
+              ))}
+            </div>
+            <div className="h-[100%] overflow-y-scroll overflow-x-hidden pb-6">
+              {filteredTasks.map((task: UserTaskType) => (
+                <ul key={task.id} className="grid grid-cols-7">
+                  <li className="border border-gray-400 text-center py-10 sm:py-7">
+                    {task.category}
+                  </li>
+                  <li className="border border-gray-400 text-center py-10 sm:py-7">
+                    {task.title}
+                  </li>
+                  <li className="text-xs md:text-sm col-span-2 border border-gray-400 px-1 sm:px-2 py-2.5 sm:py-4">
+                    {task.description.length > 95
+                      ? task.description.substring(0, 98) + `...`
+                      : task.description}
+                  </li>
+                  <li className="border border-gray-400 text-center py-10 sm:py-7">
+                    {task.deadline}
+                  </li>
+                  <li
+                    className={`border border-gray-400 text-center py-10 sm:py-7 ${
+                      task.status === true
+                        ? "text-green-500"
+                        : "text-orange-600"
+                    }`}
+                  >
+                    {task.status === true ? `Completed` : `Pending`}
+                  </li>
+                  <li className=" text-center py-10 sm:py-7 tooltip-container border border-gray-400 cursor-pointer">
+                    <div className="tooltip">
+                      <span>Options</span>
+                      <div className="tooltiptext text-sm">
+                        <ul>
+                          <li
+                            onClick={() =>
+                              handleSelectedTask(task.id, "Details")
+                            }
+                          >
+                            Details
+                          </li>
+                          <li
+                            onClick={() => handleSelectedTask(task.id, "Edit")}
+                          >
+                            Edit
+                          </li>
+                          <li
+                            onClick={() =>
+                              handleSelectedTask(task.id, "Delete")
+                            }
+                          >
+                            Delete
+                          </li>
+                        </ul>
+                      </div>
                     </div>
-                  </div>
-                </li>
-              </ul>
-            ))}
+                  </li>
+                </ul>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </section>
       {displayMoreOptions && (
         <ModifyTask

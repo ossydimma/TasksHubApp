@@ -61,8 +61,8 @@ public class TaskController(ITaskRepo repo, IUserRepo userRepo) : ControllerBase
         if (string.IsNullOrWhiteSpace(userIdStr) || !Guid.TryParse(userIdStr, out Guid userId))
             return Unauthorized("Invalid or missing user ID in token.");
 
-        List<UserTask> tasks = await _repo.GetAllTasksAsync(userId);
+        List<UserTask> ListOfTasks = await _repo.GetAllTasksAsync(userId);
 
-        return Ok(new { success = true, data = tasks });
+        return Ok(new { tasks = ListOfTasks });
     }
 }

@@ -33,10 +33,6 @@ export default function page() {
   const [filteredDocuments, setFilteredDocuments] = useState<DocumentType[]>(
     []
   );
-  // const [IsDisabled, setIsDisabled] = useState({
-  //   saveBtn: true,
-  //   discardBtn: true,
-  // });
   const [feedbackText, setFeedbackText] = useState<string | undefined>(
     undefined
   );
@@ -238,7 +234,7 @@ export default function page() {
     setIsLoading(true);
 
     try {
-      const res = await api.post("document/get-documents");
+      const res = await api.get("document/get-documents");
       const docs = res.data.allDocuments;
       setDocuments(docs);
       setFilteredDocuments(docs);
