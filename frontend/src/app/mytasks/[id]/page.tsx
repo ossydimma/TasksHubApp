@@ -1,12 +1,13 @@
 "use client";
 
 import LoadingSpinner from "@/app/components/LoadingSpinner";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { api } from "../../../../services/axios";
 import { UserTaskType } from "../../../../Interfaces";
 
 export default function TaskDetailPage() {
+  const router = useRouter();
   const params = useParams();
   const taskId = params.id;
 
@@ -18,7 +19,7 @@ export default function TaskDetailPage() {
 
     try {
       const res = await api.get(`task/${taskId}`);
-      setTask(res.data)
+      setTask(res.data);
       console.log(res);
     } catch (err: any) {
       console.error(err);
@@ -52,52 +53,51 @@ export default function TaskDetailPage() {
           </h1>
         </div>
         <div className="h-[85%] overflow-hidden overflow-x-hidden pb-6 px-4">
-          <dl className={`flex flex-col gap-2  mt-[2rem] text-sm sm:text-lg italic`}>
-
+          <dl
+            className={`flex flex-col gap-2  mt-[2rem] text-sm sm:text-lg italic`}
+          >
             <div className="flex items-center justify-between border border-gray-300 p-3">
-                <dt className="font-bold">Task Name:</dt>
-                <dd className="">{task?.title}</dd>
+              <dt className="font-bold">Task Name:</dt>
+              <dd className="">{task?.title}</dd>
             </div>
-            
+
             <div className="flex items-center  justify-between border border-gray-300  p-3  ">
-                <dt className="font-bold ">Category:</dt>
-                <dd className=" ">{task?.category}</dd>
+              <dt className="font-bold ">Category:</dt>
+              <dd className=" ">{task?.category}</dd>
             </div>
 
             <div className="flex items-center  justify-between border border-gray-300  p-3">
-                <dt className="font-bold ">Deadline:</dt>
-                <dd className="">{task?.deadline}</dd>
+              <dt className="font-bold ">Deadline:</dt>
+              <dd className="">{task?.deadline}</dd>
             </div>
 
             <div className="flex items-center  justify-between border border-gray-300  p-3">
-                <dt className="font-bold ">Status:</dt>
-                <dd className="">
+              <dt className="font-bold ">Status:</dt>
+              <dd className="">
                 {task?.status == true ? "Completed" : "Pending"}
-                </dd>
+              </dd>
             </div>
-
-
 
             <div className="flex flex-col gap-1 border border-gray-300  p-3">
-                <dt className="font-[900] ">Description:</dt>
-                <dd className="ml-6 ">{task?.description}</dd>
+              <dt className="font-[900] ">Description:</dt>
+              <dd className="ml-6 ">{task?.description}</dd>
             </div>
           </dl>
 
           <div className="mt-4 flex items-center justify-between">
             <p
-            className="underline text-red-500 cursor-pointer"
-            // onClick={() => setOption("Delete")}
+              className="underline text-red-500 cursor-pointer"
+              // onClick={() => setOption("Delete")}
             >
-            Delete Task
+              Delete Task
             </p>
             <p
-            className="text-blue-400 underline cursor-pointer"
-            // onClick={() => setOption("Edit")}
+              className="text-blue-400 underline cursor-pointer"
+              onClick={() => router.push(`/mytasks/edit/${taskId}`)}
             >
-            Edit Task
+              Edit Task
             </p>
-        </div>
+          </div>
         </div>
       </div>
     </main>

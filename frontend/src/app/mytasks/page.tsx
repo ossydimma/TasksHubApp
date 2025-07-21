@@ -385,7 +385,7 @@ useEffect(() => {
                             Details
                           </li>
                           <li
-                            onClick={() => handleSelectedTask(task.id, "Edit")}
+                            onClick={() => router.push(`/mytasks/edit/${task.id}`)}
                           >
                             Edit
                           </li>
