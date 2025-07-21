@@ -16,7 +16,7 @@ public class TaskRepo(IDistributedCache distributedCache, ApplicationDbContext D
 
     public async Task<bool> CreateTaskAsync(UserTask newTask)
     {
-        string key = $"TasksHub_Document_{newTask.Id}";
+        string key = $"TasksHub_Task_{newTask.Id}";
         await _db.UserTasks.AddAsync(newTask);
 
         int affected = await _db.SaveChangesAsync();
@@ -38,14 +38,76 @@ public class TaskRepo(IDistributedCache distributedCache, ApplicationDbContext D
         return false;
     }
 
-    public async Task<List<UserTask>> GetAllTasksAsync(Guid userId)
+    public async Task<List<TaskDto>> GetAllTasksAsync(Guid userId)
     {
-        List<UserTask> tasks = await _db.UserTasks
+        List<TaskDto> tasks = await _db.UserTasks
             .AsNoTracking()
             .Where(t => t.UserId == userId)
+            .Select(t => new TaskDto
+            {
+                Id = t.Id,
+                Title = t.Title,
+                Description = t.Description,
+                Category = t.Category,
+                Status = t.Status,
+                CreationDate = t.CreationDate,
+                Deadline = t.Deadline.ToString()
+            })
             .OrderByDescending(t => t.CreationDate)
             .ToListAsync();
 
         return tasks;
     }
+
+    public async Task<TaskDto?> GetTaskByIdAsync(Guid taskId, Guid? userId)
+    {
+        string key = $"TasksHub_Task_{taskId}";
+        TaskDto? task = null;
+
+        try
+        {
+            string? fromCache = await _distributedCache.GetStringAsync(key);
+
+
+            if (!string.IsNullOrEmpty(fromCache))
+            {
+                task = JsonConvert.DeserializeObject<TaskDto>(fromCache);
+                if (task != null)
+                    return task;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Redis unavailable: " + ex.Message);
+        }
+
+        task = await _db.UserTasks
+            .Where(t => t.UserId == userId && t.Id == taskId)
+            .Select(t => new TaskDto
+            {
+                Id = t.Id,
+                Title = t.Title,
+                Description = t.Description,
+                Category = t.Category,
+                Status = t.Status,
+                Deadline = t.Deadline.ToString()
+            })
+            .FirstOrDefaultAsync();
+
+        if (task == null)
+            return null;
+
+        try
+        {
+            await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(task), _cacheOptions);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Data was not cached:" + ex.Message);
+        }
+
+        return task;
+    }
+
+
 }

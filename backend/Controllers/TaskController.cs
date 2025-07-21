@@ -53,16 +53,42 @@ public class TaskController(ITaskRepo repo, IUserRepo userRepo) : ControllerBase
     [ProducesResponseType(401)]
     public async Task<IActionResult> GetAllUserTasks()
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-
 
         string? userIdStr = User.FindFirst("id")?.Value;
 
         if (string.IsNullOrWhiteSpace(userIdStr) || !Guid.TryParse(userIdStr, out Guid userId))
             return Unauthorized("Invalid or missing user ID in token.");
 
-        List<UserTask> ListOfTasks = await _repo.GetAllTasksAsync(userId);
+        List<TaskDto> ListOfTasks = await _repo.GetAllTasksAsync(userId);
 
         return Ok(new { tasks = ListOfTasks });
+    }
+
+    [HttpGet("{taskId}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetTaskById(Guid taskId)
+    {
+        Guid? userId = GetUserId();
+        if (userId == null)
+            return Unauthorized("Invalid or missing user ID");
+
+        TaskDto? task = await _repo.GetTaskByIdAsync(taskId, userId.Value);
+        if (task == null)
+            return NotFound("Task not found. ");
+
+        return Ok(task);
+    }
+
+    private Guid? GetUserId()
+    {
+        string? userIdStr = User.FindFirst("id")?.Value;
+
+        if (!Guid.TryParse(userIdStr, out Guid userId))
+            return null;
+
+        return userId;
     }
 }

@@ -42,4 +42,6 @@ public static class JwtTokenGenerator
         rng.GetBytes(randomBytes);
         return Convert.ToBase64String(randomBytes);
     }
+
+    
 }

@@ -378,7 +378,8 @@ useEffect(() => {
                         <ul>
                           <li
                             onClick={() =>
-                              handleSelectedTask(task.id, "Details")
+                              router.push(`/mytasks/${task.id}`)
+                              // handleSelectedTask(task.id, "Details")
                             }
                           >
                             Details

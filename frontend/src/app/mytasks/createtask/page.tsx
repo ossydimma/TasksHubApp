@@ -35,6 +35,12 @@ export default function page() {
       return;
     }
 
+    if (taskValues.description.length > 100)
+    {
+      setMessage("Description should be above 100 character");
+      return
+    }
+
     setIsLoading(true);
     try {
       const res = await api.post("task/create", taskValues);
