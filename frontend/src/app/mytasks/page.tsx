@@ -1,7 +1,6 @@
 "use client";
 
 import { categories } from "../../../mock";
-import ModifyTask from "../components/modifyTask";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
@@ -17,13 +16,13 @@ export default function page() {
   const [tasks, setTasks] = useState<UserTaskType[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<UserTaskType[]>([]);
   const [match, setMatch] = useState<string>("");
-  const [displayMoreOptions, setDisplayMoreOptions] = useState<boolean>();
-  const [selectedTask, setSelectedTask] = useState<undefined | UserTaskType>(
-    undefined
-  );
-  const [option, setOption] = useState<
-    "Details" | "Edit" | "Delete" | undefined
-  >(undefined);
+  // const [displayMoreOptions, setDisplayMoreOptions] = useState<boolean>();
+  // const [selectedTask, setSelectedTask] = useState<undefined | UserTaskType>(
+  //   undefined
+  // );
+  // const [option, setOption] = useState<
+  //   "Details" | "Edit" | "Delete" | undefined
+  // >(undefined);
 
   const [filterBy, setFilterBy] = useState<FilterByType>({
     allTask: true,
@@ -34,21 +33,21 @@ export default function page() {
 
   const [showFilter, setShowFilter] = useState<boolean>(false);
 
-  const handleSelectedTask = (
-    id: string,
-    SelectedOption: "Details" | "Edit" | "Delete"
-  ) => {
-    setSelectedTask(tasks.find((task) => task.id == id));
+  // const handleSelectedTask = (
+  //   id: string,
+  //   SelectedOption: "Details" | "Edit" | "Delete"
+  // ) => {
+  //   setSelectedTask(tasks.find((task) => task.id == id));
 
-    if (selectedTask !== undefined) {
-      setDisplayMoreOptions(true);
-      setOption(SelectedOption);
-    } else {
-      console.log(`task ${id} not found`);
-    }
+  //   if (selectedTask !== undefined) {
+  //     setDisplayMoreOptions(true);
+  //     setOption(SelectedOption);
+  //   } else {
+  //     console.log(`task ${id} not found`);
+  //   }
 
-    console.log(selectedTask);
-  };
+  //   console.log(selectedTask);
+  // };
 
   const handleFilterBy = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -377,10 +376,7 @@ useEffect(() => {
                       <div className="tooltiptext text-sm">
                         <ul>
                           <li
-                            onClick={() =>
-                              router.push(`/mytasks/${task.id}`)
-                              // handleSelectedTask(task.id, "Details")
-                            }
+                            onClick={() => router.push(`/mytasks/${task.id}`)}
                           >
                             Details
                           </li>
@@ -390,9 +386,7 @@ useEffect(() => {
                             Edit
                           </li>
                           <li
-                            onClick={() =>
-                              handleSelectedTask(task.id, "Delete")
-                            }
+                            onClick={() => router.push(`/mytasks/delete/${task.id}`)}
                           >
                             Delete
                           </li>
@@ -406,15 +400,6 @@ useEffect(() => {
           </div>
         )}
       </section>
-      {displayMoreOptions && (
-        <ModifyTask
-          option={option}
-          setOption={setOption}
-          selectedTask={selectedTask}
-          setSelectedTask={setSelectedTask}
-          setDisplayMoreOptions={setDisplayMoreOptions}
-        />
-      )}
     </main>
   );
 }
