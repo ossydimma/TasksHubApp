@@ -16,13 +16,6 @@ export default function page() {
   const [tasks, setTasks] = useState<UserTaskType[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<UserTaskType[]>([]);
   const [match, setMatch] = useState<string>("");
-  // const [displayMoreOptions, setDisplayMoreOptions] = useState<boolean>();
-  // const [selectedTask, setSelectedTask] = useState<undefined | UserTaskType>(
-  //   undefined
-  // );
-  // const [option, setOption] = useState<
-  //   "Details" | "Edit" | "Delete" | undefined
-  // >(undefined);
 
   const [filterBy, setFilterBy] = useState<FilterByType>({
     allTask: true,
@@ -32,22 +25,6 @@ export default function page() {
   });
 
   const [showFilter, setShowFilter] = useState<boolean>(false);
-
-  // const handleSelectedTask = (
-  //   id: string,
-  //   SelectedOption: "Details" | "Edit" | "Delete"
-  // ) => {
-  //   setSelectedTask(tasks.find((task) => task.id == id));
-
-  //   if (selectedTask !== undefined) {
-  //     setDisplayMoreOptions(true);
-  //     setOption(SelectedOption);
-  //   } else {
-  //     console.log(`task ${id} not found`);
-  //   }
-
-  //   console.log(selectedTask);
-  // };
 
   const handleFilterBy = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

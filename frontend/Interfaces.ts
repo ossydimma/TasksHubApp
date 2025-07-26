@@ -47,11 +47,11 @@ export interface modifyTaskParams {
 }
 
 export interface TaskModel {
-    title: string | undefined;
-    description: string | undefined;
-    deadline: string | undefined;
-    category: string | undefined;
-    status: boolean | undefined;
+    title: string;
+    description: string;
+    deadline: string;
+    category: string;
+    status: boolean;
 }
 
 export interface FilterByType {

@@ -47,6 +47,39 @@ public class TaskController(ITaskRepo repo, IUserRepo userRepo) : ControllerBase
         return Ok("Task Created Successfully.");
     }
 
+    [HttpPut("update")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> UpdateTask(TaskDto model)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        Guid? userId = GetUserId();
+        if (userId == null)
+            return Unauthorized("Invalid or missing user ID");
+
+        UserTask? task = await _repo.GetTaskByIdAsync(model.Id, userId);
+
+        if (task == null)
+            return NotFound("Task not Found.");
+
+        task.Title = model.Title!;
+        task.Category = model.Category;
+        task.Status = model.Status;
+        task.Description = model.Description!;
+        task.Deadline = model.Deadline;
+
+        bool updated = await _repo.UpdateTaskAsync(task);
+
+        if (!updated)
+            return Conflict("Failed to update task.");
+
+        return Ok();
+
+    }
+
     [HttpGet("get-tasks")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
@@ -75,11 +108,19 @@ public class TaskController(ITaskRepo repo, IUserRepo userRepo) : ControllerBase
         if (userId == null)
             return Unauthorized("Invalid or missing user ID");
 
-        TaskDto? task = await _repo.GetTaskByIdAsync(taskId, userId.Value);
+        UserTask? task = await _repo.GetTaskByIdAsync(taskId, userId.Value);
         if (task == null)
             return NotFound("Task not found. ");
 
-        return Ok(task);
+        return Ok(new TaskDto
+        {
+            Id = task.Id,
+            Title = task.Title,
+            Category = task.Category,
+            Status = task.Status,
+            Description = task.Description,
+            Deadline = task.Deadline
+        });
     }
 
     private Guid? GetUserId()

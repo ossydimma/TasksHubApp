@@ -38,6 +38,30 @@ public class TaskRepo(IDistributedCache distributedCache, ApplicationDbContext D
         return false;
     }
 
+    public async Task<bool> UpdateTaskAsync(UserTask task)
+    {
+        string key = $"TasksHub_Task_{task.Id}";
+
+        _db.Entry(task).State = EntityState.Modified;
+
+        int affected = await _db.SaveChangesAsync();
+
+        if (affected < 1)
+        {
+            return false;
+        }
+
+        try
+        {
+            await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(task), _cacheOptions);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Data was not cached:" + ex.Message);
+        }
+        return true;
+    }
+
     public async Task<List<TaskDto>> GetAllTasksAsync(Guid userId)
     {
         List<TaskDto> tasks = await _db.UserTasks
@@ -51,7 +75,7 @@ public class TaskRepo(IDistributedCache distributedCache, ApplicationDbContext D
                 Category = t.Category,
                 Status = t.Status,
                 CreationDate = t.CreationDate,
-                Deadline = t.Deadline.ToString()
+                Deadline = t.Deadline 
             })
             .OrderByDescending(t => t.CreationDate)
             .ToListAsync();
@@ -59,10 +83,10 @@ public class TaskRepo(IDistributedCache distributedCache, ApplicationDbContext D
         return tasks;
     }
 
-    public async Task<TaskDto?> GetTaskByIdAsync(Guid taskId, Guid? userId)
+    public async Task<UserTask?> GetTaskByIdAsync(Guid taskId, Guid? userId)
     {
         string key = $"TasksHub_Task_{taskId}";
-        TaskDto? task = null;
+        UserTask? task = null;
 
         try
         {
@@ -71,7 +95,7 @@ public class TaskRepo(IDistributedCache distributedCache, ApplicationDbContext D
 
             if (!string.IsNullOrEmpty(fromCache))
             {
-                task = JsonConvert.DeserializeObject<TaskDto>(fromCache);
+                task = JsonConvert.DeserializeObject<UserTask>(fromCache);
                 if (task != null)
                     return task;
             }
@@ -83,15 +107,6 @@ public class TaskRepo(IDistributedCache distributedCache, ApplicationDbContext D
 
         task = await _db.UserTasks
             .Where(t => t.UserId == userId && t.Id == taskId)
-            .Select(t => new TaskDto
-            {
-                Id = t.Id,
-                Title = t.Title,
-                Description = t.Description,
-                Category = t.Category,
-                Status = t.Status,
-                Deadline = t.Deadline.ToString()
-            })
             .FirstOrDefaultAsync();
 
         if (task == null)

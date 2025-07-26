@@ -5,12 +5,12 @@ import type { TaskValuesType } from "../../../../Interfaces";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
 import { api } from "../../../../services/axios";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../../../../context/AuthContext"
+import { useAuth } from "../../../../context/AuthContext";
+import { validateDeadline } from "../../../../mock";
 
 export default function page() {
-
   const router = useRouter();
-  const {isAuthenticated, loading} = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
   const [message, setMessage] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -35,17 +35,26 @@ export default function page() {
       return;
     }
 
-    if (taskValues.description.length > 100)
-    {
+    if (taskValues.description.length > 100) {
       setMessage("Description should be above 100 character");
-      return
+      return;
+    }
+
+    if (!validateDeadline(taskValues.deadline)) {
+      setMessage("Deadline can't be less than today");
+      return;
     }
 
     setIsLoading(true);
     try {
       const res = await api.post("task/create", taskValues);
-      setTaskValues((prev)=> ({...prev, title: "", deadline: "", description: ""}));
-      setTimeout(()=> {
+      setTaskValues((prev) => ({
+        ...prev,
+        title: "",
+        deadline: "",
+        description: "",
+      }));
+      setTimeout(() => {
         setMessage("Tasks created successfully");
       }, 3000);
       setMessage("");
@@ -62,8 +71,6 @@ export default function page() {
         errorMsg = errorData;
       }
       setMessage(errorMsg);
-
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -71,11 +78,11 @@ export default function page() {
     console.log(taskValues);
   }
 
-   useEffect(() => {
-      if (!isAuthenticated && !loading) {
-        router.push("/login");
-      }
-    }, [isAuthenticated, loading]);
+  useEffect(() => {
+    if (!isAuthenticated && !loading) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, loading]);
 
   return (
     <main className="pb-[3.6rem] sm:pb-0 relative w-full h-full">
@@ -98,7 +105,15 @@ export default function page() {
         </div>
 
         <div className=" w-[80%] lmd:w-[70%] mx-auto ">
-          <p className={`${message.includes("successfully") ? "text-green-500" : "text-red-500"} mt-2`}>{message} </p>
+          <p
+            className={`${
+              message.includes("successfully")
+                ? "text-green-500"
+                : "text-red-500"
+            } mt-2`}
+          >
+            {message}{" "}
+          </p>
           <form
             action=""
             method="post"

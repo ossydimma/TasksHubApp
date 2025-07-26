@@ -42,7 +42,7 @@ public class DocumentController(IDocumentRepo repo, IUserRepo userRepo) : Contro
         return Ok(new { allDocuments = docs });
     }
 
-    [HttpPost("update")]
+    [HttpPut("update")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
     public async Task<IActionResult> UpdateDocument(UpdateDocumentDto model)

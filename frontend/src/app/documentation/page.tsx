@@ -304,7 +304,7 @@ export default function page() {
     setIsLoading(true);
 
     try {
-      const res = await api.post("document/update", {
+      const res = await api.put("document/update", {
         Title: content.title,
         Body: content.body,
         DocumentIdStr: content.id,

@@ -1,29 +1,29 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { api } from "../../../../../services/axios";
 import { TaskModel, UserTaskType } from "../../../../../Interfaces";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
+import { validateDeadline } from "../../../../../mock";
 
 export default function EditTaskPage() {
   const params = useParams();
   const taskId = params.id;
+  const router = useRouter();
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [task, setTask] = useState<UserTaskType | undefined>(undefined);
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [isSuccess, setIsSuccess] = useState<boolean>(false);
 
-  const initialTaskState: TaskModel = {
+  const [editedTask, setEditedTask] = useState<TaskModel>({
     title: "",
     description: "",
     deadline: "",
     category: "",
     status: false,
-  };
-
-  const [editedTask, setEditedTask] = useState<TaskModel>(
-    task || initialTaskState
-  );
+  });
 
   async function getTask() {
     setIsLoading(true);
@@ -31,6 +31,7 @@ export default function EditTaskPage() {
     try {
       const res = await api.get(`task/${taskId}`);
       setTask(res.data);
+      setEditedTask(res.data);
       console.log(res);
     } catch (err: any) {
       console.error(err);
@@ -39,7 +40,47 @@ export default function EditTaskPage() {
     }
   }
 
-  const saveChanges = async () => {};
+  const saveChanges = async (
+    e: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
+    e.preventDefault();
+
+    if (!Object.values(editedTask).every((val) => val !== "")) {
+      console.log("All field must be filled", editedTask);
+      return;
+    }
+
+    if (!validateDeadline(editedTask.deadline)) {
+      setErrorMessage("Deadline can't be less than today");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      await api.put("task/update", editedTask);
+      setIsLoading(false);
+      setIsSuccess(true);
+      setTimeout(() => {
+        router.push("/mytasks");
+        setIsSuccess(false);
+      }, 2000);
+    } catch (err: any) {
+      console.error(err.response.data);
+      // Try to extract the first error message if available
+      const errorData = err.response?.data;
+      let errorMsg = "An error occurred";
+      if (errorData?.errors) {
+        // Get the first error message from the errors object
+        const firstKey = Object.keys(errorData.errors)[0];
+        errorMsg = errorData.errors[firstKey][0];
+      } else if (typeof errorData === "string") {
+        errorMsg = errorData;
+      }
+      setErrorMessage(errorMsg);
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     getTask();
@@ -58,124 +99,137 @@ export default function EditTaskPage() {
           />
         </div>
       )}
-
-      <div className="py-4 sm:pt-4 sm:pb absolute left-1/2 top-4 sm:top-1/2 transform -translate-x-1/2 sm:-translate-y-1/2 z-10 bg-white shadow-xl   w-[90%] md:w-[80%] lmd:w-[48%] rounded-3xl">
-        <div className=" w-[80%]  mx-auto   px-4 py-2 sm:my-6 border-b-2 border-dashed border-gray-500 ">
-          <h1 className="font-bold font-serif text-2xl sm:text-3xl text-center italic">
-            Task Edit
-          </h1>
-        </div>
-        <form
-          action=""
-          onSubmit={saveChanges}
-          className="flex flex-col gap-3 sm:gap-4 mt-5 md:mt-8 w-[80%] mx-auto italic text-sm sm:text-[1rem]"
+      {isSuccess ? (
+        <div
+          className={`absolute -translate-x-1/2 left-1/2 top-4 bg-white shadow-xl py-5 px-12 border`}
         >
-          <div className="flex flex-col gap-1">
-            <label className=" font-bold ">Title</label>
-            <input
-              id="title"
-              placeholder="Enter Title"
-              defaultValue={task?.title}
-              onChange={(e) =>
-                setEditedTask((prev) => ({
-                  ...prev,
-                  Title: e.target.value,
-                }))
-              }
-              className="border border-gray-600 rounded-lg outline-none py-2 px-4  w-[100%]"
-            />
+          Task updated
+        </div>
+      ) : (
+        <div className="py-4 sm:pt-4 sm:pb absolute left-1/2 top-4 sm:top-1/2 transform -translate-x-1/2 sm:-translate-y-1/2 z-10 bg-white shadow-xl   w-[90%] md:w-[80%] lmd:w-[48%] rounded-3xl">
+          <div className=" w-[80%]  mx-auto   px-4 py-2 sm:my-6 border-b-2 border-dashed border-gray-500 ">
+            <h1 className="font-bold font-serif text-2xl sm:text-3xl text-center italic">
+              Task Edit
+            </h1>
           </div>
-
-          <div>
-            <label className=" font-bold ">Category</label>
-            <select
-              id="category"
-              defaultValue={task?.category}
-              onChange={(e) =>
-                setEditedTask((prev) => ({
-                  ...prev,
-                  Category: e.target.value,
-                }))
-              }
-              name="category"
-              className="border border-gray-600 rounded-lg outline-none py-2 px-4 mt-1 w-[100%]"
-            >
-              <option value="Personal">Personal</option>
-              <option value="Work">work</option>
-              <option value="others">others</option>
-            </select>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <div
-              className={`flex flex-col ${
-                task?.status ? "w-[100%]" : "w-[45%]"
-              }`}
-            >
-              <label className=" font-bold ">Deadline</label>
+          <form
+            action=""
+            onSubmit={saveChanges}
+            className="flex flex-col gap-3 sm:gap-4 mt-5 md:mt-8 w-[80%] mx-auto italic text-sm sm:text-[1rem]"
+          >
+            <p className="text-red-500">{errorMessage}</p>
+            <div className="flex flex-col gap-1">
+              <label className=" font-bold ">Title</label>
               <input
-                id="deadline"
-                type="date"
-                defaultValue={task?.deadline}
-                onChange={(e) =>
+                id="title"
+                placeholder="Enter Title"
+                value={editedTask.title}
+                onChange={(e) => {
                   setEditedTask((prev) => ({
                     ...prev,
-                    Deadline: new Date(e.target.value),
-                  }))
-                }
-                placeholder="DD/MM/YYYY"
-                className="border border-gray-600 rounded-lg mt-1 outline-none py-2 px-4 w-full"
+                    title: e.target.value,
+                  }));
+                  setErrorMessage("");
+                }}
+                className="border border-gray-600 rounded-lg outline-none py-2 px-4  w-[100%]"
               />
             </div>
 
-            {!task?.status && (
-              <div className="w-[45%] relative checkBox-conatiner">
-                <div className="w-[78%] text-center checkBox-tooltip bg-blue-600 -top-[1rem] text-white border border-white px-4 py-2 rounded-lg absolute">
-                  <span>Check the box</span>
-                </div>
-                <label className=" font-bold ">Status</label>
-                <div className="flex items-center justify-between border border-gray-600 rounded-lg py-2 px-4 mt-1">
-                  Completed
-                  <input
-                    type="checkbox"
-                    id="status"
-                    defaultChecked={task?.status}
-                    onChange={(e) =>
-                      setEditedTask((prev) => ({
-                        ...prev,
-                        Status: e.target.checked,
-                      }))
-                    }
-                    className=" w-[10%] h-5 rounded-full"
-                  />
-                </div>
+            <div>
+              <label className=" font-bold ">Category</label>
+              <select
+                id="category"
+                value={editedTask.category}
+                onChange={(e) => {
+                  setEditedTask((prev) => ({
+                    ...prev,
+                    category: e.target.value,
+                  }));
+                  setErrorMessage("");
+                }}
+                name="category"
+                className="border border-gray-600 rounded-lg outline-none py-2 px-4 mt-1 w-[100%]"
+              >
+                <option value="Personal">Personal</option>
+                <option value="Work">work</option>
+                <option value="others">others</option>
+              </select>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <div
+                className={`flex flex-col ${
+                  task?.status ? "w-[100%]" : "w-[45%]"
+                }`}
+              >
+                <label className=" font-bold ">Deadline</label>
+                <input
+                  id="deadline"
+                  type="date"
+                  value={editedTask.deadline}
+                  onChange={(e) => {
+                    setEditedTask((prev) => ({
+                      ...prev,
+                      deadline: e.target.value,
+                    }));
+                    setErrorMessage("");
+                  }}
+                  placeholder="DD/MM/YYYY"
+                  className="border border-gray-600 rounded-lg mt-1 outline-none py-2 px-4 w-full"
+                />
               </div>
-            )}
-          </div>
 
-          <div>
-            <label className=" font-bold  ">Description</label>
-            <textarea
-              id="description"
-              defaultValue={task?.description}
-              onChange={(e) =>
-                setEditedTask((prev) => ({
-                  ...prev,
-                  Description: e.target.value,
-                }))
-              }
-              placeholder="Enter a description"
-              className="border border-gray-600 rounded-lg outline-none py-2 px-4 w-[100%] mt-1 h-24"
-            ></textarea>
-          </div>
+              {!task?.status && (
+                <div className="w-[45%] relative checkBox-conatiner">
+                  <div className="w-[78%] text-center checkBox-tooltip bg-blue-600 -top-[1rem] text-white border border-white px-4 py-2 rounded-lg absolute">
+                    <span>Check the box</span>
+                  </div>
+                  <label className=" font-bold ">Status</label>
+                  <div className="flex items-center justify-between border border-gray-600 rounded-lg py-2 px-4 mt-1">
+                    Completed
+                    <input
+                      type="checkbox"
+                      id="status"
+                      defaultChecked={editedTask.status}
+                      onChange={(e) => {
+                        setEditedTask((prev) => ({
+                          ...prev,
+                          status: e.target.checked,
+                        }));
+                        setErrorMessage("");
+                      }}
+                      className=" w-[10%] h-5 rounded-full cursor-pointer"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
 
-          <div className="bg-black  text-white px-4 py-3 text-center rounded-2xl sm:mt-2 ml-auto ">
-            <button type="submit" className="">
-              Save Changes
-            </button>
-          </div>
-        </form>
-      </div>
+            <div>
+              <label className=" font-bold  ">Description</label>
+              <textarea
+                id="description"
+                value={editedTask.description}
+                onChange={(e) => {
+                  setEditedTask((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }));
+                  setErrorMessage("");
+                }}
+                placeholder="Enter a description"
+                className="border border-gray-600 rounded-lg outline-none py-2 px-4 w-[100%] mt-1 h-24"
+              ></textarea>
+            </div>
+
+            <div className="bg-black  text-white px-4 py-3 text-center rounded-2xl sm:mt-2 ml-auto ">
+              <button type="submit" className="">
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </main>
   );
 }
