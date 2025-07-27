@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { formatDate } from "../../../mock";
+import { formatDate } from "../../../SharedFunctions";
 import { DocumentType, DocumentInputType } from "../../../Interfaces";
 import { useAuth } from "../../../context/AuthContext";
 import { api } from "../../../services/axios";
@@ -42,7 +42,7 @@ export default function page() {
     body: "",
   });
   const [filterBy, setFilterBy] = useState<FilterByType>({
-    title: '',
+    title: "",
     date: undefined,
   });
 
@@ -56,19 +56,19 @@ export default function page() {
       Title: filterBy.title ?? "",
     };
 
-  if (!payload.Date && !payload.Title) {
-    setIsFeedBack(true);
-    setFeedbackText("Please provide a title or date to filter.");
-    return;
-  }
+    if (!payload.Date && !payload.Title) {
+      setIsFeedBack(true);
+      setFeedbackText("Please provide a title or date to filter.");
+      return;
+    }
 
-  if (payload.Date && payload.Title) {
-    setMatch(`${payload.Title} & ${payload.Date.split("T")[0]}`);
-  } else if (payload.Date) {
-    setMatch(payload.Date.split("T")[0]);
-  } else if (payload.Title) {
-    setMatch(payload.Title);
-  }
+    if (payload.Date && payload.Title) {
+      setMatch(`${payload.Title} & ${payload.Date.split("T")[0]}`);
+    } else if (payload.Date) {
+      setMatch(payload.Date.split("T")[0]);
+    } else if (payload.Title) {
+      setMatch(payload.Title);
+    }
 
     setSearching(true);
     try {
@@ -92,11 +92,10 @@ export default function page() {
     } finally {
       setSearching(false);
     }
-
   };
 
   const resetFilterBy = () => {
-    setFilterBy({ title: '', date: undefined });
+    setFilterBy({ title: "", date: undefined });
     setFilteredDocuments(documents);
   };
 
@@ -373,9 +372,9 @@ export default function page() {
         return;
       }
 
-      setFilterBy({title: "", date : undefined});
+      setFilterBy({ title: "", date: undefined });
       setShowFilter(false);
-      if (!showDocus && showForm ) {
+      if (!showDocus && showForm) {
         setShowForm(false);
         setShowDocus(true);
         localStorage.removeItem("showDocuForm");

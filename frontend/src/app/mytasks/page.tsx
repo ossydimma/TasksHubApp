@@ -1,6 +1,6 @@
 "use client";
 
-import { categories } from "../../../mock";
+import { categories } from "../../../SharedFunctions";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
@@ -31,26 +31,25 @@ export default function page() {
     console.log(filterBy);
   };
 
-async function getAllTasks() {
-  setIsLoading(true);
+  async function getAllTasks() {
+    setIsLoading(true);
 
-  try {
-    const res = await api.get("/task/get-tasks");
-    const allTasks = res.data.tasks;
-    console.log(allTasks);
-    setTasks(allTasks);
-    setFilteredTasks(allTasks);
-  } catch (err: any) {
-    console.error("Failed to fetch tasks:", err);
-  } finally {
-    setIsLoading(false);
+    try {
+      const res = await api.get("/task/get-tasks");
+      const allTasks = res.data.tasks;
+      console.log(allTasks);
+      setTasks(allTasks);
+      setFilteredTasks(allTasks);
+    } catch (err: any) {
+      console.error("Failed to fetch tasks:", err);
+    } finally {
+      setIsLoading(false);
+    }
   }
-}
 
-useEffect(() => {
-  getAllTasks();
-}, []);
-
+  useEffect(() => {
+    getAllTasks();
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated && !loading) {
@@ -358,12 +357,16 @@ useEffect(() => {
                             Details
                           </li>
                           <li
-                            onClick={() => router.push(`/mytasks/edit/${task.id}`)}
+                            onClick={() =>
+                              router.push(`/mytasks/edit/${task.id}`)
+                            }
                           >
                             Edit
                           </li>
                           <li
-                            onClick={() => router.push(`/mytasks/delete/${task.id}`)}
+                            onClick={() =>
+                              router.push(`/mytasks/delete/${task.id}`)
+                            }
                           >
                             Delete
                           </li>

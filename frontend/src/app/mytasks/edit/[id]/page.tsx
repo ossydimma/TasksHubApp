@@ -5,7 +5,8 @@ import { useState, useEffect } from "react";
 import { api } from "../../../../../services/axios";
 import { TaskModel, UserTaskType } from "../../../../../Interfaces";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
-import { validateDeadline } from "../../../../../mock";
+import { getApiErrorMessage, validateDeadline } from "../../../../../SharedFunctions"
+import { TaskApiService } from "../../../../../services/TaskApiService";
 
 export default function EditTaskPage() {
   const params = useParams();
@@ -32,33 +33,47 @@ export default function EditTaskPage() {
       const res = await api.get(`task/${taskId}`);
       setTask(res.data);
       setEditedTask(res.data);
-      console.log(res);
     } catch (err: any) {
       console.error(err);
     } finally {
       setIsLoading(false);
     }
   }
+  /**
+   * Validate all input of task form
+   * @return {string | null} - Error message if any is valid
+   */
+  const validateForm = (): string | null => {
+    if (!Object.values(editedTask).every((val) => val !== "")) {
+      return "All field must be filled";
+    }
+
+    const deadlineError = validateDeadline(editedTask.deadline);
+    if (deadlineError) {
+      return deadlineError;
+    }
+
+    return null;
+  };
 
   const saveChanges = async (
     e: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {
     e.preventDefault();
 
-    if (!Object.values(editedTask).every((val) => val !== "")) {
-      console.log("All field must be filled", editedTask);
-      return;
-    }
-
-    if (!validateDeadline(editedTask.deadline)) {
-      setErrorMessage("Deadline can't be less than today");
+    // Validation step
+    const validationError = validateForm();
+    if (validationError) {
+      setErrorMessage(validationError);
       return;
     }
 
     setIsLoading(true);
 
     try {
-      await api.put("task/update", editedTask);
+      await TaskApiService.updateTask(editedTask); //Api interaction step
+
+      // Success handling step
       setIsLoading(false);
       setIsSuccess(true);
       setTimeout(() => {
@@ -66,17 +81,8 @@ export default function EditTaskPage() {
         setIsSuccess(false);
       }, 2000);
     } catch (err: any) {
-      console.error(err.response.data);
-      // Try to extract the first error message if available
-      const errorData = err.response?.data;
-      let errorMsg = "An error occurred";
-      if (errorData?.errors) {
-        // Get the first error message from the errors object
-        const firstKey = Object.keys(errorData.errors)[0];
-        errorMsg = errorData.errors[firstKey][0];
-      } else if (typeof errorData === "string") {
-        errorMsg = errorData;
-      }
+      //Error handling step
+      const errorMsg = getApiErrorMessage(err);
       setErrorMessage(errorMsg);
       setIsLoading(false);
     }

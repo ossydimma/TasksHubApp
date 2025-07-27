@@ -6,7 +6,7 @@ import LoadingSpinner from "@/app/components/LoadingSpinner";
 import { api } from "../../../../services/axios";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../../context/AuthContext";
-import { validateDeadline } from "../../../../mock";
+import { validateDeadline } from "../../../../SharedFunctions";
 
 export default function page() {
   const router = useRouter();
