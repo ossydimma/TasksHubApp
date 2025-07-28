@@ -123,6 +123,24 @@ public class TaskController(ITaskRepo repo, IUserRepo userRepo) : ControllerBase
         });
     }
 
+    [HttpDelete("{taskId}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(500)]
+    public async Task<IActionResult> DeleteTaskById(Guid taskId)
+    {
+        Guid? userId = GetUserId();
+        if (userId == null)
+            return Unauthorized("Invalid or missing user ID");
+
+        bool deleted = await _repo.DeleteTaskByIdAsync(taskId, userId);
+
+        if (!deleted)
+            return StatusCode(500, "An internal server error occurred. Please try again later.");
+
+        return Ok();
+    }
+
     private Guid? GetUserId()
     {
         string? userIdStr = User.FindFirst("id")?.Value;
