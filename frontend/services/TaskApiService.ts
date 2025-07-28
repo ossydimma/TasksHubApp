@@ -1,13 +1,18 @@
-import { TaskModel } from "../Interfaces";
+import { TaskModel, TaskValuesType } from "../Interfaces";
 import { api } from "./axios";
 
 interface TaskService {
+    createTask(values: TaskValuesType): Promise<any>;
     updateTask(payload: TaskModel) : Promise<any>;
     getTask(taskId: string | string[] | undefined): Promise<any>;
     deleteTask(taskId: string | string[] | undefined): Promise<any>;
 }
 
-export const TaskApiService: TaskService = {
+export const taskApi: TaskService = {
+
+    createTask: async(values: TaskValuesType) => {
+        await api.post("task/create", values);
+    },
 
     updateTask: async(payload: TaskModel) => {
         await api.put("task/update", payload)

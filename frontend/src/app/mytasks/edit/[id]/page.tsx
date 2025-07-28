@@ -5,8 +5,11 @@ import { useState, useEffect } from "react";
 import { api } from "../../../../../services/axios";
 import { TaskModel, UserTaskType } from "../../../../../Interfaces";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
-import { getApiErrorMessage, validateDeadline } from "../../../../../SharedFunctions"
-import { TaskApiService } from "../../../../../services/TaskApiService";
+import {
+  getApiErrorMessage,
+  validateDeadline,
+} from "../../../../../SharedFunctions";
+import { taskApi } from "../../../../../services/TaskApiService";
 
 export default function EditTaskPage() {
   const params = useParams();
@@ -30,12 +33,12 @@ export default function EditTaskPage() {
     setIsLoading(true);
 
     try {
-      const res = await TaskApiService.getTask(taskId);
+      const res = await taskApi.getTask(taskId);
       setTask(res);
       setEditedTask(res);
     } catch (err: any) {
       console.error(err);
-      setErrorMessage("An unexpected error occured, try reloading the page.")
+      setErrorMessage("An unexpected error occured, try reloading the page.");
     } finally {
       setIsLoading(false);
     }
@@ -72,7 +75,7 @@ export default function EditTaskPage() {
     setIsLoading(true);
 
     try {
-      await TaskApiService.updateTask(editedTask); //Api interaction step
+      await taskApi.updateTask(editedTask); //Api interaction step
 
       // Success handling step
       setIsLoading(false);

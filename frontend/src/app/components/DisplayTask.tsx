@@ -5,7 +5,7 @@ import { useRouter, usePathname, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { api } from "../../../services/axios";
 import { UserTaskType } from "../../../Interfaces";
-import { TaskApiService } from "../../../services/TaskApiService";
+import { taskApi } from "../../../services/TaskApiService";
 
 export default function DisplayTask() {
   const router = useRouter();
@@ -24,7 +24,7 @@ export default function DisplayTask() {
     setIsLoading(true);
 
     try {
-      await TaskApiService.deleteTask(taskId);
+      await taskApi.deleteTask(taskId);
       setIsLoading(false);
       setDeleted(true);
       setTimeout(() => {
@@ -42,7 +42,7 @@ export default function DisplayTask() {
     setIsLoading(true);
 
     try {
-      const res = await TaskApiService.getTask(taskId);
+      const res = await taskApi.getTask(taskId);
       setTask(res);
     } catch (err: any) {
       console.error(err);
@@ -105,7 +105,7 @@ export default function DisplayTask() {
         <div className="py-4 sm:py-8 pb absolute left-1/2 top-4 sm:top-1/2 transform -translate-x-1/2 sm:-translate-y-1/2 z-10 bg-white shadow-xl w-[90%] md:w-[80%] lmd:w-[48%] rounded-3xl">
           <div className=" w-[80%]  mx-auto  px-4 py-2 border-b-2 border-dashed border-gray-500 ">
             <h1 className="font-bold font-serif text-2xl sm:text-3xl text-center italic">
-             {DeletePage ? "Delete Task" : "Task Details" }
+              {DeletePage ? "Delete Task" : "Task Details"}
             </h1>
           </div>
           <div className="h-[85%] w-[80%] mx-auto overflow-hidden overflow-x-hidden pb-6">

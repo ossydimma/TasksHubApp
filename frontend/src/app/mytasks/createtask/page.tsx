@@ -7,6 +7,7 @@ import { api } from "../../../../services/axios";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../../context/AuthContext";
 import { validateDeadline } from "../../../../SharedFunctions";
+import { taskApi } from "../../../../services/TaskApiService";
 
 export default function page() {
   const router = useRouter();
@@ -47,7 +48,7 @@ export default function page() {
 
     setIsLoading(true);
     try {
-      const res = await api.post("task/create", taskValues);
+      await taskApi.createTask(taskValues);
       setTaskValues((prev) => ({
         ...prev,
         title: "",
