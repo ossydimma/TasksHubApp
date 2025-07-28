@@ -75,7 +75,7 @@ public class TaskRepo(IDistributedCache distributedCache, ApplicationDbContext D
                 Category = t.Category,
                 Status = t.Status,
                 CreationDate = t.CreationDate,
-                Deadline = t.Deadline 
+                Deadline = t.Deadline
             })
             .OrderByDescending(t => t.CreationDate)
             .ToListAsync();
@@ -122,6 +122,33 @@ public class TaskRepo(IDistributedCache distributedCache, ApplicationDbContext D
         }
 
         return task;
+    }
+
+    public async Task<bool> DeleteTaskByIdAsync(Guid taskId, Guid? userId)
+    {
+        string key = $"TasksHub_Task_{taskId}";
+
+        UserTask? task = await _db.UserTasks
+            .FirstOrDefaultAsync(t => t.UserId == userId && t.Id == taskId);
+        if (task == null)
+            return false;
+
+        _db.UserTasks.Remove(task);
+
+        int affected = await _db.SaveChangesAsync();
+        if (affected > 0)
+        {
+            try
+            {
+                _distributedCache.Remove(key);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to delete from Redis cache: " + ex.Message);
+            }
+            return true;
+        }
+        return false;
     }
 
 

@@ -7,4 +7,5 @@ public interface ITaskRepo
     Task<bool> UpdateTaskAsync(UserTask task);
     Task<List<TaskDto>> GetAllTasksAsync(Guid userId);
     Task<UserTask?> GetTaskByIdAsync(Guid taskId, Guid? userId);
+    Task<bool> DeleteTaskByIdAsync(Guid taskId, Guid? userId);
 }
