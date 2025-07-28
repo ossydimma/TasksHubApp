@@ -30,7 +30,7 @@ export default function EditTaskPage() {
     setIsLoading(true);
 
     try {
-      const res = await TaskApiService.getTaskById(taskId);
+      const res = await TaskApiService.getTask(taskId);
       setTask(res);
       setEditedTask(res);
     } catch (err: any) {

@@ -3,7 +3,8 @@ import { api } from "./axios";
 
 interface TaskService {
     updateTask(payload: TaskModel) : Promise<any>;
-    getTaskById(taskId: string | string[] | undefined): Promise<any>;
+    getTask(taskId: string | string[] | undefined): Promise<any>;
+    deleteTask(taskId: string | string[] | undefined): Promise<any>;
 }
 
 export const TaskApiService: TaskService = {
@@ -12,9 +13,12 @@ export const TaskApiService: TaskService = {
         await api.put("task/update", payload)
     },
 
-    getTaskById: async(taskId: string) => {
+    getTask: async(taskId: string) => {
         const res = await api.get(`task/${taskId}`);
         return res.data;
-    }
+    },
 
+    deleteTask: async(taskId: string) => {
+        await api.delete(`task/${taskId}`)
+    }
 }

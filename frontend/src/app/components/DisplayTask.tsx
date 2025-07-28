@@ -24,7 +24,7 @@ export default function DisplayTask() {
     setIsLoading(true);
 
     try {
-      await api.delete(`task/delete?${taskId}`);
+      await TaskApiService.deleteTask(taskId);
       setIsLoading(false);
       setDeleted(true);
       setTimeout(() => {
@@ -42,7 +42,7 @@ export default function DisplayTask() {
     setIsLoading(true);
 
     try {
-      const res = await TaskApiService.getTaskById(taskId);
+      const res = await TaskApiService.getTask(taskId);
       setTask(res);
     } catch (err: any) {
       console.error(err);
