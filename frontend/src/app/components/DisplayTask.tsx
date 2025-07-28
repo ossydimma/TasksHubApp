@@ -5,6 +5,7 @@ import { useRouter, usePathname, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { api } from "../../../services/axios";
 import { UserTaskType } from "../../../Interfaces";
+import { TaskApiService } from "../../../services/TaskApiService";
 
 export default function DisplayTask() {
   const router = useRouter();
@@ -41,9 +42,8 @@ export default function DisplayTask() {
     setIsLoading(true);
 
     try {
-      const res = await api.get(`task/${taskId}`);
-      setTask(res.data);
-      console.log(res);
+      const res = await TaskApiService.getTaskById(taskId);
+      setTask(res);
     } catch (err: any) {
       console.error(err);
     } finally {

@@ -30,11 +30,12 @@ export default function EditTaskPage() {
     setIsLoading(true);
 
     try {
-      const res = await api.get(`task/${taskId}`);
-      setTask(res.data);
-      setEditedTask(res.data);
+      const res = await TaskApiService.getTaskById(taskId);
+      setTask(res);
+      setEditedTask(res);
     } catch (err: any) {
       console.error(err);
+      setErrorMessage("An unexpected error occured, try reloading the page.")
     } finally {
       setIsLoading(false);
     }
