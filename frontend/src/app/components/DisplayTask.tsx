@@ -14,23 +14,26 @@ export default function DisplayTask() {
   const taskId = params.id;
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [task, setTask] = useState<UserTaskType | undefined>(undefined);
+  const [task, setTask] = useState<UserTaskType>({} as UserTaskType);
   const [validate, setValidate] = useState<boolean>(false);
   const [deleted, setDeleted] = useState<boolean>(false);
 
   const DeletePage = pathname.includes("delete");
+
+  const successfulDeletion = () => {
+    setIsLoading(false);
+    setDeleted(true);
+      setTimeout(() => {
+        router.push("/mytasks");
+      }, 2000);
+  }
 
   async function deleteTask() {
     setIsLoading(true);
 
     try {
       await taskApi.deleteTask(taskId);
-      setIsLoading(false);
-      setDeleted(true);
-      setTimeout(() => {
-        router.push("/mytasks");
-        setDeleted(false);
-      }, 1000);
+      successfulDeletion();
     } catch (err: any) {
       console.error(err);
     } finally {
@@ -110,11 +113,11 @@ export default function DisplayTask() {
           </div>
           <div className="h-[85%] w-[80%] mx-auto overflow-hidden overflow-x-hidden pb-6">
             <dl
-              className={`flex flex-col gap-2  mt-[2rem] text-sm sm:text-lg italic`}
+              className={`flex flex-col gap-2 sm:gap-3  ${task?.description?.length > 110 ? "mt-2 sm:mt-[1.5rem]" : "mt-[2rem]"}  text-sm sm:text-[1rem] italic`}
             >
               <div className="flex items-center justify-between border border-gray-300 p-3">
                 <dt className="font-bold">Task Name:</dt>
-                <dd className="lowercase">{task?.title}</dd>
+                <dd className="uppercase">{task?.title}</dd>
               </div>
 
               <div className="flex items-center  justify-between border border-gray-300  p-3  ">
@@ -136,7 +139,7 @@ export default function DisplayTask() {
 
               <div className="flex flex-col gap-1 border border-gray-300  p-3">
                 <dt className="font-[900] ">Description:</dt>
-                <dd className="ml-6 ">{task?.description}</dd>
+                <dd className="ml-6 text-sm">{task?.description}</dd>
               </div>
             </dl>
 

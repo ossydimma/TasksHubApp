@@ -44,7 +44,7 @@ export default function EditTaskPage() {
     }
   }
   /**
-   * Validate all input of task form
+   * Validate all form inputs
    * @return {string | null} - Error message if any is valid
    */
   const validateForm = (): string | null => {
@@ -127,7 +127,7 @@ export default function EditTaskPage() {
             onSubmit={saveChanges}
             className="flex flex-col gap-3 sm:gap-4 mt-5 md:mt-8 w-[80%] mx-auto italic text-sm sm:text-[1rem]"
           >
-            <p className="text-red-500">{errorMessage}</p>
+            <p className="text-red-500 -mt-4">{errorMessage}</p>
             <div className="flex flex-col gap-1">
               <label className=" font-bold ">Title</label>
               <input

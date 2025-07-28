@@ -6,7 +6,10 @@ import LoadingSpinner from "@/app/components/LoadingSpinner";
 import { api } from "../../../../services/axios";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../../context/AuthContext";
-import { validateDeadline } from "../../../../SharedFunctions";
+import {
+  getApiErrorMessage,
+  validateDeadline,
+} from "../../../../SharedFunctions";
 import { taskApi } from "../../../../services/TaskApiService";
 
 export default function page() {
@@ -22,55 +25,64 @@ export default function page() {
     category: "personal",
   });
 
-  async function handleSubmit(
-    e: React.FormEvent<HTMLFormElement>
-  ): Promise<void> {
-    e.preventDefault();
+  const successfulApiCall = () => {
+    setTaskValues((prev) => ({
+      ...prev,
+      title: "",
+      deadline: "",
+      description: "",
+    }));
 
+    setTimeout(() => {
+      setMessage("Tasks created successfully");
+    }, 3000);
+
+    setMessage(""); 
+    router.push("/mytasks");
+  };
+
+  /**
+   * Validate all form inputs
+   * @return {string | null} - Error message if any is vallid else return null
+   */
+  const validateForm = (): string | null => {
     const emptyFields = Object.entries(taskValues)
       .filter(([key, value]) => value === "")
       .map(([key]) => key);
 
     if (emptyFields.length > 0) {
-      setMessage(`Please fill in: ${emptyFields.join(", ")}`);
-      return;
+      return `Please fill in: ${emptyFields.join(", ")}`;
     }
 
-    if (taskValues.description.length > 100) {
-      setMessage("Description should be above 100 character");
-      return;
+    if (taskValues.description.length > 200 && taskValues.description.length < 3) {
+      return "Description should be above 200 or below 3 characters. ";
     }
 
-    if (!validateDeadline(taskValues.deadline)) {
-      setMessage("Deadline can't be less than today");
+    const deadlineError = validateDeadline(taskValues.deadline);
+    if (deadlineError) {
+      return deadlineError
+  }
+    return null;
+  };
+
+  async function handleSubmit(
+    e: React.FormEvent<HTMLFormElement>
+  ): Promise<void> {
+    e.preventDefault();
+
+    const validationError = validateForm();
+    if (validationError){
+      setMessage(validationError);
       return;
     }
 
     setIsLoading(true);
     try {
       await taskApi.createTask(taskValues);
-      setTaskValues((prev) => ({
-        ...prev,
-        title: "",
-        deadline: "",
-        description: "",
-      }));
-      setTimeout(() => {
-        setMessage("Tasks created successfully");
-      }, 3000);
-      setMessage("");
+
+      successfulApiCall();
     } catch (err: any) {
-      console.error(err.response.data);
-      // Try to extract the first error message if available
-      const errorData = err.response?.data;
-      let errorMsg = "An error occurred";
-      if (errorData?.errors) {
-        // Get the first error message from the errors object
-        const firstKey = Object.keys(errorData.errors)[0];
-        errorMsg = errorData.errors[firstKey][0];
-      } else if (typeof errorData === "string") {
-        errorMsg = errorData;
-      }
+      const errorMsg = getApiErrorMessage(err);
       setMessage(errorMsg);
     } finally {
       setIsLoading(false);
@@ -111,7 +123,7 @@ export default function page() {
               message.includes("successfully")
                 ? "text-green-500"
                 : "text-red-500"
-            } mt-2`}
+            } my-2 italic text-sm sm:text-[1rem]`}
           >
             {message}{" "}
           </p>
@@ -194,7 +206,6 @@ export default function page() {
                 className="border border-gray-600 rounded-lg outline-none py-2 px-4 w-[100%] h-20 sm:h-24"
               />
             </div>
-            Richard branson
             <div className="ml-auto ">
               <button
                 type="submit"
