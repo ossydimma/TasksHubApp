@@ -55,11 +55,10 @@ export interface TaskModel {
 }
 
 export interface FilterByType {
-    allTask : boolean;
-    status : string | undefined;
-    created: Date | undefined;
-    deadline : Date | undefined;
-    category : string | undefined;
+    status : string;
+    created: string;
+    deadline : string;
+    category : string;
 }
 
 export interface DocumentType {

@@ -6,41 +6,78 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
 import { FilterByType, UserTaskType } from "../../../Interfaces";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { api } from "../../../services/axios";
+import { taskApi } from "../../../services/TaskApiService";
 
 export default function page() {
   const router = useRouter();
   const { loading, isAuthenticated } = useAuth();
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [searching, setSearching] = useState<boolean>(false);
   const [tasks, setTasks] = useState<UserTaskType[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<UserTaskType[]>([]);
   const [match, setMatch] = useState<string>("");
   const [query, setQuery] = useState<string>("");
-
-  const [filterBy, setFilterBy] = useState<FilterByType>({
-    allTask: true,
-    status: undefined,
-    created: undefined,
-    deadline: undefined,
-    category: undefined,
-  });
-
   const [showFilter, setShowFilter] = useState<boolean>(false);
 
+  const [filterBy, setFilterBy] = useState<FilterByType>({
+    status: "",
+    created: "",
+    deadline: "",
+    category: "",
+  });
+
+  const statusOptions = [
+    { id: 1, label: "None", value: "" },
+    { id: 2, label: "Completed tasks", value: "completed" },
+    { id: 3, label: "Pending tasks", value: "pending" },
+    { id: 4, label: "Overdue tasks", value: "overdue" },
+  ];
+
+  const CategoryOptions = [
+    { id: 1, label: "None", value: undefined },
+    { id: 2, label: "Work", value: "work" },
+    { id: 3, label: "Personal", value: "personal" },
+    { id: 4, label: "Others", value: "others" },
+  ];
+
+  // const validateFilterForm = () : string | null => {
+  //   if (!Object.values(filterBy).every((val) => val !== "")) {
+  //     return "All fields are empty";
+  //   }
+
+  //   return null;
+  // }
+
+  
   const handleFilterBy = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log(filterBy);
+    // const formError = validateFilterForm();
+    // if (formError) {
+    //   console.log(formError);
+    // } else {
+    //   console.log("null");
+    // }
   };
 
   async function getTaskByTitle() {}
+
+  function resetFilterBy() {
+    setFilterBy({
+      status: "",
+      created: "",
+      deadline: "",
+      category: "",
+    });
+    console.log(filterBy);
+  }
 
   async function getAllTasks() {
     setIsLoading(true);
 
     try {
-      const res = await api.get("/task/get-tasks");
-      const allTasks = res.data.tasks;
+      const allTasks = await taskApi.getAllTasks();
       setTasks(allTasks);
       setFilteredTasks(allTasks);
     } catch (err: any) {
@@ -53,6 +90,33 @@ export default function page() {
   useEffect(() => {
     getAllTasks();
   }, []);
+
+  useEffect(() => {
+    if (tasks.length < 1) {
+      return;
+    }
+
+    setSearching(true);
+    const handler = setTimeout(() => {
+      if (query.trim() === "") {
+        setFilteredTasks(tasks);
+        setSearching(false);
+      }
+
+      const filtered: UserTaskType[] = tasks.filter((task) =>
+        task.title.toLowerCase().includes(query.toLowerCase())
+      );
+
+      setSearching(false);
+      setMatch(query);
+
+      setFilteredTasks(filtered);
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [query]);
 
   useEffect(() => {
     if (!isAuthenticated && !loading) {
@@ -211,30 +275,16 @@ export default function page() {
                 className="flex flex-col gap-2"
                 onSubmit={handleFilterBy}
               >
-                <div className="flex items-center justify-between border border-gray-600 rounded-lg py-2 px-2 text-sm">
-                  All Tasks
-                  <input
-                    type="checkbox"
-                    id="status"
-                    defaultChecked={filterBy.allTask}
-                    onChange={(e) =>
-                      setFilterBy((prev) => ({
-                        ...prev,
-                        allTask: e.target.checked,
-                      }))
-                    }
-                    className=" w-[10%] h-5 rounded-full"
-                  />
-                </div>
                 <div className={`flex flex-col text-sm w-[100%]`}>
                   <label className=" font-medium">Creation date</label>
                   <input
                     id="deadline"
                     type="date"
+                    value={filterBy.created}
                     onChange={(e) =>
                       setFilterBy((prev) => ({
                         ...prev,
-                        created: new Date(e.target.value),
+                        created: e.target.value,
                       }))
                     }
                     placeholder="DD/MM/YYYY"
@@ -245,27 +295,25 @@ export default function page() {
                   <label className=" font-medium">Status</label>
                   <select
                     id="status"
+                    value={filterBy.status ? filterBy.status : "None"}
                     onChange={(e) =>
                       setFilterBy((prev) => ({
                         ...prev,
-                        status:
-                          e.target.value === "None"
-                            ? undefined
-                            : e.target.value,
+                        status: e.target.value,
                       }))
                     }
                     name="status"
                     className="border border-gray-600 bg-transparent rounded-lg outline-none py-2 px-1  w-[100%]"
                   >
-                    <option className="text-black" value="None">
-                      None
-                    </option>
-                    <option className="text-black" value="completed">
-                      Completed Task
-                    </option>
-                    <option className="text-black" value="pending">
-                      Pending Task
-                    </option>
+                    {statusOptions.map((option) => (
+                      <option
+                        className="text-black"
+                        key={option.id}
+                        value={option.value}
+                      >
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -274,10 +322,11 @@ export default function page() {
                   <input
                     id="deadline"
                     type="date"
+                    value={filterBy.deadline}
                     onChange={(e) =>
                       setFilterBy((prev) => ({
                         ...prev,
-                        deadline: new Date(e.target.value),
+                        deadline: e.target.value,
                       }))
                     }
                     placeholder="DD/MM/YYYY"
@@ -292,32 +341,34 @@ export default function page() {
                     onChange={(e) =>
                       setFilterBy((prev) => ({
                         ...prev,
-                        category:
-                          e.target.value === "None"
-                            ? undefined
-                            : e.target.value,
+                        category: e.target.value,
                       }))
                     }
                     name="category"
                     className="border border-gray-600 bg-transparent rounded-lg outline-none py-2 px-1  w-[100%]"
                   >
-                    <option className="text-black" value="None">
-                      None
-                    </option>
-                    <option className="text-black" value="work">
-                      work{" "}
-                    </option>
-                    <option className="text-black" value="personal">
-                      Personal
-                    </option>
-                    <option className="text-black" value="other">
-                      others
-                    </option>
+                    {CategoryOptions.map((cate) => (
+                      <option
+                        className="text-black"
+                        key={cate.id}
+                        value={cate.value}
+                      >
+                        {cate.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
+                <div className="my-4 flex justify-between items-center">
+                  <div
+                    onClick={resetFilterBy}
+                    className="py-2 px-4 rounded-md cursor-pointer text-sm text-black hover:text-white  bg-white hover:bg-black border"
+                  >
+                    <button type="button">Reset</button>
+                  </div>
 
-                <div className="py-2 px-4 rounded-md cursor-pointer text-sm text-black hover:text-white  bg-white hover:bg-black border my-2 ml-auto">
-                  <button type="submit">Confirm</button>
+                  <div className="py-2 px-4 rounded-md cursor-pointer text-sm text-black hover:text-white  bg-white hover:bg-black border">
+                    <button type="submit">Confirm</button>
+                  </div>
                 </div>
               </form>
             </div>
@@ -355,7 +406,7 @@ export default function page() {
       </header>
 
       <section className="h-[85vh] w-[98%] md:h-[90vh] overflow-hidden pt-4 mx-2  mb-[3rem] overflow-y-hidde">
-        {isLoading ? (
+        {searching ? (
           <div className="h-full w-full flex justify-center items-center">
             <LoadingSpinner
               styles={{
