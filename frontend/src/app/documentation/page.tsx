@@ -415,9 +415,9 @@ export default function page() {
       <header
         className={`flex ${
           documents.length > 0 ? "justify-between" : "gap-[15%]"
-        }  items-center px-4 sm:px-6 mt-5 lmd:mt-6 -mb-2 border-b-2 border-dashed border-gray-500 pb-4`}
+        }  items-center px-4 sm:px-6 mt-5 lmd:mt-4 -mb-2 border-b-2 border-dashed border-gray-500 pb-4`}
       >
-        <div className="py-3 px-4 text-sm md:text-lg bg-black text-white rounded-md cursor-pointer">
+        <div className="py-[0.5rem] px-4 text-sm md:text-lg bg-black text-white rounded-md cursor-pointer">
           Document
         </div>
 
@@ -428,7 +428,7 @@ export default function page() {
         >
           {query && (
             <div
-              className="border-r-2 w-[15%] md:w-[13.5%] lmd:w-[10%] py-3 cursor-pointer"
+              className="border-r-2 w-[15%] md:w-[13.5%] lmd:w-[10%] py-2 cursor-pointer"
               onClick={() => setQuery("")}
             >
               <svg
@@ -468,7 +468,7 @@ export default function page() {
           />
 
           <div
-            className="bg-gray-700 hover:bg-black w-[18%] md:w-[15%] lmd:w-[12.5%] py-3 cursor-pointer "
+            className="bg-gray-700 hover:bg-black w-[18%] md:w-[15%] lmd:w-[12.5%] py-2 cursor-pointer "
             onClick={getDocumentsByTitle}
             role="button"
             tabIndex={0}
@@ -511,6 +511,8 @@ export default function page() {
             </svg>
           </div>
         </div>
+
+
         {showDocus && documents.length > 0 && (
           <div
             onClick={() => setShowFilter(true)}
