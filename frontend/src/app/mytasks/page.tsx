@@ -4,7 +4,7 @@ import { categories } from "../../../SharedFunctions";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
-import { FilterByType, UserTaskType } from "../../../Interfaces";
+import { FilterTaskType, UserTaskType } from "../../../Interfaces";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { taskApi } from "../../../services/TaskApiService";
 
@@ -20,7 +20,7 @@ export default function page() {
   const [query, setQuery] = useState<string>("");
   const [showFilter, setShowFilter] = useState<boolean>(false);
 
-  const [filterBy, setFilterBy] = useState<FilterByType>({
+  const [filterBy, setFilterBy] = useState<FilterTaskType>({
     status: "",
     created: "",
     deadline: "",
@@ -41,24 +41,29 @@ export default function page() {
     { id: 4, label: "Others", value: "others" },
   ];
 
-  // const validateFilterForm = () : string | null => {
-  //   if (!Object.values(filterBy).every((val) => val !== "")) {
-  //     return "All fields are empty";
-  //   }
+  const validateFilterForm = () : boolean => {
+    if (!Object.values(filterBy).some((val) => val !== "")) {
+      return false;
+    }
 
-  //   return null;
-  // }
+    return true;
+  }
 
   
-  const handleFilterBy = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleFilterBy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(filterBy);
-    // const formError = validateFilterForm();
-    // if (formError) {
-    //   console.log(formError);
-    // } else {
-    //   console.log("null");
-    // }
+
+    const formError = validateFilterForm();
+    if (!formError) {
+      return;
+    } 
+
+    try {
+      const tasks = await taskApi.filterTask(filterBy);
+      setFilteredTasks(tasks)
+    } catch (err: any) {
+      console.error(err);
+    }
   };
 
   async function getTaskByTitle() {}

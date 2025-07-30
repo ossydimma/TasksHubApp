@@ -1,4 +1,4 @@
-import { TaskModel, TaskValuesType } from "../Interfaces";
+import { FilterTaskType, TaskModel, TaskValuesType } from "../Interfaces";
 import { api } from "./axios";
 
 interface TaskService {
@@ -6,6 +6,7 @@ interface TaskService {
     updateTask(payload: TaskModel) : Promise<any>;
     getAllTasks() : Promise<any>;
     getTask(taskId: string | string[] | undefined): Promise<any>;
+    filterTask(obj : FilterTaskType): Promise<any>
     deleteTask(taskId: string | string[] | undefined): Promise<any>;
 }
 
@@ -27,6 +28,11 @@ export const taskApi: TaskService = {
     getTask: async(taskId: string) => {
         const res = await api.get(`task/${taskId}`);
         return res.data;
+    },
+
+    filterTask: async(obj: FilterTaskType) => {
+        const res = await api.post('task/filterTask', obj);
+        return res.data.tasks;
     },
 
     deleteTask: async(taskId: string) => {

@@ -54,7 +54,7 @@ export interface TaskModel {
     status: boolean;
 }
 
-export interface FilterByType {
+export interface FilterTaskType {
     status : string;
     created: string;
     deadline : string;
