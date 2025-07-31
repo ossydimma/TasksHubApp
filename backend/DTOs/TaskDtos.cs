@@ -21,7 +21,7 @@ public class TaskDto
     [Required]
     public DateTime CreationDate { get; set; }
     [Required]
-    public bool Status { get; set; }
+    public string? Status { get; set; } = null!;
 }
 
 public class CreateTaskDto
@@ -32,4 +32,12 @@ public class CreateTaskDto
     public string? Description { get; set; } = null!;
     public string? Deadline { get; set; } = null!;
 
+}
+
+public class FilterTaskDto
+{
+    public string? Category { get; set; } = null!;
+    public string? Deadline { get; set; } = null!;
+    public string? Created { get; set; } = null!;
+    public string? Status { get; set; } = null!;
 }

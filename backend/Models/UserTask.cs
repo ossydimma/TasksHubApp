@@ -21,7 +21,7 @@ public class UserTask
     public string Description { get; set; } = string.Empty;
     public DateOnly? Deadline { get; set; } = null;
     public DateTime CreationDate { get; set; } = DateTime.UtcNow;
-    public bool Status { get; set; } = false;
+    public string Status { get; set; } = "Pending";
 
     [ForeignKey("UserId")]
     public Guid UserId { get; set; }
