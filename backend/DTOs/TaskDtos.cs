@@ -37,7 +37,7 @@ public class CreateTaskDto
 public class FilterTaskDto
 {
     public string? Category { get; set; } = null!;
-    public string? Deadline { get; set; } = null!;
-    public string? Created { get; set; } = null!;
+    public DateOnly? Deadline { get; set; }
+    public DateOnly? Created { get; set; }
     public string? Status { get; set; } = null!;
 }

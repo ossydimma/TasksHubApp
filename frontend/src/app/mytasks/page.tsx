@@ -43,6 +43,7 @@ export default function page() {
 
   const validateFilterForm = () : boolean => {
     if (!Object.values(filterBy).some((val) => val !== "")) {
+      
       return false;
     }
 
@@ -53,13 +54,14 @@ export default function page() {
   const handleFilterBy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    console.log(filterBy.deadline)
     const formError = validateFilterForm();
     if (!formError) {
       return;
     } 
 
     try {
-      const tasks = await taskApi.filterTask(filterBy);
+      // const tasks = await taskApi.filterTask(filterBy);
       setFilteredTasks(tasks)
     } catch (err: any) {
       console.error(err);
@@ -85,6 +87,7 @@ export default function page() {
       const allTasks = await taskApi.getAllTasks();
       setTasks(allTasks);
       setFilteredTasks(allTasks);
+      console.log(allTasks);
     } catch (err: any) {
       console.error("Failed to fetch tasks:", err);
     } finally {
@@ -292,7 +295,7 @@ export default function page() {
                         created: e.target.value,
                       }))
                     }
-                    placeholder="DD/MM/YYYY"
+                    // placeholder="DD/MM/YYYY"
                     className="border border-gray-600 text-black rounded-lg outline-none py-2 px-2 w-full"
                   />
                 </div>
@@ -334,7 +337,7 @@ export default function page() {
                         deadline: e.target.value,
                       }))
                     }
-                    placeholder="DD/MM/YYYY"
+                    // placeholder="DD/MM/YYYY"
                     className="border border-gray-600 text-black rounded-lg outline-none py-2 px-2 w-full"
                   />
                 </div>
@@ -462,12 +465,12 @@ export default function page() {
                   </li>
                   <li
                     className={`border border-gray-400 text-center py-10 sm:py-7 ${
-                      task.status === true
+                      task.status === "Completed"
                         ? "text-green-500"
-                        : "text-orange-600"
+                        : task.status === "Pending" ? "text-orange-600" : "text-red-500"
                     }`}
                   >
-                    {task.status === true ? `Completed` : `Pending`}
+                    {task.status}
                   </li>
                   <li className=" text-center py-10 sm:py-7 tooltip-container border border-gray-400 cursor-pointer">
                     <div className="tooltip">

@@ -137,8 +137,6 @@ public class DocumentRepo(IDistributedCache distributedCache, ApplicationDbConte
             .OrderByDescending(d => d.Date)
             .ToListAsync();
 
-
-
         return docs;
     }
 

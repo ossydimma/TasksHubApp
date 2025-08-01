@@ -20,7 +20,7 @@ public class UserTask
     [StringLength(200, MinimumLength = 3)]
     public string Description { get; set; } = string.Empty;
     public DateOnly? Deadline { get; set; } = null;
-    public DateTime CreationDate { get; set; } = DateTime.UtcNow;
+    public DateTime Created_at { get; set; } = DateTime.UtcNow;
     public string Status { get; set; } = "Pending";
 
     [ForeignKey("UserId")]

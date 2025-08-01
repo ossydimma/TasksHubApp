@@ -35,7 +35,7 @@ export interface UserTaskType {
     description : string;
     category : string;
     deadline : string;
-    status : boolean;
+    status : string;
 }
 
 export interface modifyTaskParams {

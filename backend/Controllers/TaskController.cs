@@ -67,7 +67,7 @@ public class TaskController(ITaskRepo repo, IUserRepo userRepo) : ControllerBase
 
         task.Title = model.Title!;
         task.Category = model.Category;
-        task.Status = model.Status;
+        task.Status = model.Status!;
         task.Description = model.Description!;
         task.Deadline = model.Deadline;
 

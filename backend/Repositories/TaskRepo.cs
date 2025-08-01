@@ -74,7 +74,7 @@ public class TaskRepo(IDistributedCache distributedCache, ApplicationDbContext D
                 Description = t.Description,
                 Category = t.Category,
                 Status = t.Status,
-                CreationDate = t.CreationDate,
+                CreationDate = t.Created_at,
                 Deadline = t.Deadline
             })
             .OrderByDescending(t => t.CreationDate)
@@ -124,6 +124,146 @@ public class TaskRepo(IDistributedCache distributedCache, ApplicationDbContext D
         return task;
     }
 
+    // public async Task<List<TaskDto>> FilterTaskByCreationDateAsync(DateOnly creationDate, Guid? userId)
+    // {
+    //     DateTime startDay = creationDate.ToDateTime(TimeOnly.MinValue);
+    //     DateTime nextDayStart = creationDate.AddDays(1).ToDateTime(TimeOnly.MinValue);
+
+    //     List<TaskDto> tasks = await _db.UserTasks
+    //         .Where(t =>
+    //             t.UserId == userId &&
+    //             t.Created_at >= startDay &&
+    //             t.Created_at < nextDayStart
+    //         )
+    //         .Select(t => new TaskDto
+    //         {
+    //             Id = t.Id,
+    //             Title = t.Title,
+    //             Description = t.Description,
+    //             Category = t.Category,
+    //             Status = t.Status,
+    //             CreationDate = t.Created_at,
+    //             Deadline = t.Deadline
+    //         })
+    //         .OrderByDescending(t => t.CreationDate)
+    //         .ToListAsync();
+
+    //     return tasks;
+    // }
+
+    // public async Task<List<TaskDto>> FilterTaskByDeadlineAsync(DateOnly deadline, Guid? userId)
+    // {
+    //     List<TaskDto> tasks = await _db.UserTasks
+    //         .Where(t =>
+    //             t.UserId == userId &&
+    //             t.Deadline == deadline
+    //         )
+    //         .Select(t => new TaskDto
+    //         {
+    //             Id = t.Id,
+    //             Title = t.Title,
+    //             Description = t.Description,
+    //             Category = t.Category,
+    //             Status = t.Status,
+    //             CreationDate = t.Created_at,
+    //             Deadline = t.Deadline
+    //         })
+    //         .OrderByDescending(t => t.CreationDate)
+    //         .ToListAsync();
+
+    //     return tasks;
+    // }
+
+    // public async Task<List<TaskDto>> FilterTaskByStatusAsync(string status, Guid? userId)
+    // {
+    //     List<TaskDto> tasks = await _db.UserTasks
+    //         .Where(t =>
+    //             t.UserId == userId &&
+    //             t.Status == status
+    //         )
+    //         .Select(t => new TaskDto
+    //         {
+    //             Id = t.Id,
+    //             Title = t.Title,
+    //             Description = t.Description,
+    //             Category = t.Category,
+    //             Status = t.Status,
+    //             CreationDate = t.Created_at,
+    //             Deadline = t.Deadline
+    //         })
+    //         .OrderByDescending(t => t.CreationDate)
+    //         .ToListAsync();
+
+    //     return tasks;
+    // }
+
+    // public async Task<List<TaskDto>> FilterTaskByCategoryAsync(string category, Guid? userId)
+    // {
+    //     List<TaskDto> tasks = await _db.UserTasks
+    //         .Where(t =>
+    //             t.UserId == userId &&
+    //             t.Category == category
+    //         )
+    //         .Select(t => new TaskDto
+    //         {
+    //             Id = t.Id,
+    //             Title = t.Title,
+    //             Description = t.Description,
+    //             Category = t.Category,
+    //             Status = t.Status,
+    //             CreationDate = t.Created_at,
+    //             Deadline = t.Deadline
+    //         })
+    //         .OrderByDescending(t => t.CreationDate)
+    //         .ToListAsync();
+
+    //     return tasks;
+    // }
+
+    public async Task<List<TaskDto>> FilterTasksAsync(FilterTaskDto filter, Guid? userId)
+    {
+
+        IQueryable<UserTask> tasks = _db.UserTasks.AsQueryable()
+            .Where(t => t.UserId == userId);
+
+        if (!string.IsNullOrEmpty(filter.Category))
+        {
+            tasks = tasks.Where(t => t.Category == filter.Category);
+        }
+
+        if (!string.IsNullOrEmpty(filter.Status))
+        {
+            tasks = tasks.Where(t => t.Status == filter.Status);
+        }
+
+        if (filter.Deadline.HasValue)
+        { 
+            tasks = tasks.Where(t => t.Deadline == filter.Deadline);
+        }
+
+        if (filter.Created.HasValue)
+        {
+            DateTime startDay = filter.Created.Value.ToDateTime(TimeOnly.MinValue);
+            DateTime nextDayStart = filter.Created.Value.AddDays(1).ToDateTime(TimeOnly.MinValue);
+
+            tasks = tasks.Where(t => t.Created_at >= startDay && t.Created_at < nextDayStart);
+        }
+
+        tasks = tasks.OrderByDescending(t => t.Created_at);
+
+        IQueryable<TaskDto> dtoQuery = tasks.Select(t => new TaskDto
+        {
+            Id = t.Id,
+            Title = t.Title,
+            Description = t.Description,
+            Category = t.Category,
+            Status = t.Status,
+            CreationDate = t.Created_at,
+            Deadline = t.Deadline
+        });
+
+        return await dtoQuery.ToListAsync();
+    }
     public async Task<bool> DeleteTaskByIdAsync(Guid taskId, Guid? userId)
     {
         string key = $"TasksHub_Task_{taskId}";
