@@ -123,6 +123,24 @@ public class TaskController(ITaskRepo repo, IUserRepo userRepo) : ControllerBase
         });
     }
 
+    [HttpPost("filter-tasks")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(401)]
+    public async Task<IActionResult> FilterTasks(FilterTaskDto model)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        Guid? userId = GetUserId();
+        if (userId == null)
+            return Unauthorized("Invalid or missing user ID");
+
+        List<TaskDto> FilteredTasks = await _repo.FilterTasksAsync(model, userId);
+
+        return Ok(new { tasks = FilteredTasks });
+    }
+
     [HttpDelete("{taskId}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(401)]
