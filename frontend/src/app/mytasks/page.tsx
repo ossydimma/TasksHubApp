@@ -21,10 +21,10 @@ export default function page() {
   const [showFilter, setShowFilter] = useState<boolean>(false);
 
   const [filterBy, setFilterBy] = useState<FilterTaskType>({
-    status: "",
-    created: "",
-    deadline: "",
-    category: "",
+    status: null,
+    created: null,
+    deadline: null,
+    category: null,
   });
 
   const statusOptions = [
@@ -59,12 +59,24 @@ export default function page() {
     if (!formError) {
       return;
     } 
+    setSearching(true);
+
+    const filterPayload = {
+      ...filterBy,
+      deadline: filterBy.deadline ? filterBy.deadline : null,
+      created: filterBy.created ? filterBy.created : null,
+      category: filterBy.category || null,
+      status: filterBy.status || null,
+    };
 
     try {
-      // const tasks = await taskApi.filterTask(filterBy);
+      const tasks = await taskApi.filterTask(filterPayload);
       setFilteredTasks(tasks)
     } catch (err: any) {
       console.error(err);
+    } finally {
+      setSearching(false);
+      setShowFilter(!showFilter);
     }
   };
 
@@ -72,11 +84,13 @@ export default function page() {
 
   function resetFilterBy() {
     setFilterBy({
-      status: "",
-      created: "",
-      deadline: "",
-      category: "",
+      status: null,
+      created: null,
+      deadline: null,
+      category: null,
     });
+    setFilteredTasks(tasks);
+    setShowFilter(!showFilter);
     console.log(filterBy);
   }
 
@@ -288,7 +302,7 @@ export default function page() {
                   <input
                     id="deadline"
                     type="date"
-                    value={filterBy.created}
+                    value={filterBy.created ?? ""}
                     onChange={(e) =>
                       setFilterBy((prev) => ({
                         ...prev,
@@ -330,7 +344,7 @@ export default function page() {
                   <input
                     id="deadline"
                     type="date"
-                    value={filterBy.deadline}
+                    value={filterBy.deadline ?? ""}
                     onChange={(e) =>
                       setFilterBy((prev) => ({
                         ...prev,
@@ -346,6 +360,7 @@ export default function page() {
                   <label className=" font-medium">Category</label>
                   <select
                     id="category"
+                    value={filterBy.category ?? ""}
                     onChange={(e) =>
                       setFilterBy((prev) => ({
                         ...prev,

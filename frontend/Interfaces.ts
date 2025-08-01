@@ -55,10 +55,10 @@ export interface TaskModel {
 }
 
 export interface FilterTaskType {
-    status : string;
-    created: string;
-    deadline : string;
-    category : string;
+     deadline: string | null;
+    created: string | null;
+    category: string | null;
+    status: string | null;
 }
 
 export interface DocumentType {

@@ -21,6 +21,12 @@ export default function EditTaskPage() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
 
+  const CategoryOptions = [
+    { id: 2, label: "Work", value: "work" },
+    { id: 3, label: "Personal", value: "personal" },
+    { id: 4, label: "Others", value: "others" },
+  ];
+
   const [editedTask, setEditedTask] = useState<TaskModel>({
     title: "",
     description: "",
@@ -160,9 +166,11 @@ export default function EditTaskPage() {
                 name="category"
                 className="border border-gray-600 rounded-lg outline-none py-2 px-4 mt-1 w-[100%]"
               >
-                <option value="Personal">Personal</option>
-                <option value="Work">work</option>
-                <option value="others">others</option>
+                {CategoryOptions.map((cate) => (
+                  <option key={cate.id} value={cate.value}>
+                    {cate.label}
+                  </option>
+                ))}
               </select>
             </div>
 
