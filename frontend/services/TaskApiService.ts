@@ -6,7 +6,7 @@ interface TaskService {
     updateTask(payload: TaskModel) : Promise<any>;
     getAllTasks() : Promise<any>;
     getTask(taskId: string | string[] | undefined): Promise<any>;
-    filterTask(obj : FilterTaskType): Promise<any>
+    filterTask(payload : FilterTaskType): Promise<any>
     deleteTask(taskId: string | string[] | undefined): Promise<any>;
 }
 
@@ -30,8 +30,8 @@ export const taskApi: TaskService = {
         return res.data;
     },
 
-    filterTask: async(obj: FilterTaskType) => {
-        const res = await api.post('task/filterTask', obj);
+    filterTask: async(payload: FilterTaskType) => {
+        const res = await api.post('task/filter-tasks', payload);
         return res.data.tasks;
     },
 
