@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { api } from "../../../services/axios";
 import { UserTaskType } from "../../../Interfaces";
 import { taskApi } from "../../../services/TaskApiService";
+import { formatDate } from "../../../SharedFunctions";
 
 export default function DisplayTask() {
   const router = useRouter();
@@ -126,14 +127,19 @@ export default function DisplayTask() {
               </div>
 
               <div className="flex items-center  justify-between border border-gray-300  p-3">
+                <dt className="font-bold ">Created_at:</dt>
+                <dd className="">{formatDate(task?.creationDate)}</dd>
+              </div>
+
+              <div className="flex items-center  justify-between border border-gray-300  p-3">
                 <dt className="font-bold ">Deadline:</dt>
-                <dd className="">{task?.deadline}</dd>
+                <dd className="">{formatDate(task?.deadline)}</dd>
               </div>
 
               <div className="flex items-center  justify-between border border-gray-300  p-3">
                 <dt className="font-bold ">Status:</dt>
                 <dd className="">
-                  {task?.status == true ? "Completed" : "Pending"}
+                  {task?.status}
                 </dd>
               </div>
 

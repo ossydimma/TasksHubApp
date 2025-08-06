@@ -33,6 +33,7 @@ export interface UserTaskType {
     id : string;
     title : string;
     description : string;
+    creationDate: string;
     category : string;
     deadline : string;
     status : string;

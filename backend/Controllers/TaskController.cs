@@ -119,7 +119,8 @@ public class TaskController(ITaskRepo repo, IUserRepo userRepo) : ControllerBase
             Category = task.Category,
             Status = task.Status,
             Description = task.Description,
-            Deadline = task.Deadline
+            Deadline = task.Deadline,
+            CreationDate = task.Created_at
         });
     }
 

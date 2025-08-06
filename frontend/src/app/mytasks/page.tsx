@@ -1,6 +1,6 @@
 "use client";
 
-import { categories } from "../../../SharedFunctions";
+import { categories, formatDate } from "../../../SharedFunctions";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
@@ -16,7 +16,7 @@ export default function page() {
   const [searching, setSearching] = useState<boolean>(false);
   const [tasks, setTasks] = useState<UserTaskType[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<UserTaskType[]>([]);
-  const [match, setMatch] = useState<string>("");
+  const [match, setMatch] = useState<string | string[]>("");
   const [query, setQuery] = useState<string>("");
   const [showFilter, setShowFilter] = useState<boolean>(false);
 
@@ -35,30 +35,34 @@ export default function page() {
   ];
 
   const CategoryOptions = [
-    { id: 1, label: "None", value: undefined },
+    { id: 1, label: "None", value: "" },
     { id: 2, label: "Work", value: "work" },
     { id: 3, label: "Personal", value: "personal" },
     { id: 4, label: "Others", value: "others" },
   ];
 
-  const validateFilterForm = () : boolean => {
-    if (!Object.values(filterBy).some((val) => val !== "")) {
-      
+  const validateFilterForm = (): boolean => {
+    const obj = Object.values(filterBy);
+    if (!obj.some((val) => val !== "")) {
       return false;
     }
 
-    return true;
-  }
+    const filledCred = Object.entries(filterBy)
+      .filter(([key, value]) => value !== null && value !== "")
+      .map(([key, value]) => `${key}: ${value}`);
 
-  
+    setMatch(`No matching tasks found for "${filledCred.join(" or ")}". `);
+    return true;
+  };
+
   const handleFilterBy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    console.log(filterBy.deadline)
+    console.log(filterBy.deadline);
     const formError = validateFilterForm();
     if (!formError) {
       return;
-    } 
+    }
     setSearching(true);
 
     const filterPayload = {
@@ -69,9 +73,11 @@ export default function page() {
       status: filterBy.status || null,
     };
 
+    console.log(filterPayload);
+
     try {
       const tasks = await taskApi.filterTask(filterPayload);
-      setFilteredTasks(tasks)
+      setFilteredTasks(tasks);
     } catch (err: any) {
       console.error(err);
     } finally {
@@ -300,7 +306,7 @@ export default function page() {
                 <div className={`flex flex-col text-sm w-[100%]`}>
                   <label className=" font-medium">Creation date</label>
                   <input
-                    id="deadline"
+                    id="creation_date"
                     type="date"
                     value={filterBy.created ?? ""}
                     onChange={(e) =>
@@ -445,11 +451,11 @@ export default function page() {
           </div>
         ) : filteredTasks.length === 0 ? (
           <div className="h-full w-full flex justify-center items-center text-[0.910rem] sm:text-[1.2rem] md:text-[0.8rem] lmd:text-[0.910rem]">
-            <p>No matching tasks found for "{match}".</p>
+            <p>{match}</p>
           </div>
         ) : (
           <div className="w-full h-[90%] pb-10 overflow-y-hidde ">
-            <div className="grid grid-cols-7 gap-4 font-bold py-2 border-b-2 border-gray-500 mr-4">
+            <div className="grid grid-cols-6 gap-4 font-bold py-2 border-b-2 border-gray-500 mr-4">
               {categories.map((category, index) => (
                 <h1
                   key={index}
@@ -463,26 +469,26 @@ export default function page() {
             </div>
             <div className="h-[100%] overflow-y-scroll overflow-x-hidden pb-6">
               {filteredTasks.map((task: UserTaskType) => (
-                <ul key={task.id} className="grid grid-cols-7">
-                  <li className="border border-gray-400 text-center py-10 sm:py-7">
+                <ul key={task.id} className="grid grid-cols-6">
+                  <li className="border justify-items-center border-gray-400 text-center py-10 sm:py-7">
                     {task.category}
                   </li>
                   <li className="border border-gray-400 text-center py-10 sm:py-7">
                     {task.title}
                   </li>
-                  <li className="text-xs md:text-sm col-span-2 border border-gray-400 px-1 sm:px-2 py-2.5 sm:py-4">
-                    {task.description.length > 130
-                      ? task.description.substring(0, 135) + `...`
-                      : task.description}
+                  <li className="border border-gray-400 text-center py-10 sm:py-7">
+                    {formatDate(task.creationDate)}
                   </li>
                   <li className="border border-gray-400 text-center py-10 sm:py-7">
-                    {task.deadline}
+                    {formatDate(task.deadline)}
                   </li>
                   <li
                     className={`border border-gray-400 text-center py-10 sm:py-7 ${
                       task.status === "Completed"
                         ? "text-green-500"
-                        : task.status === "Pending" ? "text-orange-600" : "text-red-500"
+                        : task.status === "Pending"
+                        ? "text-orange-600"
+                        : "text-red-500"
                     }`}
                   >
                     {task.status}
