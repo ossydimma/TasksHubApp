@@ -177,7 +177,7 @@ export default function EditTaskPage() {
             <div className="flex justify-between items-center">
               <div
                 className={`flex flex-col ${
-                  task?.status ? "w-[100%]" : "w-[45%]"
+                  task?.status === "Completed" ? "w-[100%]" : "w-[45%]"
                 }`}
               >
                 <label className=" font-bold ">Deadline</label>
@@ -197,7 +197,7 @@ export default function EditTaskPage() {
                 />
               </div>
 
-              {!task?.status && (
+              {task?.status !== "Completed" && (
                 <div className="w-[45%] relative checkBox-conatiner">
                   <div className="w-[78%] text-center checkBox-tooltip bg-blue-600 -top-[1rem] text-white border border-white px-4 py-2 rounded-lg absolute">
                     <span>Check the box</span>

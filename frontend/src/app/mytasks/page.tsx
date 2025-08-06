@@ -19,6 +19,10 @@ export default function page() {
   const [match, setMatch] = useState<string | string[]>("");
   const [query, setQuery] = useState<string>("");
   const [showFilter, setShowFilter] = useState<boolean>(false);
+  const [activeOrderBy, setActiveOrderBy] = useState({
+    latest: true,
+    oldest: false,
+  });
 
   const [filterBy, setFilterBy] = useState<FilterTaskType>({
     status: null,
@@ -42,8 +46,7 @@ export default function page() {
   ];
 
   const validateFilterForm = (): boolean => {
-    const obj = Object.values(filterBy);
-    if (!obj.some((val) => val !== "")) {
+    if (!Object.values(filterBy).some((val) => val !== "")) {
       return false;
     }
 
@@ -76,8 +79,9 @@ export default function page() {
     console.log(filterPayload);
 
     try {
-      const tasks = await taskApi.filterTask(filterPayload);
-      setFilteredTasks(tasks);
+      let tasks = await taskApi.filterTask(filterPayload);
+
+      setFilteredTasks(validateOrder() ? tasks.reverse() : tasks);
     } catch (err: any) {
       console.error(err);
     } finally {
@@ -104,15 +108,26 @@ export default function page() {
     setIsLoading(true);
 
     try {
-      const allTasks = await taskApi.getAllTasks();
+      let allTasks = await taskApi.getAllTasks();
+
       setTasks(allTasks);
-      setFilteredTasks(allTasks);
+      setFilteredTasks(validateOrder() ? allTasks.reverse() : allTasks);
       console.log(allTasks);
     } catch (err: any) {
       console.error("Failed to fetch tasks:", err);
     } finally {
       setIsLoading(false);
     }
+  }
+
+  function validateOrder(): boolean {
+    const order = localStorage.getItem("orderBy");
+    if (order) {
+      setActiveOrderBy({ latest: false, oldest: true });
+      return true;
+    }
+
+    return false;
   }
 
   useEffect(() => {
@@ -165,10 +180,10 @@ export default function page() {
           />
         </div>
       )}
-      <header className="flex justify-between items-center px-6 mt-5 lmd:mt-4 -mb-2 border-b-2 border-dashed border-gray-500 pb-4">
+      <header className="flex justify-between  items-center px-4 md:px-7 mt-5 lmd:mt-4 -mb-2 border-b-2 border-dashed border-gray-500 pb-4">
         <div className="  ">
           <div className="py-2 px-4 text-sm bg-black text-white rounded-md cursor-pointer">
-            All Tasks
+            Tasks
           </div>
         </div>
 
@@ -264,10 +279,10 @@ export default function page() {
 
         <div className="flex items-center gap-3 relative">
           {showFilter && (
-            <div className="bg-black w-[15rem] text-white py-4 px-5 absolute top-0 -right-2 z-10 rounded-xl">
+            <div className="bg-black w-[17rem] text-white pt-4 pb-6 px-3 absolute -top-2 -right-2 z-10 rounded-xl">
               <div>
                 <svg
-                  className="w-5 ml-auto text-righ cursor-pointer"
+                  className="w-6 ml-auto text-righ cursor-pointer"
                   onClick={() => {
                     setShowFilter(false);
                   }}
@@ -296,11 +311,11 @@ export default function page() {
                   </g>
                 </svg>
               </div>
-              <h1 className="border-b text-sm mb-4 w-fit pb-1">Filter by :</h1>
+              <h1 className="text-[0.9rem] mb-1 pl-4 w-fit uppercase italic ">Filter by:</h1>
 
               <form
                 action=""
-                className="flex flex-col gap-2"
+                className="flex flex-col gap-2 border-2 rounded-xl p-4 italic"
                 onSubmit={handleFilterBy}
               >
                 <div className={`flex flex-col text-sm w-[100%]`}>
@@ -430,6 +445,33 @@ export default function page() {
               </g>
             </svg>
             Filter
+          </div>
+        </div>
+
+        <div className="w-fit hidden sm:flex border-2 border-black cursor-pointer rounded-2xl overflow-hidden">
+          <div
+            className={`py-2.5 px-4  ${activeOrderBy.latest ? "bg-gray-700 text-white" : ""}`}
+            onClick={() => {
+              if (!activeOrderBy.latest) {
+                localStorage.removeItem("orderBy");
+                setFilteredTasks(filteredTasks.reverse());
+                setActiveOrderBy({ latest: true, oldest: false });
+              }
+            }}
+          >
+            Latest
+          </div>
+          <div
+            className={`py-2.5 px-4 ${activeOrderBy.oldest ? "bg-gray-700 text-white" : ""}`}
+            onClick={() => {
+              if (!activeOrderBy.oldest) {
+                localStorage.setItem("orderBy", "true");
+                setFilteredTasks(filteredTasks.reverse());
+                setActiveOrderBy({ latest: false, oldest: true });
+              }
+            }}
+          >
+            Oldest
           </div>
         </div>
       </header>
