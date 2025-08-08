@@ -2,7 +2,6 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { api } from "../../../../../services/axios";
 import { TaskModel, UserTaskType } from "../../../../../Interfaces";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
 import {
@@ -16,7 +15,7 @@ export default function EditTaskPage() {
   const taskId = params.id;
   const router = useRouter();
 
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [task, setTask] = useState<UserTaskType | undefined>(undefined);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
@@ -50,20 +49,44 @@ export default function EditTaskPage() {
     }
   }
   /**
-   * Validate all form inputs
-   * @return {string | null} - Error message if any is valid
+   * map update payload value from task and editedTask values
+   * @return {UserTaskType} - return mapped payload
    */
-  const validateForm = (): string | null => {
+
+  function mapPayload(): UserTaskType {
+
+    const payload: UserTaskType = {
+      id: task?.id ?? "",
+      title: editedTask.title,
+      description: editedTask.description,
+      creationDate: task?.creationDate ?? "",
+      category: editedTask.category,
+      deadline: editedTask.deadline,
+      status: editedTask.status === true ? "Completed" : task?.status ?? "",
+    };
+    return payload;
+
+  }
+
+  /**
+   * Validate all form inputs
+   * @return {string | UserTaskType} - return payload if no error 
+   */
+  const validateForm = (): string | UserTaskType => {
     if (!Object.values(editedTask).every((val) => val !== "")) {
       return "All field must be filled";
     }
+
+    const payload = mapPayload();
+
+    if (task?.deadline === editedTask.deadline) return payload;
 
     const deadlineError = validateDeadline(editedTask.deadline);
     if (deadlineError) {
       return deadlineError;
     }
 
-    return null;
+    return payload;
   };
 
   const saveChanges = async (
@@ -72,16 +95,17 @@ export default function EditTaskPage() {
     e.preventDefault();
 
     // Validation step
-    const validationError = validateForm();
-    if (validationError) {
-      setErrorMessage(validationError);
+    const payload = validateForm();
+    if (typeof payload === "string") {
+      setErrorMessage(payload);
       return;
     }
 
     setIsLoading(true);
+    console.log(payload);
 
     try {
-      await taskApi.updateTask(editedTask); //Api interaction step
+      await taskApi.updateTask(payload); //Api interaction step
 
       // Success handling step
       setIsLoading(false);
@@ -101,6 +125,10 @@ export default function EditTaskPage() {
   useEffect(() => {
     getTask();
   }, [taskId]);
+
+   useEffect(() => {
+    setIsLoading(false);
+  }, [task]);
 
   return (
     <main className="pb-[3.6rem] sm:pb-0 relative w-full h-full">
@@ -208,7 +236,7 @@ export default function EditTaskPage() {
                     <input
                       type="checkbox"
                       id="status"
-                      defaultChecked={editedTask.status}
+                      defaultChecked={!!editedTask.status}
                       onChange={(e) => {
                         setEditedTask((prev) => ({
                           ...prev,

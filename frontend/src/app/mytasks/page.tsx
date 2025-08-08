@@ -476,7 +476,7 @@ export default function page() {
         </div>
       </header>
 
-      <section className="h-[85vh] w-[98%] md:h-[90vh] overflow-hidden pt-4 mx-2  mb-[3rem] overflow-y-hidde">
+      <section className="h-[85vh] w-[98%] md:h-[90vh] overflow-hidden pt-10 mx-2  mb-[3rem] overflow-y-hidde">
         {searching ? (
           <div className="h-full w-full flex justify-center items-center">
             <LoadingSpinner

@@ -22,9 +22,6 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 string? hangfireUser = builder.Configuration.GetSection("HangfireSettings:User").Value;
 string? hangfirePass = builder.Configuration.GetSection("HangfireSettings:Pass").Value;
 
-Console.WriteLine($"Hangfire configured user: '{hangfireUser}'");
-Console.WriteLine($"Hangfire configured pass: '{hangfirePass}'");
-
 // --- Configure Hangfire Services ---
 builder.Services.AddHangfire(configuration => configuration
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
@@ -73,7 +70,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
+        policy.WithOrigins("http://localhost:3000", "http://10.10.8.21:3000")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();

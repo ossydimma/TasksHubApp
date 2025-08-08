@@ -52,7 +52,7 @@ export interface TaskModel {
     description: string;
     deadline: string;
     category: string;
-    status: boolean;
+    status: boolean | string;
 }
 
 export interface FilterTaskType {
