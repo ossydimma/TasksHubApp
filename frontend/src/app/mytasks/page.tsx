@@ -100,7 +100,7 @@ export default function page() {
       category: null,
     });
     setFilteredTasks(tasks);
-    setShowFilter(!showFilter);
+    setShowFilter(false);
     console.log(filterBy);
   }
 
@@ -145,7 +145,7 @@ export default function page() {
         setFilteredTasks(tasks);
         setSearching(false);
       }
-
+      resetFilterBy();
       const filtered: UserTaskType[] = tasks.filter((task) =>
         task.title.toLowerCase().includes(query.toLowerCase())
       );
@@ -324,12 +324,12 @@ export default function page() {
                     id="creation_date"
                     type="date"
                     value={filterBy.created ?? ""}
-                    onChange={(e) =>
+                    onChange={(e) =>{
                       setFilterBy((prev) => ({
                         ...prev,
                         created: e.target.value,
-                      }))
-                    }
+                      }));
+                    }}
                     // placeholder="DD/MM/YYYY"
                     className="border border-gray-600 text-black rounded-lg outline-none py-2 px-2 w-full"
                   />
@@ -339,12 +339,14 @@ export default function page() {
                   <select
                     id="status"
                     value={filterBy.status ? filterBy.status : "None"}
-                    onChange={(e) =>
+                    onChange={(e) =>{
                       setFilterBy((prev) => ({
                         ...prev,
                         status: e.target.value,
-                      }))
-                    }
+                      }));
+
+
+                    }}
                     name="status"
                     className="border border-gray-600 bg-transparent rounded-lg outline-none py-2 px-1  w-[100%]"
                   >
@@ -366,12 +368,12 @@ export default function page() {
                     id="deadline"
                     type="date"
                     value={filterBy.deadline ?? ""}
-                    onChange={(e) =>
+                    onChange={(e) =>{
                       setFilterBy((prev) => ({
                         ...prev,
                         deadline: e.target.value,
-                      }))
-                    }
+                      }));
+                    }}
                     // placeholder="DD/MM/YYYY"
                     className="border border-gray-600 text-black rounded-lg outline-none py-2 px-2 w-full"
                   />
@@ -382,12 +384,12 @@ export default function page() {
                   <select
                     id="category"
                     value={filterBy.category ?? ""}
-                    onChange={(e) =>
+                    onChange={(e) =>{
                       setFilterBy((prev) => ({
                         ...prev,
                         category: e.target.value,
                       }))
-                    }
+                    }}
                     name="category"
                     className="border border-gray-600 bg-transparent rounded-lg outline-none py-2 px-1  w-[100%]"
                   >
