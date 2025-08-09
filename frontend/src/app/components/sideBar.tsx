@@ -213,7 +213,9 @@ export default function sideBar() {
                   }
                   className={clsx(
                     `${
-                      pathname === "/home" ? "bg-black text-white fill-white" : ""
+                      pathname === "/home"
+                        ? "bg-black text-white fill-white"
+                        : ""
                     } flex  items-center p-2 gap-2.5 cursor-pointer rounded-full hover:bg-black hover:text-white fill-black hover:fill-white`,
                     {
                       "rounded-lg border-2 border-gray-600 ": isMaximized,
@@ -261,7 +263,8 @@ export default function sideBar() {
                   }
                   className={clsx(
                     `${
-                      pathname.includes("mytasks") && !pathname.includes("createtask")
+                      pathname.includes("mytasks") &&
+                      !pathname.includes("createtask")
                         ? "bg-black text-white fill-white"
                         : ""
                     } flex items-center p-2 gap-2.5 cursor-pointer hover:bg-black hover:text-white fill-black hover:fill-white`,
@@ -439,48 +442,54 @@ export default function sideBar() {
 
             {/* ---------------LOG OUT------------------- */}
             <li className={clsx({ "h-[3.25rem]": !isMaximized })}>
-              <div
-                onMouseEnter={() =>
-                  setShowToolTips((prev) => ({ ...prev, logOut: true }))
-                }
-                onMouseLeave={() =>
-                  setShowToolTips((prev) => ({ ...prev, logOut: false }))
-                }
-                className={clsx(
-                  `flex  items-center p-2 gap-2.5 cursor-pointer   hover:bg-red-600 hover:text-white stroke-black hover:stroke-white`,
-                  {
-                    "rounded-lg border-2 border-gray-600 hover:border-white pl-[0.6rem] ":
-                      isMaximized,
-                    "rounded-full p-3 ": !isMaximized,
+              <Link href="/logout">
+                <div
+                  onMouseEnter={() =>
+                    setShowToolTips((prev) => ({ ...prev, logOut: true }))
                   }
-                )}
-              >
-                <svg
-                  className={clsx(`w-6 md:w-7  `, { "mx-auto": !isMaximized })}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
+                  onMouseLeave={() =>
+                    setShowToolTips((prev) => ({ ...prev, logOut: false }))
+                  }
+                  className={clsx(
+                    `flex  items-center p-2 gap-2.5 cursor-pointer   hover:bg-red-600 hover:text-white stroke-black hover:stroke-white`,
+                    {
+                      "rounded-lg border-2 border-gray-600 hover:border-white pl-[0.6rem] ":
+                        isMaximized,
+                      "rounded-full p-3 ": !isMaximized,
+                    }
+                  )}
                 >
-                  <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-                  <g
-                    id="SVGRepo_tracerCarrier"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  ></g>
-                  <g id="SVGRepo_iconCarrier">
-                    <path
-                      d="M14 20H6C4.89543 20 4 19.1046 4 18L4 6C4 4.89543 4.89543 4 6 4H14M10 12H21M21 12L18 15M21 12L18 9"
-                      strokeWidth="2"
+                  <svg
+                    className={clsx(`w-6 md:w-7  `, {
+                      "mx-auto": !isMaximized,
+                    })}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
+                    <g
+                      id="SVGRepo_tracerCarrier"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                    ></path>
-                  </g>
-                </svg>
-                {isMaximized && <p className=" font-medium">Log out</p>}
-              </div>
-              {!isMaximized && showToolTips.logOut && (
-                <p className=" text-center font-bold text-[10.5px]">Log out</p>
-              )}
+                    ></g>
+                    <g id="SVGRepo_iconCarrier">
+                      <path
+                        d="M14 20H6C4.89543 20 4 19.1046 4 18L4 6C4 4.89543 4.89543 4 6 4H14M10 12H21M21 12L18 15M21 12L18 9"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      ></path>
+                    </g>
+                  </svg>
+                  {isMaximized && <p className=" font-medium">Log out</p>}
+                </div>
+                {!isMaximized && showToolTips.logOut && (
+                  <p className=" text-center font-bold text-[10.5px]">
+                    Log out
+                  </p>
+                )}
+              </Link>
             </li>
           </ul>
         </div>
@@ -493,10 +502,7 @@ export default function sideBar() {
             <ul className="flex justify-between items-center  text-xs xxs:text-sm px-6 xxs:px-8 pt-2  ">
               {/* --------------- HOME -------------- */}
               <li className="p-2 rounded-2xl  hover:bg-black hover:text-white fill-black hover:fill-white">
-                <Link
-                  href="/"
-                  className=" "
-                >
+                <Link href="/" className=" ">
                   <svg
                     className="w-5 xxs:w-6 mx-auto mb-1 "
                     viewBox="0 0 1920 1920"
@@ -521,10 +527,7 @@ export default function sideBar() {
 
               {/* ---------- MY TASK ----------- */}
               <li className="p-3 rounded-2xl  hover:bg-black hover:text-white fill-black hover:fill-white">
-                <Link
-                  href="/mytasks"
-                  className=""
-                >
+                <Link href="/mytasks" className="">
                   <svg
                     className="w-5 xxs:w-6 mx-auto mb-1"
                     viewBox="0 0 1024 1024"
@@ -610,10 +613,7 @@ export default function sideBar() {
 
               {/* ----------- SETTINGS ------------ */}
               <li className="p-2 rounded-2xl  hover:bg-black hover:text-white stroke-black hover:stroke-white">
-                <Link
-                  href="/settings"
-                  className=""
-                >
+                <Link href="/settings" className="">
                   <svg
                     className=" w-5 xxs:w-7 mx-auto mb-1 "
                     viewBox="0 0 24 24"

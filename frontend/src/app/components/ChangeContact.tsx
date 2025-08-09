@@ -95,7 +95,7 @@ export default function ChangeContact({
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
-    await signOut({redirect: false});
+    // await signOut({redirect: false});
     await signIn("google", {callbackUrl : "/settings?postSwitch=true"});
   };
 
