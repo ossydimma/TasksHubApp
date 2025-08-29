@@ -5,7 +5,7 @@ import { useRouter, usePathname, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { api } from "../../../services/axios";
 import { UserTaskType } from "../../../Interfaces";
-import { taskApi } from "../../../services/TaskApiService";
+import { taskApi } from "../../../services/apiServices/TaskApiService";
 import { formatDate } from "../../../SharedFunctions";
 
 export default function DisplayTask() {
@@ -24,10 +24,10 @@ export default function DisplayTask() {
   const successfulDeletion = () => {
     setIsLoading(false);
     setDeleted(true);
-      setTimeout(() => {
-        router.push("/mytasks");
-      }, 2000);
-  }
+    setTimeout(() => {
+      router.push("/mytasks");
+    }, 2000);
+  };
 
   async function deleteTask() {
     setIsLoading(true);
@@ -114,7 +114,11 @@ export default function DisplayTask() {
           </div>
           <div className="h-[85%] w-[80%] mx-auto overflow-hidden overflow-x-hidden pb-6">
             <dl
-              className={`flex flex-col gap-2 sm:gap-3  ${task?.description?.length > 110 ? "mt-2 sm:mt-[1.5rem]" : "mt-[2rem]"}  text-sm sm:text-[1rem] italic`}
+              className={`flex flex-col gap-2 sm:gap-3  ${
+                task?.description?.length > 110
+                  ? "mt-2 sm:mt-[1.5rem]"
+                  : "mt-[2rem]"
+              }  text-sm sm:text-[1rem] italic`}
             >
               <div className="flex items-center justify-between border border-gray-300 p-3">
                 <dt className="font-bold">Task Name:</dt>
@@ -138,9 +142,7 @@ export default function DisplayTask() {
 
               <div className="flex items-center  justify-between border border-gray-300  p-3">
                 <dt className="font-bold ">Status:</dt>
-                <dd className="">
-                  {task?.status}
-                </dd>
+                <dd className="">{task?.status}</dd>
               </div>
 
               <div className="flex flex-col gap-1 border border-gray-300  p-3">

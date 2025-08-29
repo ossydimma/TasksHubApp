@@ -583,9 +583,9 @@ export default function page() {
                 action=""
                 className="flex flex-col gap-4"
                 onSubmit={handleFilterBy}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleFilterBy(e);
-                }}
+                // onKeyDown={(e) => {
+                //   if (e.key === "Enter") handleFilterBy(e);
+                // }}
               >
                 <div className={`flex flex-col text-sm w-[100%]`}>
                   <label className=" font-medium">Title</label>
@@ -729,13 +729,13 @@ export default function page() {
                 onSubmit={
                   btnText === "Create" ? createDocument : updateDocument
                 }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    btnText === "Create"
-                      ? createDocument(e)
-                      : updateDocument(e);
-                  }
-                }}
+                // onKeyDown={(e) => {
+                //   if (e.key === "Enter") {
+                //     btnText === "Create"
+                //       ? createDocument(e)
+                //       : updateDocument(e);
+                //   }
+                // }}
               >
                 <div className="flex items-center justify-between">
                   <input

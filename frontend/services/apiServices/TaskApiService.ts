@@ -1,5 +1,5 @@
-import { FilterTaskType, TaskModel, TaskValuesType } from "../Interfaces";
-import { api } from "./axios";
+import { FilterTaskType, TaskModel, TaskValuesType } from "../../Interfaces";
+import { api } from "../axios";
 
 interface TaskService {
     createTask(values: TaskValuesType): Promise<any>;

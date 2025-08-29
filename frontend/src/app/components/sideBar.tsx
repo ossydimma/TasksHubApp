@@ -441,7 +441,7 @@ export default function sideBar() {
             </li>
 
             {/* ---------------LOG OUT------------------- */}
-            <li className={clsx({ "h-[3.25rem]": !isMaximized })}>
+            <li className={clsx({ "h-[3.25rem]": !isMaximized })} >
               <Link href="/logout">
                 <div
                   onMouseEnter={() =>
@@ -501,7 +501,7 @@ export default function sideBar() {
           <div className=" w-full fixed bottom-0 bg-[#dadde2] z-50">
             <ul className="flex justify-between items-center  text-xs xxs:text-sm px-6 xxs:px-8 pt-2  ">
               {/* --------------- HOME -------------- */}
-              <li className="p-2 rounded-2xl  hover:bg-black hover:text-white fill-black hover:fill-white">
+              <li className="p-2 rounded-2xl cursor-pointer hover:bg-black hover:text-white fill-black hover:fill-white">
                 <Link href="/" className=" ">
                   <svg
                     className="w-5 xxs:w-6 mx-auto mb-1 "
@@ -526,7 +526,7 @@ export default function sideBar() {
               </li>
 
               {/* ---------- MY TASK ----------- */}
-              <li className="p-3 rounded-2xl  hover:bg-black hover:text-white fill-black hover:fill-white">
+              <li className="p-3 rounded-2xl cursor-pointer hover:bg-black hover:text-white fill-black hover:fill-white">
                 <Link href="/mytasks" className="">
                   <svg
                     className="w-5 xxs:w-6 mx-auto mb-1"
@@ -579,7 +579,7 @@ export default function sideBar() {
               </li>
 
               {/* ------------- DOCUMENTATION ------------ */}
-              <li className="p-2 rounded-2xl hover:bg-black">
+              <li className="p-2 cursor-pointer rounded-2xl hover:bg-black">
                 <Link
                   href="/documentation"
                   className=" hover:text-white fill-black hover:fill-white"
@@ -612,7 +612,7 @@ export default function sideBar() {
               </li>
 
               {/* ----------- SETTINGS ------------ */}
-              <li className="p-2 rounded-2xl  hover:bg-black hover:text-white stroke-black hover:stroke-white">
+              <li className="p-2 rounded-2xl cursor-pointer hover:bg-black hover:text-white stroke-black hover:stroke-white">
                 <Link href="/settings" className="">
                   <svg
                     className=" w-5 xxs:w-7 mx-auto mb-1 "

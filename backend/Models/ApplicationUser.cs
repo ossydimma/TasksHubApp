@@ -19,9 +19,9 @@ namespace TasksHubServer.Models;
         public string Email { get; set; } = string.Empty;
         public byte[]? PasswordHash { get; set; } = null;
         public byte[]? PasswordSalt { get; set; } = null;
-        public string? RefreshToken { get; set; } = null;
-        public DateTime? RefreshTokenExpiryTime { get; set; } = null;
 
+        [JsonIgnore]
+        public List<UserRefreshToken> RefreshTokens { get; set; } = [];
         [JsonIgnore]
         public virtual List<UserDocument>UserDocument { get; set; } = [];
         [JsonIgnore]

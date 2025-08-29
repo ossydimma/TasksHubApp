@@ -44,7 +44,6 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
     [ProducesResponseType(400)]
     public async Task<IActionResult> GoogleAuth([FromBody] GoogleAuthDto model)
     {
-
         try
         {
             var payload = await GoogleJsonWebSignature.ValidateAsync(model.Credential);
@@ -52,19 +51,19 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
 
             ApplicationUser? user = await _repo.GetUserByGoogleSubAsync(payload.Subject);
 
-            // Fallback to email lookup for first-time linking
             if (user == null)
             {
+                // Fallback to email lookup for first-time linking
                 user = await _repo.GetUserByEmailAsync(normalizedEmail);
                 if (user != null)
                 {
                     user.GoogleSub = payload.Subject;
-                    await _repo.UpdateUserAsync(user);
                 }
             }
 
             if (user == null)
             {
+                // Create a new user if not found by Google sub or email
                 user = new ApplicationUser
                 {
                     GoogleSub = payload.Subject,
@@ -74,6 +73,7 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
                     ProfilePicture = payload.Picture ?? null,
                 };
 
+                // Add the new user to the context
                 await _repo.CreateUserAsync(user);
             }
             else
@@ -82,23 +82,28 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
                 if (user.Email != payload.Email)
                 {
                     user.Email = payload.Email;
-                    await _repo.UpdateUserAsync(user);
                 }
             }
 
-            string accessToken = JwtTokenGenerator.GenerateToken(user, HttpContext.RequestServices.GetRequiredService<IConfiguration>());
-            string refreshToken = JwtTokenGenerator.GenerateRefreshToken();
+            // Add the refresh token to the user object
+            UserRefreshToken refreshToken = JwtTokenGenerator.GenerateRefreshToken(user.Id);
 
-            // Update user's refresh token and expiry
-            user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            if (!await _repo.CreateRefreshToken(refreshToken))
+            {
+                return BadRequest("Failed to update user refresh token");
+            }
 
-            // Save updated user to the database
+            // Now, perform a single save operation for all changes
             bool updated = await _repo.UpdateUserAsync(user);
             if (!updated)
-                return BadRequest("Failed to update user refresh token");
+            {
+                // Log the error and handle the failure gracefully
+                return BadRequest("Failed to update ");
+            }
 
-            // Set refresh token in HttpOnly cookie
+            // ... rest of the code for generating tokens and cookies
+            string accessToken = JwtTokenGenerator.GenerateToken(user, HttpContext.RequestServices.GetRequiredService<IConfiguration>());
+
             var cookieoptions = new CookieOptions
             {
                 HttpOnly = true,
@@ -107,9 +112,8 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
                 Expires = DateTime.UtcNow.AddDays(7)
             };
 
-            Response.Cookies.Append("refreshToken", refreshToken, cookieoptions);
+            Response.Cookies.Append("refreshToken", refreshToken.Token, cookieoptions);
 
-            // Return access token to the frontend
             return Ok(new { AccessToken = accessToken });
         }
         catch (InvalidJwtException)
@@ -143,11 +147,10 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
 
         // 2. Generate new token
         string accessToken = JwtTokenGenerator.GenerateToken(user, HttpContext.RequestServices.GetRequiredService<IConfiguration>());
-        string refreshToken = JwtTokenGenerator.GenerateRefreshToken();
+        UserRefreshToken refreshToken = JwtTokenGenerator.GenerateRefreshToken(user.Id);
 
-        // 3. Update user's refresh token and expiry
-        user.RefreshToken = refreshToken;
-        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+        // Update user's refreshtokens
+        user.RefreshTokens.Add(refreshToken);
 
         // 4. Save updated user to the database
         bool updated = await _repo.UpdateUserAsync(user);
@@ -163,7 +166,7 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
             Expires = DateTime.UtcNow.AddDays(7)
         };
 
-        Response.Cookies.Append("refreshToken", refreshToken, cookieoptions);
+        Response.Cookies.Append("refreshToken", refreshToken.Token, cookieoptions);
 
         // 6. Return access token to the frontend
         return Ok(new { AccessToken = accessToken });
@@ -175,44 +178,51 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
     [ProducesResponseType(401)]
     public async Task<IActionResult> RefreshToken()
     {
-        // 1. Getting refresh token from HttpOnly cookie
+        // Getting refresh token from HttpOnly cookie
         var cookie = Request.Cookies["refreshToken"];
-
         if (string.IsNullOrEmpty(cookie))
             return Unauthorized();
 
         var refreshToken = Uri.UnescapeDataString(cookie);
 
-        // 2. Find user by refresh token
         ApplicationUser? user = await _repo.GetUserByRefreshTokenAsync(refreshToken);
-        if (user is null || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+        if (user == null)
         {
-            // Clear refresh token from cookie
             Response.Cookies.Append("refreshToken", "", new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.None,
-                Expires = DateTime.UtcNow.AddDays(-1) // Expire immediately
+                Expires = DateTimeOffset.UtcNow.AddDays(-1) // Expire immediately
             });
-
-            return Unauthorized("Refresh token is invalid or expired");
+            return Unauthorized("Invalid user.");
         }
 
-        // 3. Generate new token
+        UserRefreshToken? currentToken = user.RefreshTokens.First(t => t.Token == refreshToken);
+
+        if (currentToken.TokenExpiryTime <= DateTime.UtcNow)
+        {
+            Response.Cookies.Append("refreshToken", "", new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTimeOffset.UtcNow.AddDays(-1) // Expire immediately
+            });
+
+            await _repo.RemoveRefreshTokenAsync(currentToken.Token);
+            return Unauthorized("Refresh token has expired.");
+        }
+
+        // Generate new token
         string accessToken = JwtTokenGenerator.GenerateToken(user, HttpContext.RequestServices.GetRequiredService<IConfiguration>());
-        string newRefreshToken = JwtTokenGenerator.GenerateRefreshToken();
+        UserRefreshToken newRefreshToken = JwtTokenGenerator.GenerateRefreshToken(user.Id);
 
-        // 4. Update user's refresh token and expiry
-        user.RefreshToken = newRefreshToken;
-        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+        // Replace the old token with the new one
+        if (!await _repo.UpdateRefreshToken(currentToken, newRefreshToken))
+            return Unauthorized("database failed to updated token.");
 
-        // 5. Save updated user to the database
-        bool updated = await _repo.UpdateUserAsync(user);
-        if (!updated)
-            return BadRequest("Failed to update user refresh token");
-
-        // 6. Set new refresh token in HttpOnly cookie
+        // Set new refresh token in HttpOnly cookie
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
@@ -220,10 +230,11 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
             SameSite = SameSiteMode.None,
             Expires = DateTime.UtcNow.AddDays(7)
         };
-        Response.Cookies.Append("refreshToken", newRefreshToken, cookieOptions);
+        Response.Cookies.Append("refreshToken", newRefreshToken.Token, cookieOptions);
 
         // 7. Return new acess token to the frontend
         return Ok(new { AccessToken = accessToken });
+
     }
 
     [HttpPost("auth/logout")]
@@ -232,38 +243,40 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
     [ProducesResponseType(400)]
     public async Task<IActionResult> Logout()
     {
-        // Get and validate resfresh token from cookie
+        // Getting refresh token from HttpOnly cookie
         var cookie = Request.Cookies["refreshToken"];
-
         if (string.IsNullOrEmpty(cookie))
-            return Unauthorized("Refresh token Not found.");
+            return BadRequest("Logout failed cookies empty.");
 
-        // Decode and get user with the refresh token
         var refreshToken = Uri.UnescapeDataString(cookie);
 
-        ApplicationUser? user = await _repo.GetUserByRefreshTokenAsync(refreshToken);
-        if (user == null)
-            return Unauthorized("Invalid refresh token");
+        UserRefreshToken? token = await _repo.GetRefreshTokenAsync(refreshToken);
+        if (token == null)
+        {
+            Response.Cookies.Append("refreshToken", "", new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTimeOffset.UtcNow.AddDays(-1) // Expire immediately
+            });
 
-        // Set refresh token to and empty string
+            return NotFound("token not found on the database");
+        }
+
+        bool updated = await _repo.RemoveRefreshTokenAsync(refreshToken);
+        if (!updated)
+            return BadRequest("Failed to update user refresh token");
+
         Response.Cookies.Append("refreshToken", "", new CookieOptions
         {
             HttpOnly = true,
             Secure = true,
-            SameSite = SameSiteMode.Strict,
+            SameSite = SameSiteMode.None,
             Expires = DateTimeOffset.UtcNow.AddDays(-1) // Expire immediately
         });
+        return Ok("Logout successful.");
 
-        // modify user and update the database
-        user.RefreshToken = null;
-        user.RefreshTokenExpiryTime = null;
-
-        bool updated = await _repo.UpdateUserAsync(user);
-        if (!updated)
-            return BadRequest("Failed to update user refresh token");
-
-
-        return Ok();
 
     }
 
@@ -339,6 +352,6 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
         return Ok("OTP verified successfully.");
     }
 
-   
+
 
 }

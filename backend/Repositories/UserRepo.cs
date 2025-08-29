@@ -35,6 +35,18 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
 
     }
 
+    public async Task<bool> CreateRefreshToken(UserRefreshToken token)
+    {
+        await _db.UserRefreshTokens.AddAsync(token);
+        int affect = await _db.SaveChangesAsync();
+
+        if (affect == 1)
+        {
+            return true;
+        }
+        return false;
+    }
+
     public async Task<IEnumerable<ApplicationUser>> GetAllUsersAsync()
     {
         string key = "TasksHUB_Users";
@@ -45,7 +57,9 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
             return JsonConvert.DeserializeObject<IEnumerable<ApplicationUser>>(cachedUsers) ?? Enumerable.Empty<ApplicationUser>();
         }
 
-        IEnumerable<ApplicationUser> users = await _db.ApplicationUsers.ToListAsync();
+        IEnumerable<ApplicationUser> users = await _db.ApplicationUsers
+            .Include(u => u.RefreshTokens)
+            .ToListAsync();
 
         await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(users), _cacheOptions);
 
@@ -112,8 +126,8 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
 
     public async Task<ApplicationUser?> GetUserByGoogleSubAsync(string googleSub)
     {
-         if (string.IsNullOrWhiteSpace(googleSub))
-        return null;
+        if (string.IsNullOrWhiteSpace(googleSub))
+            return null;
 
         string key = $"TasksHUB_UserGoogleSub_{googleSub}";
         try
@@ -128,6 +142,7 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
         }
 
         ApplicationUser? user = await _db.ApplicationUsers
+            .Include(u => u.RefreshTokens)
             .FirstOrDefaultAsync(s => s.GoogleSub == googleSub);
 
         if (user is null) return user;
@@ -144,18 +159,57 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
         return user;
     }
 
+    public async Task SaveChangesAsync()
+    {
+        await _db.SaveChangesAsync();
+    }
+
+    // public async Task<bool> UpdateUserAsync(ApplicationUser user)
+    // {
+    //     string key = $"TasksHUB_User_{user.Id}";
+
+    //     _db.Entry(user).State = EntityState.Modified;
+
+    //     int affect = await _db.SaveChangesAsync();
+
+    //     if (affect > 0)
+    //     {
+    //         await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(user), _cacheOptions);
+    //         return true;
+    //     }
+
+    //     return false;
+    // }
+
     public async Task<bool> UpdateUserAsync(ApplicationUser user)
     {
-        string key = $"TasksHUB_User_{user.Id}";
+        // The DbContext can automatically track changes if the entity is from its own context.
+        // If the entity is detached, you can re-attach it.
+        _db.ApplicationUsers.Update(user);
 
-        _db.Entry(user).State = EntityState.Modified;
-
-        int affect = await _db.SaveChangesAsync();
-
-        if (affect > 0)
+        try
         {
-            await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(user), _cacheOptions);
-            return true;
+            int affected = await _db.SaveChangesAsync();
+            if (affected > 0)
+            {
+                // Now that the save is successful, update the cache.
+                // You should also update your cached object here with the newly saved user
+                // to ensure it has the latest concurrency token.
+                await _distributedCache.SetStringAsync($"TasksHUB_User_{user.Id}", JsonConvert.SerializeObject(user), _cacheOptions);
+                return true;
+            }
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            // Log the exception for debugging
+            Console.WriteLine($"Concurrency exception: {ex.Message}");
+            return false;
+        }
+        catch (DbUpdateException ex)
+        {
+            // Log other database exceptions
+            Console.WriteLine($"Database update exception: {ex.Message}");
+            return false;
         }
 
         return false;
@@ -164,21 +218,54 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
     public async Task<ApplicationUser?> GetUserByRefreshTokenAsync(string refreshToken)
     {
         string key = $"TasksHUB_UserRefreshToken_{refreshToken}";
-        string? cachedUser = await _distributedCache.GetStringAsync(key);
 
+        string? cachedUser = await _distributedCache.GetStringAsync(key);
         if (cachedUser is not null)
         {
             return JsonConvert.DeserializeObject<ApplicationUser>(cachedUser);
         }
 
         ApplicationUser? user = await _db.ApplicationUsers
-            .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
+            .Include(u => u.RefreshTokens)
+            .FirstOrDefaultAsync(u => u.RefreshTokens.Any(t => t.Token == refreshToken));
 
         if (user is null) return user;
 
         await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(user), _cacheOptions);
 
         return user;
+    }
+
+    public async Task<UserRefreshToken?> GetRefreshTokenAsync(string refreshToken)
+    {
+        UserRefreshToken? token = await _db.UserRefreshTokens
+            .FirstOrDefaultAsync(t => t.Token == refreshToken);
+
+        return token;
+    }
+
+    public async Task<bool> UpdateRefreshToken(UserRefreshToken currentToken, UserRefreshToken newToken)
+    {
+        _db.UserRefreshTokens.Remove(currentToken);
+        await _db.UserRefreshTokens.AddAsync(newToken);
+        int affected = await _db.SaveChangesAsync();
+        if (affected > 0)
+            return true;
+
+        return false;
+    }
+    public async Task<bool> RemoveRefreshTokenAsync(string refreshToken)
+    {
+        UserRefreshToken? token = await _db.UserRefreshTokens
+            .FirstOrDefaultAsync(t => t.Token == refreshToken);
+
+        if (token == null)
+            return false;
+
+        _db.UserRefreshTokens.Remove(token);
+        await _db.SaveChangesAsync();
+
+        return true;
     }
 
 

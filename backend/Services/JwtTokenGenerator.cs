@@ -35,12 +35,19 @@ public static class JwtTokenGenerator
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    public static string GenerateRefreshToken()
+    public static UserRefreshToken GenerateRefreshToken(Guid userId)
     {
         var randomBytes = new byte[32];
         using var rng = RandomNumberGenerator.Create();
         rng.GetBytes(randomBytes);
-        return Convert.ToBase64String(randomBytes);
+        
+        UserRefreshToken refreshToken = new()
+        {
+            Token = Convert.ToBase64String(randomBytes),
+            TokenExpiryTime = DateTime.UtcNow.AddDays(7),
+            UserId = userId
+        };
+        return refreshToken;
     }
 
     

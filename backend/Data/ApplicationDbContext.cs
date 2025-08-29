@@ -12,6 +12,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<ApplicationUser> ApplicationUsers { get; set; } = null!;
     public DbSet<UserTask> UserTasks { get; set; } = null!;
     public DbSet<UserDocument> UserDocuments { get; set; } = null!;
+    public DbSet<UserRefreshToken> UserRefreshTokens { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -27,6 +28,12 @@ public class ApplicationDbContext : DbContext
             .HasMany(u => u.UserDocument)
             .WithOne(d => d.User)
             .HasForeignKey(d => d.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ApplicationUser>()
+            .HasMany(u => u.RefreshTokens)
+            .WithOne(r => r.User)
+            .HasForeignKey(r => r.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<ApplicationUser>()

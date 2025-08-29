@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
 import { FilterTaskType, UserTaskType } from "../../../Interfaces";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { taskApi } from "../../../services/TaskApiService";
+import { taskApi } from "../../../services/apiServices/TaskApiService";
 
 export default function page() {
   const router = useRouter();
@@ -311,7 +311,9 @@ export default function page() {
                   </g>
                 </svg>
               </div>
-              <h1 className="text-[0.9rem] mb-1 pl-4 w-fit uppercase italic ">Filter by:</h1>
+              <h1 className="text-[0.9rem] mb-1 pl-4 w-fit uppercase italic ">
+                Filter by:
+              </h1>
 
               <form
                 action=""
@@ -324,7 +326,7 @@ export default function page() {
                     id="creation_date"
                     type="date"
                     value={filterBy.created ?? ""}
-                    onChange={(e) =>{
+                    onChange={(e) => {
                       setFilterBy((prev) => ({
                         ...prev,
                         created: e.target.value,
@@ -339,13 +341,11 @@ export default function page() {
                   <select
                     id="status"
                     value={filterBy.status ? filterBy.status : "None"}
-                    onChange={(e) =>{
+                    onChange={(e) => {
                       setFilterBy((prev) => ({
                         ...prev,
                         status: e.target.value,
                       }));
-
-
                     }}
                     name="status"
                     className="border border-gray-600 bg-transparent rounded-lg outline-none py-2 px-1  w-[100%]"
@@ -368,7 +368,7 @@ export default function page() {
                     id="deadline"
                     type="date"
                     value={filterBy.deadline ?? ""}
-                    onChange={(e) =>{
+                    onChange={(e) => {
                       setFilterBy((prev) => ({
                         ...prev,
                         deadline: e.target.value,
@@ -384,11 +384,11 @@ export default function page() {
                   <select
                     id="category"
                     value={filterBy.category ?? ""}
-                    onChange={(e) =>{
+                    onChange={(e) => {
                       setFilterBy((prev) => ({
                         ...prev,
                         category: e.target.value,
-                      }))
+                      }));
                     }}
                     name="category"
                     className="border border-gray-600 bg-transparent rounded-lg outline-none py-2 px-1  w-[100%]"
@@ -452,7 +452,9 @@ export default function page() {
 
         <div className="w-fit hidden sm:flex border-2 border-black cursor-pointer rounded-2xl overflow-hidden">
           <div
-            className={`py-2.5 px-4  ${activeOrderBy.latest ? "bg-gray-700 text-white" : ""}`}
+            className={`py-2.5 px-4  ${
+              activeOrderBy.latest ? "bg-gray-700 text-white" : ""
+            }`}
             onClick={() => {
               if (!activeOrderBy.latest) {
                 localStorage.removeItem("orderBy");
@@ -464,7 +466,9 @@ export default function page() {
             Latest
           </div>
           <div
-            className={`py-2.5 px-4 ${activeOrderBy.oldest ? "bg-gray-700 text-white" : ""}`}
+            className={`py-2.5 px-4 ${
+              activeOrderBy.oldest ? "bg-gray-700 text-white" : ""
+            }`}
             onClick={() => {
               if (!activeOrderBy.oldest) {
                 localStorage.setItem("orderBy", "true");

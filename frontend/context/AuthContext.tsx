@@ -4,8 +4,9 @@ import { AuthContextType, User } from "../Interfaces";
 import { tokenService } from "../services/tokenService";
 import { api } from "../services/axios";
 import { jwtDecode } from "jwt-decode";
-import { useRouter } from "next/navigation";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
+import { signOut } from "next-auth/react";
+import { AuthService } from "../services/apiServices/AuthService";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -15,7 +16,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
   const [userInfo, setUserInfo] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const router = useRouter();
 
   const setAccessToken = (token: string) => {
     tokenService.set(token);
@@ -31,16 +31,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logout = async () => {
     try {
-      await api.post("/auth/logout", { withCredentials: true });
+      await AuthService.logout();
+      
+      await signOut({callbackUrl: "/login" });
+
     } catch (err) {
       console.error("Failed to logout from server:", err);
     }
-
-    tokenService.clear();
-    setAccessTokenState(null);
-    setUserInfo(null);
-    router.push("/login");
+      
   };
+
 
   useEffect(() => {
     const tryRefresh = async () => {
@@ -54,7 +54,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         console.log(err.message);
         setAccessTokenState(null);
         setUserInfo(null);
-        // logout();
       } finally {
         console.log("Setting loading to false...");
         setLoading(false);
@@ -74,7 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         userInfo,
         setUserInfo,
         loading, 
-        setLoading
+        setLoading,
       }}
     >
       {loading ? (

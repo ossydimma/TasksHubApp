@@ -8,7 +8,7 @@ import {
   getApiErrorMessage,
   validateDeadline,
 } from "../../../../../SharedFunctions";
-import { taskApi } from "../../../../../services/TaskApiService";
+import { taskApi } from "../../../../../services/apiServices/TaskApiService";
 
 export default function EditTaskPage() {
   const params = useParams();
@@ -54,7 +54,6 @@ export default function EditTaskPage() {
    */
 
   function mapPayload(): UserTaskType {
-
     const payload: UserTaskType = {
       id: task?.id ?? "",
       title: editedTask.title,
@@ -65,12 +64,11 @@ export default function EditTaskPage() {
       status: editedTask.status === true ? "Completed" : task?.status ?? "",
     };
     return payload;
-
   }
 
   /**
    * Validate all form inputs
-   * @return {string | UserTaskType} - return payload if no error 
+   * @return {string | UserTaskType} - return payload if no error
    */
   const validateForm = (): string | UserTaskType => {
     if (!Object.values(editedTask).every((val) => val !== "")) {
@@ -126,7 +124,7 @@ export default function EditTaskPage() {
     getTask();
   }, [taskId]);
 
-   useEffect(() => {
+  useEffect(() => {
     setIsLoading(false);
   }, [task]);
 

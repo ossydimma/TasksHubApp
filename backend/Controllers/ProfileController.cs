@@ -23,7 +23,7 @@ public class ProfileController(IUserRepo repo, IConfiguration config, OTPService
     {
         string? userIdStr = User.FindFirst("id")?.Value;
 
-        if (userIdStr == null)
+        if (userIdStr == null)  
             return BadRequest("unauthenticated user");
 
         if (string.IsNullOrWhiteSpace(model.Username))
@@ -174,13 +174,15 @@ public class ProfileController(IUserRepo repo, IConfiguration config, OTPService
 
             // Generate tokens
             string accessToken = JwtTokenGenerator.GenerateToken(user, HttpContext.RequestServices.GetRequiredService<IConfiguration>());
-            string refreshToken = JwtTokenGenerator.GenerateRefreshToken();
+            UserRefreshToken refreshToken = JwtTokenGenerator.GenerateRefreshToken(user.Id);
 
             // Update user
+            user.RefreshTokens.Add(refreshToken);
             user.Email = payload.Email;
             user.GoogleSub = payload.Subject;
-            user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            
+            // user.RefreshToken = refreshToken;
+            // user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
 
             // Save updated user to the database
             bool updated = await _repo.UpdateUserAsync(user);
@@ -196,7 +198,7 @@ public class ProfileController(IUserRepo repo, IConfiguration config, OTPService
                 Expires = DateTime.UtcNow.AddDays(7)
             };
 
-            Response.Cookies.Append("refreshToken", refreshToken, cookieoptions);
+            Response.Cookies.Append("refreshToken", refreshToken.Token, cookieoptions);
 
             // Return access token to the frontend
             return Ok(new { AccessToken = accessToken });
@@ -208,157 +210,156 @@ public class ProfileController(IUserRepo repo, IConfiguration config, OTPService
     
     }
 
-    [HttpPost("verify-email-change")]
-    [ProducesResponseType(200)]
-    [ProducesResponseType(400)]
-    [ProducesResponseType(404)]
-    public async Task<IActionResult> VerifyEmailChange([FromBody] VerifyEmailChangeDto model)
-    {
-        if (string.IsNullOrWhiteSpace(model.Email))
-            return BadRequest("Invalid email.");
 
-        ApplicationUser? user = await _repo.GetUserByEmailAsync(model.Email);
-        if (user is null) return NotFound("User not found.");
+    // [HttpPost("verify-email-change")]
+    // [ProducesResponseType(200)]
+    // [ProducesResponseType(400)]
+    // [ProducesResponseType(404)]
+    // public async Task<IActionResult> VerifyEmailChange([FromBody] VerifyEmailChangeDto model)
+    // {
+    //     if (string.IsNullOrWhiteSpace(model.Email))
+    //         return BadRequest("Invalid email.");
 
-        string otp = await _otpService.GenerateAndStoreOtp(model.Email);
+    //     ApplicationUser? user = await _repo.GetUserByEmailAsync(model.Email);
+    //     if (user is null) return NotFound("User not found.");
 
-        string subject = "Confirm your email change request";
-        string body = $@"
-            <div style='font-size:18px;'>
-                <h1 style='font-size:20px;'>Hi {model.Email},</h1>
-                <p>We received a request to change the email address associated with your TasksHub account.</p>
-                <p>To confirm this request, please use the following verification code:</p>
-                <p><strong style='font-size:20px;'> Code : <strong style='font-size:25px; word-spacing: 20px;'> {otp}</strong> </p>
-                <p>This code will expire in 5 minutes.</p>
-                <p>
-                    <span style='font-size:18px; font-weight: 700;'>Didn't request this?</span>
-                    If you did not request to change your email address, please ignore this message. Your account will remain unchanged.
-                </p>
-                <p style='font-size:18px;'>Thanks,<br/> <span style='font-weight: 800;'>TasksHub</span></p>
-            </div>
-        ";
+    //     string otp = await _otpService.GenerateAndStoreOtp(model.Email);
 
-        try
-        {
-            await _emailSender.SendEmail(model.Email, subject, body);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.ToString());
-            return BadRequest();
-        }
+    //     string subject = "Confirm your email change request";
+    //     string body = $@"
+    //         <div style='font-size:18px;'>
+    //             <h1 style='font-size:20px;'>Hi {model.Email},</h1>
+    //             <p>We received a request to change the email address associated with your TasksHub account.</p>
+    //             <p>To confirm this request, please use the following verification code:</p>
+    //             <p><strong style='font-size:20px;'> Code : <strong style='font-size:25px; word-spacing: 20px;'> {otp}</strong> </p>
+    //             <p>This code will expire in 5 minutes.</p>
+    //             <p>
+    //                 <span style='font-size:18px; font-weight: 700;'>Didn't request this?</span>
+    //                 If you did not request to change your email address, please ignore this message. Your account will remain unchanged.
+    //             </p>
+    //             <p style='font-size:18px;'>Thanks,<br/> <span style='font-weight: 800;'>TasksHub</span></p>
+    //         </div>
+    //     ";
 
-        return Ok("OTP sent successfully.");
+    //     try
+    //     {
+    //         await _emailSender.SendEmail(model.Email, subject, body);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Console.WriteLine(ex.ToString());
+    //         return BadRequest();
+    //     }
 
-    }
+    //     return Ok("OTP sent successfully.");
 
-    [HttpPost("verify-old-email")]
-    [ProducesResponseType(200)]
-    [ProducesResponseType(400)]
-    public async Task<IActionResult> VerifyOldEmail(VerifyEmailDto model)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
+    // }
 
-        bool isValid = await _otpService.VerifyOtp(model.OldEmail, model.Otp);
+    // [HttpPost("verify-old-email")]
+    // [ProducesResponseType(200)]
+    // [ProducesResponseType(400)]
+    // public async Task<IActionResult> VerifyOldEmail(VerifyEmailDto model)
+    // {
+    //     if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        if (!isValid)
-            return BadRequest("Invalid or expired OTP.");
+    //     bool isValid = await _otpService.VerifyOtp(model.OldEmail, model.Otp);
 
-        ApplicationUser? user = await _repo.GetUserByEmailAsync(model.NewEmail);
-        if (user != null) return BadRequest($"{model.NewEmail} already in use.");
+    //     if (!isValid)
+    //         return BadRequest("Invalid or expired OTP.");
 
-        string otp = await _otpService.GenerateAndStoreOtp(model.NewEmail);
+    //     ApplicationUser? user = await _repo.GetUserByEmailAsync(model.NewEmail);
+    //     if (user != null) return BadRequest($"{model.NewEmail} already in use.");
 
-        string subject = "Confirm it's you";
-        string body = $@"
-            <div style='font-size:18px;'>
-                <h1 style='font-size:20px;'>Hi {model.NewEmail},</h1>
-                <p>We're sending a security code to confirm that it's really you.</p>
-                <p><strong style='font-size:20px;'> Code : <strong style='font-size:25px; word-spacing: 20px;'> {otp}</strong> </p>
-                <p>This code will expire in 5 minutes.</p>
-                <p>
-                    <span style='font-size:18px; font-weight: 700;'>Didn't request this? </span>
-                    If you got this email but didn't request for it, it's possible someone is trying to access your TasksHub account.
-                    As long as you don't share this code with anyone, you don't need to take any further step.
-                </p>
-                <p style='font-size:18px;'>Thanks,<br/> <span style='font-weight: 800;'>TasksHub </span></p>
-            </div>";
+    //     string otp = await _otpService.GenerateAndStoreOtp(model.NewEmail);
 
-        try
-        {
-            await _emailSender.SendEmail(model.NewEmail, subject, body);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.ToString());
-            return BadRequest();
-        }
+    //     string subject = "Confirm it's you";
+    //     string body = $@"
+    //         <div style='font-size:18px;'>
+    //             <h1 style='font-size:20px;'>Hi {model.NewEmail},</h1>
+    //             <p>We're sending a security code to confirm that it's really you.</p>
+    //             <p><strong style='font-size:20px;'> Code : <strong style='font-size:25px; word-spacing: 20px;'> {otp}</strong> </p>
+    //             <p>This code will expire in 5 minutes.</p>
+    //             <p>
+    //                 <span style='font-size:18px; font-weight: 700;'>Didn't request this? </span>
+    //                 If you got this email but didn't request for it, it's possible someone is trying to access your TasksHub account.
+    //                 As long as you don't share this code with anyone, you don't need to take any further step.
+    //             </p>
+    //             <p style='font-size:18px;'>Thanks,<br/> <span style='font-weight: 800;'>TasksHub </span></p>
+    //         </div>";
 
-        return Ok("Old email verified successfully.");
-    }
+    //     try
+    //     {
+    //         await _emailSender.SendEmail(model.NewEmail, subject, body);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Console.WriteLine(ex.ToString());
+    //         return BadRequest();
+    //     }
 
-    [HttpPost("verify-new-email")]
-    [ProducesResponseType(200)]
-    [ProducesResponseType(400)]
-    public async Task<IActionResult> VerifyNewEmail(VerifyEmailDto model)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
+    //     return Ok("Old email verified successfully.");
+    // }
 
-        bool isValid = await _otpService.VerifyOtp(model.NewEmail, model.Otp);
+    // [HttpPost("verify-new-email")]
+    // [ProducesResponseType(200)]
+    // [ProducesResponseType(400)]
+    // public async Task<IActionResult> VerifyNewEmail(VerifyEmailDto model)
+    // {
+    //     if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        if (!isValid)
-            return BadRequest("Invalid or expired OTP.");
+    //     bool isValid = await _otpService.VerifyOtp(model.NewEmail, model.Otp);
 
-        ApplicationUser? user = await _repo.GetUserByEmailAsync(model.OldEmail);
-        if (user is null) return NotFound("User not found.");
+    //     if (!isValid)
+    //         return BadRequest("Invalid or expired OTP.");
 
-        user.Email = model.NewEmail.ToLower();
+    //     ApplicationUser? user = await _repo.GetUserByEmailAsync(model.OldEmail);
+    //     if (user is null) return NotFound("User not found.");
 
-        bool updated = await _repo.UpdateUserAsync(user);
-        if (!updated)
-            return BadRequest("Failed to change user email.");
+    //     user.Email = model.NewEmail.ToLower();
 
-        string oldEmailSubject = "Your TasksHub email has been changed";
-        string oldEmailBody = $@"
-            <div style='font-size:16px;'>
-                <p>Hi {user.UserName},</p>
-                <p>We wanted to let you know that the email address associated with your <strong>TasksHub</strong> account was successfully changed.</p>
-                <p>If you made this change, no further action is needed.</p>
-                <p>If you didn’t request this change, please contact our support team immediately — your account may be at risk.</p>
-                <p style='margin-top: 20px;'>Thanks,<br/><strong>TasksHub Team</strong></p>
-            </div>
+    //     bool updated = await _repo.UpdateUserAsync(user);
+    //     if (!updated)
+    //         return BadRequest("Failed to change user email.");
 
-        ";
+    //     string oldEmailSubject = "Your TasksHub email has been changed";
+    //     string oldEmailBody = $@"
+    //         <div style='font-size:16px;'>
+    //             <p>Hi {user.UserName},</p>
+    //             <p>We wanted to let you know that the email address associated with your <strong>TasksHub</strong> account was successfully changed.</p>
+    //             <p>If you made this change, no further action is needed.</p>
+    //             <p>If you didn’t request this change, please contact our support team immediately — your account may be at risk.</p>
+    //             <p style='margin-top: 20px;'>Thanks,<br/><strong>TasksHub Team</strong></p>
+    //         </div>
 
-        string newEmailSubject = "You've successfully updated your email on TasksHub";
-        string newEmailBody = $@"
-            <div style='font-size:16px;'>
-                <p>Hi {user.UserName},</p>
-                <p>Your email address on <strong>TasksHub</strong> has been successfully updated to this address.</p>
-                <p>You're now all set to log in using your new email.</p>
-                <p>If you didn't request this change, please contact support immediately.</p>
-                <p style='margin-top: 20px;'>Thanks,<br/><strong>TasksHub Team</strong></p>
-            </div>
+    //     ";
 
-        ";
+    //     string newEmailSubject = "You've successfully updated your email on TasksHub";
+    //     string newEmailBody = $@"
+    //         <div style='font-size:16px;'>
+    //             <p>Hi {user.UserName},</p>
+    //             <p>Your email address on <strong>TasksHub</strong> has been successfully updated to this address.</p>
+    //             <p>You're now all set to log in using your new email.</p>
+    //             <p>If you didn't request this change, please contact support immediately.</p>
+    //             <p style='margin-top: 20px;'>Thanks,<br/><strong>TasksHub Team</strong></p>
+    //         </div>
 
-        try
-        {
-            await _emailSender.SendEmail(model.OldEmail, oldEmailSubject, oldEmailBody);
-            await _emailSender.SendEmail(model.NewEmail, newEmailSubject, newEmailBody);
+    //     ";
 
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.ToString());
-        }
+    //     try
+    //     {
+    //         await _emailSender.SendEmail(model.OldEmail, oldEmailSubject, oldEmailBody);
+    //         await _emailSender.SendEmail(model.NewEmail, newEmailSubject, newEmailBody);
 
-        return Ok("Email Changed successfully.");
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Console.WriteLine(ex.ToString());
+    //     }
 
-
-    }
+    //     return Ok("Email Changed successfully.");
 
 
+    // }
 
     private Cloudinary GetCloudinaryInstance()
     {

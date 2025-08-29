@@ -20,7 +20,7 @@ interface MsgType {
 }
 
 export default function page() {
-  const { userInfo, isAuthenticated, setAccessToken, setUserInfo, logout } =
+  const { userInfo, isAuthenticated, setAccessToken, setUserInfo,  logout } =
     useAuth();
   const { data: session, status } = useSession();
   const hasRunRef = useRef<boolean>(false);

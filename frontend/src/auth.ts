@@ -15,7 +15,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   callbacks: {
     async jwt({ token, account, profile }) {
-      // console.log("JWT CALLBACK", { token, account, profile });
       if (account?.id_token) {
         token.idToken = account.id_token;
       }
