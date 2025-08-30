@@ -226,7 +226,7 @@ export default function page() {
           )}
           <input
             type="text"
-            placeholder="Search"
+            placeholder="Search task by title..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="w-[77.5%] bg-inherit py-2 outline-none pl-3 pr-1 lmd:pl-5 text-sm sm:text-[0.92rem] md:text-[1rem]"

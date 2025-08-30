@@ -48,11 +48,12 @@ export interface modifyTaskParams {
 }
 
 export interface TaskModel {
+    id: string
     title: string;
     description: string;
     deadline: string;
     category: string;
-    status: boolean | string;
+    status: string;
 }
 
 export interface FilterTaskType {

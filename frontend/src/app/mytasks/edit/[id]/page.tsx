@@ -27,50 +27,56 @@ export default function EditTaskPage() {
   ];
 
   const [editedTask, setEditedTask] = useState<TaskModel>({
+    id: "",
     title: "",
     description: "",
     deadline: "",
     category: "",
-    status: false,
+    status: "",
   });
 
   async function getTask() {
     setIsLoading(true);
 
     try {
-      const res = await taskApi.getTask(taskId);
-      setTask(res);
-      setEditedTask(res);
-    } catch (err: any) {
-      console.error(err);
-      setErrorMessage("An unexpected error occured, try reloading the page.");
-    } finally {
-      setIsLoading(false);
-    }
+        const res = await taskApi.getTask(taskId);
+        setTask(res);
+        setEditedTask({
+          id: res.id,
+          title: res.title,
+          deadline: res.deadline,
+          description: res.description,
+          category: res.category,
+          status: res.status, 
+        });
+      } catch (err: any) {
+        console.error(err);
+        setErrorMessage("An unexpected error occured, try reloading the page.");
+      }
   }
   /**
    * map update payload value from task and editedTask values
    * @return {UserTaskType} - return mapped payload
    */
 
-  function mapPayload(): UserTaskType {
-    const payload: UserTaskType = {
-      id: task?.id ?? "",
+  function mapPayload(): TaskModel {
+    
+    const payload: TaskModel = {
+      id: editedTask.id,
       title: editedTask.title,
       description: editedTask.description,
-      creationDate: task?.creationDate ?? "",
       category: editedTask.category,
       deadline: editedTask.deadline,
-      status: editedTask.status === true ? "Completed" : task?.status ?? "",
+      status: editedTask.status,
     };
     return payload;
   }
 
   /**
    * Validate all form inputs
-   * @return {string | UserTaskType} - return payload if no error
+   * @return {string | TaskModel} - return payload if no error
    */
-  const validateForm = (): string | UserTaskType => {
+  const validateForm = (): string | TaskModel => {
     if (!Object.values(editedTask).every((val) => val !== "")) {
       return "All field must be filled";
     }
@@ -93,17 +99,16 @@ export default function EditTaskPage() {
     e.preventDefault();
 
     // Validation step
-    const payload = validateForm();
+    const payload: TaskModel | string = validateForm();
     if (typeof payload === "string") {
       setErrorMessage(payload);
       return;
     }
 
     setIsLoading(true);
-    console.log(payload);
 
     try {
-      await taskApi.updateTask(payload); //Api interaction step
+      await taskApi.updateTask(payload);
 
       // Success handling step
       setIsLoading(false);
@@ -127,6 +132,8 @@ export default function EditTaskPage() {
   useEffect(() => {
     setIsLoading(false);
   }, [task]);
+
+
 
   return (
     <main className="pb-[3.6rem] sm:pb-0 relative w-full h-full">
@@ -234,11 +241,11 @@ export default function EditTaskPage() {
                     <input
                       type="checkbox"
                       id="status"
-                      defaultChecked={!!editedTask.status}
+                      defaultChecked={editedTask.status !== "Completed" ? false : true}
                       onChange={(e) => {
                         setEditedTask((prev) => ({
                           ...prev,
-                          status: e.target.checked,
+                          status: e.target.checked === true ? "Completed" : task?.status ?? ''
                         }));
                         setErrorMessage("");
                       }}

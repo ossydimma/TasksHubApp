@@ -52,7 +52,7 @@ public class TaskController(ITaskRepo repo, IUserRepo userRepo) : ControllerBase
     [ProducesResponseType(400)]
     [ProducesResponseType(401)]
     [ProducesResponseType(404)]
-    public async Task<IActionResult> UpdateTask(TaskDto model)
+    public async Task<IActionResult> UpdateTask(UpdateTaskDto model)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 

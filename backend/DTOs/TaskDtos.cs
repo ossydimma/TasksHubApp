@@ -23,6 +23,24 @@ public class TaskDto
     [Required]
     public string? Status { get; set; } = null!;
 }
+public class UpdateTaskDto
+{
+    [Required]
+    public Guid Id { get; set; } 
+
+    [Required]
+    public string? Title { get; set; } = null!;
+
+    [Required]
+    public string? Category { get; set; } = null!;
+
+    [Required]
+    public string? Description { get; set; } = null!;
+    [Required]
+    public DateOnly? Deadline { get; set; }
+    [Required]
+    public string? Status { get; set; } = null!;
+}
 
 public class CreateTaskDto
 {
