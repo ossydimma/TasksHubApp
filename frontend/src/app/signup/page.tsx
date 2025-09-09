@@ -119,41 +119,78 @@ export default function page() {
     setLoading(false);
   };
 
+    const validateReqirements = (): boolean => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const shouldExchange = searchParams.get("postGoogleLogin") === "true";
+
+    if (status !== "authenticated") return false;
+    if (!shouldExchange) return false;
+
+    if (hasExchangedRef.current) return false;
+    hasExchangedRef.current = true;
+    return true;
+  };
+
+  const handleGoogleAuth = async () => {
+    if (!session?.idToken) return;
+    setLoading(true);
+    try {
+      const token = await AuthService.googleAuth(session.idToken);
+      setAccessToken(token);
+      setLoading(false);
+      router.replace("/home");
+      
+    } catch (err: any) {
+      console.error("[GoogleLoginBtn] Failed to change Google account:", err);
+      setLoading(false);
+    }
+  };
   useEffect(() => {
     const exchangeToken = async () => {
-      if (status !== "authenticated") return;
-
-      const searchParams = new URLSearchParams(window.location.search);
-      const shouldExchange = searchParams.get("postGoogleLogin") === "true";
-
-      if (!shouldExchange) return;
-      if (hasExchangedRef.current) return;
-      hasExchangedRef.current = true;
-
-      console.log("[GoogleLoginBtn] Detected postGoogleLogin flow.");
-
-      setLoading(true);
-      // Login or Signup flow
-      try {
-        const res = await api.post(
-          "/auth/google",
-          { credential: session.idToken },
-          { withCredentials: true }
-        );
-        console.log("[GoogleLoginBtn] Google login/signup successful.");
-
-        setAccessToken(res.data.accessToken);
-
-        setLoading(false);
-
-        router.replace("/home");
-      } catch (err: any) {
-        console.error("[GoogleLoginBtn] Failed to change Google account:", err);
-        setLoading(false);
+      if (!validateReqirements()) {
+        return;
       }
+
+      await handleGoogleAuth();
     };
     exchangeToken();
   }, [session, setAccessToken]);
+
+  // useEffect(() => {
+  //   const exchangeToken = async () => {
+  //     if (status !== "authenticated") return;
+
+  //     const searchParams = new URLSearchParams(window.location.search);
+  //     const shouldExchange = searchParams.get("postGoogleLogin") === "true";
+
+  //     if (!shouldExchange) return;
+  //     if (hasExchangedRef.current) return;
+  //     hasExchangedRef.current = true;
+
+  //     console.log("[GoogleLoginBtn] Detected postGoogleLogin flow.");
+
+  //     setLoading(true);
+  //     // Login or Signup flow
+  //     try {
+  //       const res = await api.post(
+  //         "/auth/google",
+  //         { credential: session.idToken },
+  //         { withCredentials: true }
+  //       );
+  //       console.log("[GoogleLoginBtn] Google login/signup successful.");
+
+  //       setAccessToken(res.data.accessToken);
+
+  //       setLoading(false);
+
+  //       router.replace("/home");
+  //     } catch (err: any) {
+  //       console.error("[GoogleLoginBtn] Failed to change Google account:", err);
+  //       setLoading(false);
+  //     }
+  //   };
+  //   exchangeToken();
+  // }, [session, setAccessToken]);
 
   useEffect(() => {
     if (isAuthenticated) {
