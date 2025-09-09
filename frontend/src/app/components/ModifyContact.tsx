@@ -18,36 +18,36 @@ export default function ModifyContact({
 
   const { userInfo } = useAuth();
 
-  // useEffect(() => {
-  //   const now = Date.now();
+  useEffect(() => {
+    const now = Date.now();
 
-  //   const value: string | null = localStorage.getItem("changeNext");
+    const value: string | null = localStorage.getItem("changeNext");
 
-  //   if (value === null) {
-  //     setDisabled(false);
-  //     return;
-  //   }
+    if (value === null) {
+      setDisabled(false);
+      return;
+    }
 
-  //   const storedTime: number = Number(value);
+    const storedTime: number = Number(value);
 
-  //   if (isNaN(storedTime)) {
-  //     setDisabled(false);
-  //     return;
-  //   }
+    if (isNaN(storedTime)) {
+      setDisabled(false);
+      return;
+    }
 
-  //   const diff = storedTime - now;
+    const diff = storedTime - now;
 
-  //   if (diff > 0) {
-  //     const hours = Math.floor(diff / (1000 * 60 * 60));
-  //     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    if (diff > 0) {
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
-  //     setTimeMessage(`You can change account again in ${hours} hour${hours !== 1 ? "s" : ""} : ${minutes} minute${minutes !== 1 ? "s" : ""}.`);
-  //     setDisabled(true);
-  //   } else {
-  //     setTimeMessage("");
-  //     setDisabled(false);
-  //   }
-  // }, []);
+      setTimeMessage(`Will be avaible again in ${hours} hour${hours !== 1 ? "s" : ""} : ${minutes} minute${minutes !== 1 ? "s" : ""}.`);
+      setDisabled(true);
+    } else {
+      setTimeMessage("");
+      setDisabled(false);
+    }
+  }, []);
   return (
     <div>
       {hasPhone ? (
@@ -72,7 +72,7 @@ export default function ModifyContact({
               helps us keep your account secure by adding an additional layer of
               verification.
             </p>
-            <p className="text-sm -mb-3 mt-7 text-right">{timeMessage}</p>
+            <p className="text-sm -mb-3 mt-7 text-right text-red-600">{timeMessage}</p>
             <button
               className={`text-white rounded-lg px-4 py-2 mt-4 w-full ${disabled ? "bg-gray-400 cursor-not-allowed" : "bg-black"}`}
               disabled={disabled}

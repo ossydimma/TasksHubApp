@@ -74,6 +74,7 @@ export function getApiErrorMessage(error: any): string {
   return "An unexpected error occurred.";
 }
 
+
 export const formatDate = (isoString: string) => {
   const date = new Date(isoString);
   const month = String(date.getMonth() + 1).padStart(2, "0");

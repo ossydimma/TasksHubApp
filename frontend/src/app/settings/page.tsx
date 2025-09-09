@@ -13,6 +13,8 @@ import { useAuth } from "../../../context/AuthContext";
 import { useRouter } from "next/navigation";
 import { api } from "../../../services/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
+import { SettingsServices } from "../../../services/apiServices/SettingsService";
+import { getApiErrorMessage } from "../../../SharedFunctions";
 
 interface MsgType {
   head?: string;
@@ -20,14 +22,14 @@ interface MsgType {
 }
 
 export default function page() {
-  const { userInfo, isAuthenticated, setAccessToken, setUserInfo,  logout } =
+  const { userInfo, isAuthenticated, setAccessToken, setUserInfo, logout } =
     useAuth();
   const { data: session, status } = useSession();
   const hasRunRef = useRef<boolean>(false);
   const router = useRouter();
 
   const [disablePage, setDisablePage] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [showChangeContact, setShowChangeContact] = useState<boolean>(false);
   const [switchSuccess, setSwitchSuccess] = useState<string | null>(null);
@@ -59,43 +61,74 @@ export default function page() {
     "userName" | "email" | "password" | "number" | undefined
   >(undefined);
 
-
   // functions
+  const validateEditUsernameInput = (): string | null => {
+    if (edited === userInfo?.userName) {
+      return "No changes was made";
+    }
+    return null;
+  };
+
+  const apiSuccessAction = (name: string) => {
+    setIsSuccess(true);
+    setUserInfo((prev) => (prev ? { ...prev, userName: name } : prev));
+
+    setMessage({ ...message, body: "username updated successfully." });
+    setTimeout(() => {
+      setDisablePage(false);
+      setSelectedOption(undefined);
+      setMessage({ ...message, body: "" });
+    }, 3000);
+  };
+
   const EditUsername = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (edited === undefined) return;
-
-    if (edited === userInfo?.userName) {
+    if (edited === undefined || edited === "") {
+      setMessage({ ...message, body: "Field can't be empty." });
+      return;
+}
+    const inputError = validateEditUsernameInput();
+    if (inputError) {
       setIsSuccess(false);
-      setMessage({ ...message, body: "No changes was made" });
+      setMessage({ ...message, body: inputError });
       return;
     }
 
     setLoading(true);
     try {
-      const res = await api.post("/settings/update-username", {Username: edited});
-      setIsSuccess(true);
-
-      if (res.data.newUserName) {
-        setUserInfo((prev) =>
-          prev ? { ...prev, userName: res.data.newUserName } : prev
-        );
-      }
-
-      setMessage({ ...message, body: "username updated successfully." });
-      setTimeout(() => {
-        setDisablePage(false);
-        setSelectedOption(undefined);
-        setMessage({ ...message, body: "" });
-      }, 3000);
+      const name = await SettingsServices.updateUsername(edited);
+      apiSuccessAction(name);
     } catch (err: any) {
       console.error(err);
       setIsSuccess(false);
-      setMessage(err.data);
+      const errorMsg = getApiErrorMessage(err);
+      setMessage({ ...message, body: errorMsg });
     } finally {
       setLoading(false);
     }
+  };
+
+  const validatePasswordForm = (): string | null => {
+    if (passwordValue.oldPassword === "") {
+      return "Old password cannot be empty.";
+    } else if (passwordValue.newPassword === "") {
+      return "New password cannot be empty.";
+    } else if (confirmPassword === "") {
+      return "Confirm password cannot be empty.";
+    } else if (passwordValue.newPassword === passwordValue.oldPassword) {
+      return "New and old password can't be the same.";
+    } else if (passwordValue.newPassword !== confirmPassword) {
+      return "New password and confirm password do not match.";
+    }
+
+    return null;
+  };
+  const apiSuccessActions = () => {
+     setIsSuccess(true);
+      setPasswordValue({ oldPassword: "", newPassword: "" });
+      setConfirmPassword("");
+      setMessage({ ...message, body: "Password changed successfully" });
   };
 
   const ChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -103,64 +136,56 @@ export default function page() {
     setMessage({ ...message, body: "" });
     setIsSuccess(false);
 
-    if (passwordValue.oldPassword === "") {
-      setMessage({ ...message, body: "Old password cannot be empty." });
+    const formError = validatePasswordForm();
+    if (formError) {
+      setMessage({ ...message, body: formError });
       return;
-    } else if (passwordValue.newPassword === "") {
-      setMessage({ ...message, body: "New password cannot be empty." });
-      return;
-    } else if (confirmPassword === "") {
-      setMessage({ ...message, body: "Confirm password cannot be empty." });
-      return;
-    } else if (passwordValue.newPassword === passwordValue.oldPassword) {
-      setMessage({
-        ...message,
-        body: "New and old password can't be the same.",
-      });
-      return;
-    } else {
-      console.log("old password", passwordValue.oldPassword);
-      console.log("new password", passwordValue.newPassword);
-      console.log("confirm password", confirmPassword);
-      if (passwordValue.newPassword !== confirmPassword) {
-        setMessage({
-          ...message,
-          body: "New password and confirm password do not match.",
-        });
-      } else {
-        // Call the API to change the password
-        const payload = {
-          OldPassword: passwordValue.oldPassword,
-          NewPassword: passwordValue.newPassword,
-        };
-        setLoading(true);
-        try {
-          await api.post("/settings/change-password", payload);
-          setIsSuccess(true);
-          setPasswordValue({oldPassword: "", newPassword: ""});
-          setConfirmPassword("");
-          setMessage({ ...message, body: "Password changed successfully" });
-        } catch (err: any) {
-          setIsSuccess(false);
-          console.error(err.response.data);
-          // Try to extract the first error message if available
-          const errorData = err.response?.data;
-          let errorMsg = "An error occurred";
-          if (errorData?.errors) {
-            // Get the first error message from the errors object
-            const firstKey = Object.keys(errorData.errors)[0];
-            errorMsg = errorData.errors[firstKey][0];
-          } else if (typeof errorData === "string") {
-            errorMsg = errorData;
-          }
-          setMessage({ ...message, body: errorMsg });
-        } finally {
-          setLoading(false);
-        }
-
-        // alert("Password changed successfully");
-      }
     }
+
+    const payload = {
+      OldPassword: passwordValue.oldPassword,
+      NewPassword: passwordValue.newPassword,
+    };
+
+    setLoading(true);
+
+    // Call the API to change the password
+    try {
+      await SettingsServices.changePassword(payload);
+      apiSuccessActions();
+    } catch (err: any) {
+      setIsSuccess(false);
+      const errorMsg = getApiErrorMessage(err);
+      setMessage({ ...message, body: errorMsg });
+    } finally {
+      setLoading(false);
+    }
+
+    // if (passwordValue.oldPassword === "") {
+    //   setMessage({ ...message, body: "Old password cannot be empty." });
+    //   return;
+    // } else if (passwordValue.newPassword === "") {
+    //   setMessage({ ...message, body: "New password cannot be empty." });
+    //   return;
+    // } else if (confirmPassword === "") {
+    //   setMessage({ ...message, body: "Confirm password cannot be empty." });
+    //   return;
+    // } else if (passwordValue.newPassword === passwordValue.oldPassword) {
+    //   setMessage({
+    //     ...message,
+    //     body: "New and old password can't be the same.",
+    //   });
+    //   return;
+    // } else {
+    //   if (passwordValue.newPassword !== confirmPassword) {
+    //     setMessage({
+    //       ...message,
+    //       body: "New password and confirm password do not match.",
+    //     });
+    //     return;
+    //   } else {
+    //   }
+    // }
   };
 
   const toggleNewPasword = () => {
@@ -198,6 +223,8 @@ export default function page() {
     setShowChangeContact(false);
   };
 
+
+
   useEffect(() => {
     if (hasRunRef.current) return;
     const searchParams = new URLSearchParams(window.location.search);
@@ -206,22 +233,23 @@ export default function page() {
     if (!shouldExchange) {
       return;
     }
-    if (!session || !session.idToken ) {
+    if (!session || !session.idToken) {
       console.log("token unavaliable");
-      setSwitchError("invalid session or token.");
+      // setSwitchError("invalid session or token.");
       return;
     }
 
     hasRunRef.current = true;
-    
+
     setLoading(true);
     const sendToken = async () => {
       try {
-        const res = await api.post("/settings/change-google-account", {
-          Token: session.idToken,
-        });
+        const token = await SettingsServices.changeGoogleAccount(session.idToken);
+        // const res = await api.post("/settings/change-google-account", {
+        //   Token: session.idToken,
+        // });
         // Update access token
-        setAccessToken(res.data.accessToken);
+        setAccessToken(token);
 
         // Set 24hours for next email change
         const ChangeNext = new Date().getTime() + 24 * 60 * 60 * 1000;
@@ -231,54 +259,21 @@ export default function page() {
 
         console.log("after a successful call.");
       } catch (err: any) {
-        console.error("[GoogleLoginBtn] Failed to change Google account:", err);
+        const errorMsg = getApiErrorMessage(err);
+        setSwitchError(errorMsg);
 
-         console.error(err.response.data);
-          // Try to extract the first error message if available
-          const errorData = err.response?.data;
-          let errorMsg = "An error occurred";
-          if (errorData?.errors) {
-            // Get the first error message from the errors object
-            const firstKey = Object.keys(errorData.errors)[0];
-            errorMsg = errorData.errors[firstKey][0];
-          } else if (typeof errorData === "string") {
-            errorMsg = errorData;
-          }
-
-          setSwitchError(errorMsg)
-
-        // if (err.response) {
-        //   // Check if it's a string
-        //   if (typeof err.response.data === "string") {
-        //     setSwitchError(err.response.data);
-        //   }
-        //   // If it's ModelState or another object
-        //   else if (typeof err.response.data === "object") {
-        //     // Try to build a string from ModelState errors
-        //     const errors = err.response.data.errors;
-        //     if (errors) {
-        //       setSwitchError(Object.values(errors).flat().join(" "));
-        //     } else {
-        //       setSwitchError(JSON.stringify(err.response.data));
-        //     }
-        //   }
-        // }
-
-        // setSwitchError("An unexpected error occured.");
-        
       } finally {
-            // Remove param
+        // Remove param
         const url = new URL(window.location.href);
         url.searchParams.delete("postSwitch");
         window.history.replaceState({}, "", url.toString());
-        
+
         setLoading(false);
       }
     };
 
     sendToken();
   }, [session, status, userInfo?.id]);
-
 
   useEffect(() => {
     if (!isAuthenticated && !loading) {
@@ -289,19 +284,21 @@ export default function page() {
   return (
     <div className="px-10 pt-7 pb-20 md:pb-0 w-full h-auto md:h-full font-serif relative">
       {loading && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
-            style={{ cursor: "not-allowed" }}
-          >
-            <LoadingSpinner
-              styles={{ svg: " h-10 w-10", span: "text-[1.2rem]" }}
-              text="Loading..."
-            />
-          </div>
-        )}
+        <div
+          className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
+          style={{ cursor: "not-allowed" }}
+        >
+          <LoadingSpinner
+            styles={{ svg: " h-10 w-10", span: "text-[1.2rem]" }}
+            text="Loading..."
+          />
+        </div>
+      )}
       {switchSuccess && (
         <div className="py-12 absolute  left-1/2 transform -translate-x-1/2 -translate-y-1/2 top-[18rem] w-[100%]  xs:w-[85%] h-auto bg-black text-white border border-gray-500 shadow-2xl rounded-lg px-6 z-10">
-          <h3 className="text-xl font-bold text-center pb-4">Successfully changed</h3>
+          <h3 className="text-xl font-bold text-center pb-4">
+            Successfully changed
+          </h3>
           <p className="text-center text-[1rem] pb-2">{switchSuccess}</p>
           <div className="flex justify-center items-center">
             <button
@@ -495,7 +492,6 @@ export default function page() {
             </svg>
           </li>
 
-
           {/* ------------------------ LOGOUT -------------------------- */}
           <li
             className={`flex sm:hidden justify-between border-b-2 border-gray-600 pb-4  ${
@@ -505,9 +501,7 @@ export default function page() {
               router.push("/logout");
             }}
           >
-            <span className="font-semibold text-lg xs:text-xl">
-              Logout
-            </span>
+            <span className="font-semibold text-lg xs:text-xl">Logout</span>
             <svg
               className="w-8 h-8"
               viewBox="0 0 24 24"
@@ -594,9 +588,7 @@ export default function page() {
                     name="userName"
                     id="userName"
                     defaultValue={edited}
-                    onChange={(e) =>
-                      setEdited(e.target.value )
-                    }
+                    onChange={(e) => setEdited(e.target.value)}
                     className="border-2 border-gray-500 rounded-md px-3 py-2 outline-none focus:border-black"
                   />
                 </div>

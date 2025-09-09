@@ -177,7 +177,10 @@ public class ProfileController(IUserRepo repo, IConfiguration config, OTPService
             UserRefreshToken refreshToken = JwtTokenGenerator.GenerateRefreshToken(user.Id);
 
             // Update user
-            user.RefreshTokens.Add(refreshToken);
+            if (!await _repo.CreateRefreshToken(refreshToken))
+            {
+                return BadRequest("Failed to update user refresh token");
+            }
             user.Email = payload.Email;
             user.GoogleSub = payload.Subject;
             
@@ -187,7 +190,7 @@ public class ProfileController(IUserRepo repo, IConfiguration config, OTPService
             // Save updated user to the database
             bool updated = await _repo.UpdateUserAsync(user);
             if (!updated)
-                return BadRequest("Failed to update user refresh token");
+                return BadRequest("Update Fail");
 
             // Set refresh token in HttpOnly cookie
             var cookieoptions = new CookieOptions
