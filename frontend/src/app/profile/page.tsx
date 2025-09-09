@@ -7,12 +7,45 @@ import { redirect } from "next/navigation";
 import { api } from "../../../services/axios";
 import axios from "axios";
 import LoadingSpinner from "../components/LoadingSpinner";
+import { SettingsServices } from "../../../services/apiServices/SettingsService";
 
 export default function Page() {
   const { userInfo, isAuthenticated } = useAuth();
 
   const [imgSrc, setImgSrc] = useState<string | undefined>(userInfo?.imageSrc);
   const [loading, setLoading] = useState<boolean>(false);
+
+  const validate = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ): FormData | null => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const formData = new FormData();
+      formData.append("File", file);
+      return formData;
+    }
+    return null;
+  };
+
+  const updateImg = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formData = validate(e);
+    if (!formData) return;
+
+    setLoading(true);
+    try {
+      const img = await SettingsServices.updateUserImage(formData);
+      setImgSrc(img);
+      e.target.value = "";
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        console.error("Fail upload", err.response?.data || err.message);
+      } else {
+        console.error("Unexpected error:", err);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!isAuthenticated && !loading) {
@@ -58,64 +91,7 @@ export default function Page() {
           <input
             type="file"
             accept="image/*"
-            onChange={async (e) => {
-              if (e.target.files && e.target.files[0]) {
-                const file = e.target.files[0];
-                const formData = new FormData();
-                formData.append("File", file); // ✅ matches C# DTO property
-
-                setLoading(true);
-                try {
-                  const res = await api.post(
-                    "/settings/update-user-image",
-                    formData
-                  );
-                  const data = res.data.imageUrl;
-                  setImgSrc(data);
-                  e.target.value = ""; // optional: reset input to allow same file again
-                } catch (err) {
-                  if (axios.isAxiosError(err)) {
-                    console.error(
-                      "Upload failed:",
-                      err.response?.data || err.message
-                    );
-                  } else {
-                    console.error("Unexpected error:", err);
-                  }
-                } finally {
-                  setLoading(false);
-                }
-              }
-            }}
-            // onChange={async (e) => {
-            //   if (e.target.files && e.target.files[0]) {
-            //     // const reader = new FileReader();
-            //     const file = e.target.files[0];
-
-            //     const formData = new FormData();
-            //     formData.append("File", file);
-            //     setLoading(true);
-            //     try {
-            //       const res = await api.post(
-            //         "/settings/update-user-image",
-            //         formData
-            //       );
-            //       const data = res.data.imageUrl;
-            //       setImgSrc(data);
-            //     } catch (err) {
-            //       if (axios.isAxiosError(err)) {
-            //         console.error(
-            //           "Upload failed:",
-            //           err.response?.data || err.message
-            //         );
-            //       } else {
-            //         console.error("Unexpected error:", err);
-            //       }
-            //     } finally {
-            //       setLoading(false);
-            //     }
-            //   }
-            // }}
+            onChange={updateImg}
             className="hidden"
             id="fileInput"
           />
