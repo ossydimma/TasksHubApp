@@ -105,21 +105,13 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
 
     public async Task<ApplicationUser?> GetUserByEmailAsync(string email)
     {
-        string key = $"TasksHUB_UserEmail_{email}";
-        string? cachedUser = await _distributedCache.GetStringAsync(key);
+        
         string normalizedEmail = email.ToLower();
-
-        if (cachedUser is not null)
-        {
-            return JsonConvert.DeserializeObject<ApplicationUser>(cachedUser);
-        }
 
         ApplicationUser? user = await _db.ApplicationUsers
             .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail);
 
         if (user is null) return user;
-
-        await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(user), _cacheOptions);
 
         return user;
     }

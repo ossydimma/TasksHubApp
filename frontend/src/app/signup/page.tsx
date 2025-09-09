@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
 import { useSession } from "next-auth/react";
 import LoadingSpinner from "../components/LoadingSpinner";
+import { AuthService } from "../../../services/apiServices/AuthService";
 
 export default function page() {
   const { isAuthenticated, setAccessToken } = useAuth();
@@ -76,33 +77,43 @@ export default function page() {
     });
   };
 
+  const validatePassword = (): string | null => {
+    // Check if the password and confirm password match
+    if (signupModel.password !== confirmPasswordValue) {
+      return "Passwords do not match";
+    }
+    return null;
+  };
+
+  const getApiErrorMsg = (err: any): string => {
+    if (err.response) {
+      return err.response.data?.error || err.response.data || "signup failed";
+    } else {
+      console.log("Network or other error:", err.message);
+      return "Network error or server not reachable";
+    }
+  };
+
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setErrorMessage("");
 
-    // Check if the password and confirm password match
-    if (signupModel.password !== confirmPasswordValue) {
-      setErrorMessage("Passwords do not match");
+    const passwordValidationError = validatePassword();
+    if (passwordValidationError) {
+      setErrorMessage(passwordValidationError);
       setLoading(false);
       return;
     }
 
     // Calling the create user API
     try {
-      await api.post("/auth/signup", signupModel);
-      await api.post(`/sendOTP?email=${encodeURIComponent(signupModel.email)}`);
+      await AuthService.completeSignup(signupModel);
       setDisplayModal(true);
       setTimeLeft(60);
     } catch (err: any) {
-      if (err.response) {
-        setErrorMessage(
-          err.response.data?.error || err.response.data || "signup failed"
-        );
-      } else {
-        console.log("Network or other error:", err.message);
-        setErrorMessage("Network error or server not reachable");
-      }
+      const error = getApiErrorMsg(err);
+      setErrorMessage(error);
     }
 
     setLoading(false);
@@ -165,7 +176,7 @@ export default function page() {
       )}
       {displayModal ? (
         <EnterOTP
-          className="w-[60%] sm:w-[50%] md:w-[40%] lg:w-[28%] top-1/2"
+          className="w-[80%] sm:w-[50%] md:w-[40%] lg:w-[28%] top-1/2"
           aim={`signup`}
           handleCancel={() => setDisplayModal(false)}
           timeLeft={timeLeft}
@@ -174,7 +185,7 @@ export default function page() {
           setLoading={setLoading}
         />
       ) : (
-        <div className="relative w-[60%] sm:w-[50%] md:w-[40%] lg:w-[28%] rounded-[0.8rem] px-4 py-5 border border-gray-300 font-serif">
+        <div className="relative w-[80%] sm:w-[50%] md:w-[40%] lg:w-[28%] rounded-[0.8rem] px-4 py-5 border border-gray-300 font-serif">
           <h2 className=" text-2xl text-black font-semibold text-center">
             Sign up
           </h2>

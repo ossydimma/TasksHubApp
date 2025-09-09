@@ -29,6 +29,7 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
             Email = model.Email,
             PasswordHash = passwordHash,
             PasswordSalt = passwordSalt,
+            IsEmailVerified = false
 
         };
 
@@ -138,26 +139,33 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
         if (user is null)
             return Unauthorized("Invalid email or password");
 
-        // Checking user auth provider
+        if (user.IsEmailVerified == false)
+            return BadRequest("Email not verified");
+
         if (user.PasswordHash == null || user.PasswordSalt == null)
             return BadRequest("Please login with Google");
 
         if (!Hasher.VerifyPassword(model.Password, user.PasswordHash, user.PasswordSalt))
             return BadRequest("Invalid email or password");
 
-        // 2. Generate new token
+        // Generate new token
         string accessToken = JwtTokenGenerator.GenerateToken(user, HttpContext.RequestServices.GetRequiredService<IConfiguration>());
         UserRefreshToken refreshToken = JwtTokenGenerator.GenerateRefreshToken(user.Id);
 
-        // Update user's refreshtokens
-        user.RefreshTokens.Add(refreshToken);
-
-        // 4. Save updated user to the database
-        bool updated = await _repo.UpdateUserAsync(user);
-        if (!updated)
+        if (!await _repo.CreateRefreshToken(refreshToken))
+        {
             return BadRequest("Failed to update user refresh token");
+        }
 
-        // 5. Set refresh token in HttpOnly cookie
+        // Update user's refreshtokens
+        // user.RefreshTokens.Add(refreshToken);
+
+        // // Save updated user to the database
+        // bool updated = await _repo.UpdateUserAsync(user);
+        // if (!updated)
+        //     return BadRequest("Failed to update user refresh token");
+
+        // Set refresh token in HttpOnly cookie
         var cookieoptions = new CookieOptions
         {
             HttpOnly = true,
@@ -168,7 +176,7 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
 
         Response.Cookies.Append("refreshToken", refreshToken.Token, cookieoptions);
 
-        // 6. Return access token to the frontend
+        // Return access token to the frontend
         return Ok(new { AccessToken = accessToken });
     }
 
@@ -327,17 +335,37 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
     public async Task<IActionResult> VerifyOTP([FromBody] VerifyOtpDto model)
     {
         if (string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.SubmittedOtp))
-            return BadRequest("Email ans OTP are Required.");
+            return BadRequest("Email and code are Required.");
 
         bool isValid = await _otpService.VerifyOtp(model.Email, model.SubmittedOtp);
 
         if (!isValid)
-            return BadRequest("Invalid or expired OTP.");
+            return BadRequest("Invalid or expired code.");
 
         // Send a welcome email
-        if (model.Aim == "signup")
+        if (model.Aim == "signup" || model.Aim == "login")
         {
-            await _emailSender.SendEmail(model.Email, "Welcome to TasksHub", "Thank you for registering!");
+            ApplicationUser? user = await _repo.GetUserByEmailAsync(model.Email);
+
+            if (user == null)
+                return Unauthorized("User is not found");
+
+            user.IsEmailVerified = true;
+
+            // Save updated user to the database
+            bool updated = await _repo.UpdateUserAsync(user);
+            if (!updated)
+                return BadRequest("Failed to update user refresh token");
+
+            if (model.Aim == "signup")
+            {
+                await _emailSender.SendEmail(model.Email, "Welcome to TasksHub", "Thank you for registering!");
+            }
+            else
+            {
+                await _emailSender.SendEmail(model.Email, "Welcome to TasksHub", "Your Email has successfully been verified.");
+            }
+
         }
         else if (model.Aim == "change password")
         {
@@ -349,7 +377,7 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
         }
 
 
-        return Ok("OTP verified successfully.");
+        return Ok("Code verified successfully.");
     }
 
 

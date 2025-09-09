@@ -31,8 +31,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logout = async () => {
     try {
-      await AuthService.logout();
-      
+      await AuthService.logout(); 
+
+      tokenService.clear();
+      setAccessTokenState(null);
+      setUserInfo(null);
+
       await signOut({callbackUrl: "/login" });
 
     } catch (err) {

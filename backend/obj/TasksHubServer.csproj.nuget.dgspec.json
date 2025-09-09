@@ -68,15 +68,15 @@
             },
             "Hangfire.Core": {
               "target": "Package",
-              "version": "[1.8.20, )"
+              "version": "[1.8.21, )"
             },
             "Hangfire.Dashboard.Basic.Authentication": {
               "target": "Package",
               "version": "[8.0.0, )"
             },
-            "Hangfire.PostgreSql": {
+            "Hangfire.SqlServer": {
               "target": "Package",
-              "version": "[1.20.12, )"
+              "version": "[1.8.21, )"
             },
             "MailKit": {
               "target": "Package",

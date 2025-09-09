@@ -1,6 +1,6 @@
 using System.Text;
 using Hangfire;
-using Hangfire.PostgreSql;
+using Hangfire.SqlServer;
 using HangfireBasicAuthenticationFilter;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 // Get the PostgreSQL connection string
-var hangfireConnStr = builder.Configuration.GetConnectionString("HangfireConnection");
+// var hangfireConnStr = builder.Configuration.GetConnectionString("HangfireConnection");
 
 // Get and add the connection strings
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
@@ -27,9 +27,13 @@ builder.Services.AddHangfire(configuration => configuration
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
     .UseSimpleAssemblyNameTypeSerializer()
     .UseRecommendedSerializerSettings()
-    .UsePostgreSqlStorage(options => // <--- CHANGE THIS LINE
+    .UseSqlServerStorage(connectionString, new SqlServerStorageOptions
     {
-        options.UseNpgsqlConnection(hangfireConnStr); 
+        CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+        SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+        QueuePollInterval = TimeSpan.Zero,
+        UseRecommendedIsolationLevel = true,
+        DisableGlobalLocks = true
     }));
 
 // Add the processing server as IHostedService
@@ -45,7 +49,6 @@ builder.Services.AddStackExchangeRedisCache(options =>
     options.InstanceName = "SampleDb";
 });
 
-Console.WriteLine(builder.Configuration.GetConnectionString("RedisConnections"));
 
 builder.Services.AddScoped<IUserRepo, UserRepo>();
 builder.Services.AddScoped<IDocumentRepo, DocumentRepo>();
@@ -53,18 +56,6 @@ builder.Services.AddScoped<ITaskRepo, TaskRepo>();
 builder.Services.AddSingleton<OTPService>();
 builder.Services.AddSingleton<EmailSender>();
 builder.Services.AddScoped<TaskMaintenanceService>();
-
-
-//builder.Services.AddCors(options =>
-//{
-//    options.AddPolicy("AllowAllOrigins", policyBuilder =>
-//    {
-//        policyBuilder.AllowAnyOrigin()
-//            .AllowAnyMethod()
-//            .AllowAnyHeader();
-//    });
-//});
-
 
 builder.Services.AddCors(options =>
 {

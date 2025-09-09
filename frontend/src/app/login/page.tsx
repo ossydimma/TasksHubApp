@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation";
 import GoogleLoginBtn from "../components/GoogleLoginBtn";
 import { useSession } from "next-auth/react";
 import LoadingSpinner from "../components/LoadingSpinner";
+import EnterOTP from "../components/enterOTP";
+import { AuthService } from "../../../services/apiServices/AuthService";
 
 export default function page() {
   const { data: session, status } = useSession();
@@ -15,6 +17,8 @@ export default function page() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(false);
+  const [displayModal, setDisplayModal] = useState<boolean>(false);
+  const [timeLeft, setTimeLeft] = useState<number>(0);
   const [passwordType, setPasswordType] = useState<"password" | "text">(
     "password"
   );
@@ -24,7 +28,7 @@ export default function page() {
     rememberMe: false,
   });
 
-  const { isAuthenticated, setAccessToken } = useAuth();
+  const { setAccessToken } = useAuth();
 
   const router = useRouter();
 
@@ -41,30 +45,18 @@ export default function page() {
     setShowPassword(!showPassword);
   };
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrorMessage("");
-
+  const validateForm = (): string | null => {
     if (!loginModal.email || !loginModal.password) {
-      setErrorMessage("Please fill all the fields");
-      setLoading(false);
-      return;
+      return "Please fill all the fields";
     }
+    return null;
+  };
 
-    try {
-      const res = await api.post("/auth/login", loginModal, {
-        withCredentials: true,
-      });
-      const token = res.data.accessToken;
-
-      setAccessToken(token);
-
-      router.push("/home");
-    } catch (err: any) {
-      console.error(err.response.data);
+  const apiErrorMsg = async (err: any): Promise<string> => {
+    console.error(err.response.data);
       // Try to extract the first error message if available
       const errorData = err.response?.data;
+      
       let errorMsg = "An error occurred";
       if (errorData?.errors) {
         // Get the first error message from the errors object
@@ -73,17 +65,49 @@ export default function page() {
       } else if (typeof errorData === "string") {
         errorMsg = errorData;
       }
-      setErrorMessage(errorMsg);
+
+      if(errorMsg.includes("Email not verified")){
+        // await api.post(`/sendOTP?email=${encodeURIComponent(loginModal.email)}`);
+        await AuthService.sendOtp(loginModal.email);
+        setDisplayModal(true);
+        setTimeLeft(60);
+        console.log(errorData);
+        return "";
+      } else {
+        return errorMsg;
+      }
+  };
+
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setErrorMessage("");
+    
+    const formError = validateForm();
+    if(formError) {
+      setErrorMessage(formError);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const token = await AuthService.login(loginModal)
+      // const res = await api.post("/auth/login", loginModal, {
+      //   withCredentials: true,
+      // });
+      // const token = res.data.accessToken;
+
+      setAccessToken(token);
+      router.push("/home");
+
+    } catch (err: any) {
+      const error = await apiErrorMsg(err);
+      setErrorMessage(error);
     } finally {
       setLoading(false);
     }
   };
 
-  // useEffect(() => {
-  //   if (isAuthenticated) {
-  //     router.push("/home");
-  //   }
-  // }, [isAuthenticated]);
   useEffect(() => {
     const exchangeToken = async () => {
       if (status !== "authenticated") return;
@@ -133,93 +157,108 @@ export default function page() {
           />
         </div>
       )}
-      <div className=" w-[60%] sm:w-[50%] md:w-[40%] lg:w-[28%] rounded-[0.8rem] px-4 py-8 border border-gray-300 font-serif">
-        <h2 className=" text-2xl text-black font-semibold text-center">
-          Login
-        </h2>
-        <form
-          action=""
-          onSubmit={handleLogin}
-          className="relative flex flex-col gap-3 mt-10"
-        >
-          <p className="text-red-500">{errorMessage}</p>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="email">Email:</label>
-            <input
-              type="email"
-              id="email"
-              value={loginModal.email}
-              onChange={(e) =>
-                setLoginModal({ ...loginModal, email: e.target.value })
-              }
-              className="outline-none border py-1 px-3 rounded-lg"
-            />
-          </div>
-          <div className="flex flex-col">
-            <label htmlFor="password">Password:</label>
-            <div className="border w-full  pl-3 pr-5 rounded-lg bg-white flex items-center justify-between">
-              <input
-                type={passwordType}
-                value={loginModal.password}
-                onChange={(e) =>
-                  setLoginModal({ ...loginModal, password: e.target.value })
-                }
-                id="password"
-                className="outline-none w-[95%] py-1 px-3 "
-              />
-              <EyeIcon
-                showPassword={showPassword}
-                handlePasswordType={togglePasword}
-              />
-            </div>
-          </div>
-          <div className="text-sm mb-1 flex items-center justify-between">
-            <div className="flex gap-1.5">
-              <input
-                type="checkbox"
-                id="rememberMe"
-                checked={loginModal.rememberMe}
-                onChange={(e) =>
-                  setLoginModal({ ...loginModal, rememberMe: e.target.checked })
-                }
-              />
-              <label htmlFor="rememberMe">Remember me</label>
-            </div>
-            <div>
-              <a href="/forgetPassword" className="text-[rgb(85,119,255)]">
-                Forgot password?
-              </a>
-            </div>
-          </div>
-          <button
-            type="submit"
-            className="bg-black text-[1rem] text-white py-2 w-[100%] rounded-lg"
-          >
-            {loading ? (
-              <div className="flex justify-center items-center h-10">
-                <div className="animate-spin rounded-full h-4 w-4 border-t-4 border-white border-solid"></div>
-              </div>
-            ) : (
-              <span>Log In</span>
-            )}
-          </button>
-        </form>
-
-        {/* external-auth */}
-        <GoogleLoginBtn
-          styles=" border border-gray-300 py-2"
-          text="Continue with google"
-          source="login"
+      {displayModal ? (
+        <EnterOTP
+          className="w-[80%] sm:w-[50%] md:w-[40%] lg:w-[28%] top-1/2"
+          aim={`login`}
+          userEmail={loginModal.email}
+          handleCancel={() => setDisplayModal(false)}
+          timeLeft={timeLeft}
+          setTimeLeft={setTimeLeft}
           setLoading={setLoading}
         />
+      ) : (
+        <div className=" w-[80%] sm:w-[50%] md:w-[40%] lg:w-[28%] rounded-[0.8rem] px-4 py-8 border border-gray-300 font-serif">
+          <h2 className=" text-2xl text-black font-semibold text-center">
+            Login
+          </h2>
+          <form
+            action=""
+            onSubmit={handleLogin}
+            className="relative flex flex-col gap-3 mt-10"
+          >
+            <p className="text-red-500">{errorMessage}</p>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="email">Email:</label>
+              <input
+                type="email"
+                id="email"
+                value={loginModal.email}
+                onChange={(e) =>
+                  setLoginModal({ ...loginModal, email: e.target.value })
+                }
+                className="outline-none border py-1 px-3 rounded-lg"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label htmlFor="password">Password:</label>
+              <div className="border w-full  pl-3 pr-5 rounded-lg bg-white flex items-center justify-between">
+                <input
+                  type={passwordType}
+                  value={loginModal.password}
+                  onChange={(e) =>
+                    setLoginModal({ ...loginModal, password: e.target.value })
+                  }
+                  id="password"
+                  className="outline-none w-[95%] py-1 px-3 "
+                />
+                <EyeIcon
+                  showPassword={showPassword}
+                  handlePasswordType={togglePasword}
+                />
+              </div>
+            </div>
+            <div className="text-sm mb-1 flex items-center justify-between">
+              <div className="flex gap-1.5">
+                <input
+                  type="checkbox"
+                  id="rememberMe"
+                  checked={loginModal.rememberMe}
+                  onChange={(e) =>
+                    setLoginModal({
+                      ...loginModal,
+                      rememberMe: e.target.checked,
+                    })
+                  }
+                />
+                <label htmlFor="rememberMe">Remember me</label>
+              </div>
+              <div>
+                <a href="/forgetPassword" className="text-[rgb(85,119,255)]">
+                  Forgot password?
+                </a>
+              </div>
+            </div>
+            <button
+              type="submit"
+              className="bg-black text-[1rem] text-white py-2 w-[100%] rounded-lg"
+            >
+              {loading ? (
+                <div className="flex justify-center items-center h-10">
+                  <div className="animate-spin rounded-full h-4 w-4 border-t-4 border-white border-solid"></div>
+                </div>
+              ) : (
+                <span>Log In</span>
+              )}
+            </button>
+          </form>
 
-        <div className=" text-xs text-center">
-          Don’t have an account?{" "}
-          <a href="/signup" className="text-[#5577FF]">
-            Sign Up{" "}
-          </a>
+          {/* external-auth */}
+          <GoogleLoginBtn
+            styles=" border border-gray-300 py-2"
+            text="Continue with google"
+            source="login"
+            setLoading={setLoading}
+          />
+
+          <div className=" text-xs text-center">
+            Don’t have an account?{" "}
+            <a href="/signup" className="text-[#5577FF]">
+              Sign Up{" "}
+            </a>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
