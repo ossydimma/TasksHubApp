@@ -16,26 +16,25 @@ public class DocumentRepo(IDistributedCache distributedCache, ApplicationDbConte
         .SetSlidingExpiration(TimeSpan.FromMinutes(5))
         .SetAbsoluteExpiration(TimeSpan.FromMinutes(30));
 
-    public async Task<bool> CreateDocumentAsync(UserDocument doc)
+    public async Task<bool> CreateDocumentAsync(CreateDocumentDto model, string userIdStr)
     {
-        string key = $"TasksHub_Document_{doc.Id}";
+        Guid? userId = ParseStringToGuid(userIdStr);
+        if (userId == null)
+            return false;
+
+        var doc = new UserDocument
+        {
+            Title = model.Title!,
+            Content = model.Body!,
+            UserId = userId.Value
+        };
+
         await _db.UserDocuments.AddAsync(doc);
 
         int affected = await _db.SaveChangesAsync();
 
         if (affected > 0)
-        {
-            try
-            {
-                await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(doc), _cacheOptions);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Data was not cached:" + ex);
-            }
             return true;
-        }
-
 
         return false;
 
@@ -67,11 +66,14 @@ public class DocumentRepo(IDistributedCache distributedCache, ApplicationDbConte
 
     }
 
-    public async Task<List<UserDocument>> GetAllDocumentsAsync(ApplicationUser user)
+    public async Task<List<UserDocument>> GetAllDocumentsAsync(string userIdStr)
     {
+        Guid? userId = ParseStringToGuid(userIdStr)
+            ?? throw new ArgumentException("Invalid Document ID format.", nameof(userIdStr));
+
         List<UserDocument> docs = await _db.UserDocuments
             .AsNoTracking()
-            .Where(d => d.UserId == user.Id)
+            .Where(d => d.UserId == userId)
             .OrderByDescending(d => d.Date)
             .ToListAsync();
 
@@ -174,9 +176,16 @@ public class DocumentRepo(IDistributedCache distributedCache, ApplicationDbConte
     }
 
 
-    public async Task<bool> DeleteDocumentAsync(Guid userId, Guid documentId)
+    public async Task<bool> DeleteDocumentAsync(string userIdStr, string documentIdStr)
     {
+        Guid? userId = ParseStringToGuid(userIdStr)
+            ?? throw new ArgumentException("Invalid Document ID format.", nameof(userIdStr));
+        
+        Guid? documentId = ParseStringToGuid(documentIdStr)
+            ?? throw new ArgumentException("Invalid Document ID format.", nameof(documentIdStr));
+            
         string key = $"TasksHub_Document_{documentId}";
+
         UserDocument? doc = await _db.UserDocuments
             .FirstOrDefaultAsync(d => d.Id == documentId && d.UserId == userId);
 

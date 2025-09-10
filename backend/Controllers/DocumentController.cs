@@ -17,27 +17,15 @@ public class DocumentController(IDocumentRepo repo, IUserRepo userRepo) : Contro
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        
         string? userIdStr = User.FindFirst("id")?.Value;
 
         if (userIdStr == null)
             return BadRequest("unauthenticated user");
 
-        ApplicationUser? user = await _userRepo.GetUserByIdAsync(userIdStr);
-        if (user == null)
-            return NotFound("User not found.");
-
-        var doc = new UserDocument
-        {
-            Title = model.Title!,
-            Content = model.Body!,
-            UserId = user.Id
-        };
-
-        if (!await _repo.CreateDocumentAsync(doc))
+        if (!await _repo.CreateDocumentAsync(model, userIdStr))
             return BadRequest("Failed to create document.");
 
-        List<UserDocument> docs = await _repo.GetAllDocumentsAsync(user);
+        List<UserDocument> docs = await _repo.GetAllDocumentsAsync(userIdStr);
 
         return Ok(new { allDocuments = docs });
     }
@@ -73,7 +61,7 @@ public class DocumentController(IDocumentRepo repo, IUserRepo userRepo) : Contro
         if (!await _repo.UpdateDocumentAsync(doc))
             return BadRequest("Failed to update document.");
 
-        List<UserDocument> docs = await _repo.GetAllDocumentsAsync(user);
+        List<UserDocument> docs = await _repo.GetAllDocumentsAsync(userIdStr);
 
         return Ok(new { allDocuments = docs });
     }
@@ -89,10 +77,7 @@ public class DocumentController(IDocumentRepo repo, IUserRepo userRepo) : Contro
 
         if (string.IsNullOrWhiteSpace(userIdStr)) return BadRequest("unauthenticated user");
 
-        ApplicationUser? user = await _userRepo.GetUserByIdAsync(userIdStr);
-        if (user == null) return BadRequest("User not found.");
-
-        List<UserDocument> docs = await _repo.GetAllDocumentsAsync(user);
+        List<UserDocument> docs = await _repo.GetAllDocumentsAsync(userIdStr);
 
         return Ok(new { allDocuments = docs });
     }
@@ -156,25 +141,15 @@ public class DocumentController(IDocumentRepo repo, IUserRepo userRepo) : Contro
             return BadRequest("Document Id is missing.");
 
         string? userIdStr = User.FindFirst("id")?.Value;   
+        if (string.IsNullOrWhiteSpace(userIdStr)) 
+            return Unauthorized("unauthenticated user");
 
-        if (string.IsNullOrWhiteSpace(userIdStr)) return BadRequest("unauthenticated user");
-
-        if (!Guid.TryParse(userIdStr, out var userId))
-            throw new ArgumentException("Invalid user ID format.", nameof(userIdStr));
-
-        if (!Guid.TryParse(documentIdStr, out var documentId))
-            throw new ArgumentException("Invalid document ID format.", nameof(documentIdStr));
-
-
-        bool deleted = await _repo.DeleteDocumentAsync(userId, documentId);
+        bool deleted = await _repo.DeleteDocumentAsync(userIdStr, documentIdStr);
 
         if (!deleted)
             return BadRequest("Server failed to delete document");
 
-        ApplicationUser? user = await _userRepo.GetUserByIdAsync(userIdStr);
-        if (user == null) return BadRequest("User not found.");
-
-        List<UserDocument> docs = await _repo.GetAllDocumentsAsync(user);
+        List<UserDocument> docs = await _repo.GetAllDocumentsAsync(userIdStr);
 
         return Ok(new { allDocuments = docs });
 
