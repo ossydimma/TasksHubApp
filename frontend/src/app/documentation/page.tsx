@@ -1,30 +1,34 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { formatDate } from "../../../SharedFunctions";
+import { formatDate, getApiErrorMessage } from "../../../SharedFunctions";
 import { DocumentType, DocumentInputType } from "../../../Interfaces";
 import { useAuth } from "../../../context/AuthContext";
 import { api } from "../../../services/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useRouter } from "next/navigation";
+import { DocServices } from "../../../services/apiServices/DocService";
 
 interface FilterByType {
   title: string;
   date: Date | undefined;
+}
+export interface filterByPayloadType {
+  Title: string;
+  Date: string;
 }
 
 export default function page() {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
 
+  const [viewMode, setViewMode] = useState<"list" | "form" | "both">("both");
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [validate, setValidate] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [Searching, setSearching] = useState<boolean>(false);
   const [docId, setDocId] = useState<string>("");
   const [match, setMatch] = useState<string>("");
-  const [showForm, setShowForm] = useState<boolean>(false);
-  const [showDocus, setShowDocus] = useState<boolean>(true);
   const [isReadOnly, setIsReadOnly] = useState<boolean>(false);
   const [isFeedBack, setIsFeedBack] = useState<boolean>();
   const [query, setQuery] = useState<string>("");
@@ -47,47 +51,56 @@ export default function page() {
   });
 
   // functions
-
-  const handleFilterBy = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    query ? setQuery("") : null;
-    const payload = {
+  const mapPayload = () => {
+    const payload: filterByPayloadType = {
       Date: filterBy.date ? filterBy.date?.toISOString() : "",
       Title: filterBy.title ?? "",
     };
+    return payload;
+  };
+
+  const validateFilterByForm = (): boolean => {
+    const payload = mapPayload();
 
     if (!payload.Date && !payload.Title) {
+      return false;
+    }
+
+    return true;
+  };
+
+  const matchFilterType = (payload: filterByPayloadType) => {
+    const matchParts: string[] = [];
+
+    if (payload.Title) {
+      matchParts.push(payload.Title);
+    }
+
+    if (payload.Date) {
+      matchParts.push(payload.Date.split("T")[0]);
+    }
+
+    setMatch(matchParts.join(" & "));
+  };
+  const handleFilterBy = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    query ? setQuery("") : null;
+
+    if (!validateFilterByForm()) {
       setIsFeedBack(true);
       setFeedbackText("Please provide a title or date to filter.");
       return;
     }
 
-    if (payload.Date && payload.Title) {
-      setMatch(`${payload.Title} & ${payload.Date.split("T")[0]}`);
-    } else if (payload.Date) {
-      setMatch(payload.Date.split("T")[0]);
-    } else if (payload.Title) {
-      setMatch(payload.Title);
-    }
+    const payload = mapPayload();
+    matchFilterType(payload);
 
     setSearching(true);
     try {
-      const res = await api.post("document/filter-documents", payload);
-      setFilteredDocuments(res.data.docs);
+      const docs = await DocServices.filter(payload);
+      setFilteredDocuments(docs);
     } catch (err: any) {
-      console.error(err.response.data);
-      // Try to extract the first error message if available
-      const errorData = err.response?.data;
-      let errorMsg = "An error occurred";
-      if (errorData?.errors) {
-        // Get the first error message from the errors object
-        const firstKey = Object.keys(errorData.errors)[0];
-        errorMsg = errorData.errors[firstKey][0];
-      } else if (typeof errorData === "string") {
-        errorMsg = errorData;
-      }
-
-      setIsFeedBack(true);
+      const errorMsg = getApiErrorMessage(err);
       setFeedbackText(errorMsg);
     } finally {
       setSearching(false);
@@ -99,25 +112,36 @@ export default function page() {
     setFilteredDocuments(documents);
   };
 
+  const setMode = (doc: DocumentType, isReadonly: boolean) => {
+    setContent({
+      id: doc.id,
+      title: doc.title,
+      body: doc.content,
+    });
+
+    if ( viewMode === "list" ) {
+      setViewMode("form");
+      localStorage.setItem("showDocuForm", "true");
+    }
+
+    if(isReadonly) {
+      localStorage.setItem("isReadonly", "true");
+    } else {
+      setBtnText("Update");
+      localStorage.removeItem("isReadonly");
+    }
+
+    setIsReadOnly(isReadonly);
+  };
+
   const readDocument = (id: string): void => {
     const document: DocumentType | undefined = documents.find(
       (d) => d.id === id
     );
-    if (document !== undefined) {
-      setContent({
-        id: document.id,
-        title: document.title,
-        body: document.content,
-      });
-      if (!showForm) {
-        setShowDocus(false);
-        setShowForm(true);
-        localStorage.setItem("showDocuForm", "true");
-      }
-      setIsReadOnly(true);
-      localStorage.setItem("isReadonly", "true");
+    if (document) {
+      setMode(document, true);
     } else {
-      console.log(`${document} not found `);
+      console.error(`Document with ID ${id} not found.`);
     }
   };
 
@@ -125,50 +149,38 @@ export default function page() {
     const document: DocumentType | undefined = documents.find(
       (d) => d.id === id
     );
-    if (document !== undefined) {
-      setContent({
-        id: document.id,
-        title: document.title,
-        body: document.content,
-      });
-      setBtnText("Update");
-      if (!showForm) {
-        setShowDocus(false);
-        setShowForm(true);
-        localStorage.setItem("showDocuForm", "true");
-      }
-      localStorage.removeItem("isReadonly");
-      setIsReadOnly(false);
-      // setIsDisabled({ saveBtn: false, discardBtn: false });
+    if (document) {
+      setMode(document, false);
     } else console.log(`${document} not found `);
   };
 
-  const deleteDocument = async (id: string) => {
-    const document: DocumentType | undefined = documents.find(
-      (d) => d.id === id
-    );
-
-    if (document === undefined) {
-      console.error(`Document ${id} not found. `);
-      setIsFeedBack(!isFeedBack);
-      setFeedbackText("Fail to delete document");
-      return;
-    }
-
-    setSearching(true);
-    try {
-      const res = await api.delete(
-        `document/delete?documentIdStr=${document.id}`
-      );
-      const docs = res.data.allDocuments;
+  const deleteIsSuccess = (id: string, docs: DocumentType[]) => {
       setDocuments(docs);
       setFilteredDocuments(docs);
       setIsFeedBack(!isFeedBack);
       setFeedbackText("Dcument deleted Successfully.");
 
-      if (document.id === content.id) {
+      if (id === content.id) {
         setContent({ title: "", body: "", id: "" });
       }
+  }
+
+  const deleteDocument = async (id: string) => {
+    // const document: DocumentType | undefined = documents.find(
+    //   (d) => d.id === id
+    // );
+
+    // if (!document) {
+    //   console.error(`Document ${id} not found. `);
+    //   setIsFeedBack(!isFeedBack);
+    //   setFeedbackText("Fail to delete document");
+    //   return;
+    // }
+
+    setSearching(true);
+    try {
+      const docs = await DocServices.delete(id);
+      deleteIsSuccess(id, docs)
     } catch (err) {
       console.error(err);
       setIsFeedBack(!isFeedBack);
@@ -183,14 +195,11 @@ export default function page() {
     const w = window.innerWidth;
 
     if (w >= 815) {
-      setShowForm(true);
-      setShowDocus(true);
+      setViewMode("both");
     } else if (w < 815 && valueFromStorage === null) {
-      setShowForm(false);
-      setShowDocus(true);
+      setViewMode("list");
     } else if (w < 815 && valueFromStorage === "true") {
-      setShowDocus(false);
-      setShowForm(true);
+      setViewMode("form");
     } else console.log("handle resize is confused");
   };
 
@@ -374,11 +383,14 @@ export default function page() {
 
       setFilterBy({ title: "", date: undefined });
       setShowFilter(false);
-      if (!showDocus && showForm) {
-        setShowForm(false);
-        setShowDocus(true);
+      if(viewMode !== "list" && viewMode !== "both") {
+        setViewMode("list");
         localStorage.removeItem("showDocuForm");
       }
+      // if (!showDocus && showForm) {
+      //   setShowForm(false);
+      //   setShowDocus(true);
+      // }
 
       const filtered: DocumentType[] = documents.filter((docs) =>
         docs.title.toLowerCase().includes(query.toLowerCase())
@@ -423,7 +435,7 @@ export default function page() {
 
         <div
           className={`${
-            !showDocus ? "w-[50%]" : "w-[40%]"
+            viewMode !== "list" ? "w-[50%]" : "w-[40%]"
           }  lg:w-[45%] flex items-center justify-between  border border-gray-600 rounded-3xl overflow-hidden`}
         >
           {query && (
@@ -512,8 +524,7 @@ export default function page() {
           </div>
         </div>
 
-
-        {showDocus && documents.length > 0 && (
+        {(viewMode === "list" || viewMode === "both" && documents.length > 0) && (
           <div
             onClick={() => setShowFilter(true)}
             className=" border text-sm border-gray-600 rounded-md py-2 px-4 flex items-center gap-2 cursor-pointer hover:bg-black hover:text-white stroke-black hover:stroke-white"
@@ -668,7 +679,7 @@ export default function page() {
         )}
         {isFeedBack && (
           <div
-            className={` bg-black border w-[80%] h-fit py-10 flex flex-col gap-4 justify-center items-center rounded-2xl absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20`}
+            className={`w-[90%] md:w-[80%] lmd:w-[48%] bg-black border h-fit py-10 flex flex-col gap-4 justify-center items-center rounded-2xl absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20`}
           >
             <p className="text-center text-xl text-white font-mono font-semibold">
               {feedbackText}
@@ -679,7 +690,6 @@ export default function page() {
                 setIsFeedBack(!isFeedBack);
                 if (feedbackText?.endsWith("Successfully")) {
                   setContent({ id: "", body: "", title: "" });
-                  // setIsDisabled({ saveBtn: true, discardBtn: true });
                 }
               }}
             >
@@ -687,13 +697,12 @@ export default function page() {
             </button>
           </div>
         )}
-        {showForm && (
+        {(viewMode === "form" || viewMode === "both") && (
           <>
-            {!showDocus && (
+            {viewMode !== "both" && (
               <div
                 onClick={() => {
-                  setShowForm(false);
-                  setShowDocus(true);
+                  setViewMode("list");
                   localStorage.removeItem("showDocuForm");
                 }}
                 className="ml-auto my-1 mr-[1.2rem] border text-sm border-gray-600 rounded-md py-2 px-4 flex items-center gap-2 cursor-pointer hover:bg-black hover:text-white stroke-black hover:stroke-white"
@@ -857,13 +866,12 @@ export default function page() {
           </>
         )}
 
-        {showDocus && (
+        {(viewMode === "list" || viewMode === "both") && (
           <>
-            {!showForm && (
+            {viewMode !== "both" && (
               <div
                 onClick={() => {
-                  setShowForm(true);
-                  setShowDocus(false);
+                  setViewMode("form");
                   setContent({ id: "", title: "", body: "" });
                   localStorage.setItem("showDocuForm", "true");
                 }}
