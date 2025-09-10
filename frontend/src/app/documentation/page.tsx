@@ -166,16 +166,6 @@ export default function page() {
   }
 
   const deleteDocument = async (id: string) => {
-    // const document: DocumentType | undefined = documents.find(
-    //   (d) => d.id === id
-    // );
-
-    // if (!document) {
-    //   console.error(`Document ${id} not found. `);
-    //   setIsFeedBack(!isFeedBack);
-    //   setFeedbackText("Fail to delete document");
-    //   return;
-    // }
 
     setSearching(true);
     try {
@@ -205,36 +195,34 @@ export default function page() {
 
   const draftingInput = () => {
     const darft = localStorage.getItem("inputContent");
-    const isReadonly = localStorage.getItem("isReadonly");
+
     if (darft) {
       const draftData = JSON.parse(darft) as DocumentInputType;
+
+      // Consolidate the content setting
       setContent({
         id: draftData.id ?? "",
         title: draftData.title ?? "",
         body: draftData.body ?? "",
       });
 
+      const isReadOnlyFromStorage = localStorage.getItem("isReadonly") === "true";
+
       if (draftData.id) {
-        if (isReadonly) {
+        // If a document ID exists, determine the correct mode (read-only or update)
+        if (isReadOnlyFromStorage) {
           setIsReadOnly(true);
-          console.log("isReadonly", isReadonly);
         } else {
           setIsReadOnly(false);
           setBtnText("Update");
-          console.log("isReadonly", isReadonly);
         }
+
       } else {
+        // If no document ID exists, it's a new document
+        setIsReadOnly(false);
         setBtnText("Create");
       }
 
-      if (!draftData.id) {
-        setBtnText("Create");
-      } else if (draftData.id && isReadonly === null) {
-        setBtnText("Update");
-      } else if (draftData.id && isReadonly === "true") {
-        setIsReadOnly(true);
-      }
-      // draftData.id  ? setBtnText("Update") : setBtnText("Create");
     }
   };
 
@@ -242,8 +230,7 @@ export default function page() {
     setIsLoading(true);
 
     try {
-      const res = await api.get("document/get-documents");
-      const docs = res.data.allDocuments;
+      const docs = await DocServices.getDocs();
       setDocuments(docs);
       setFilteredDocuments(docs);
     } catch (err: any) {
