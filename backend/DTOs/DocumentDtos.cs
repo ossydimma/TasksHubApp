@@ -3,8 +3,8 @@ namespace TasksHubServer.DTOs;
 
 public class CreateDocumentDto 
 {
-    public string? Title { get; set; } = null;
-    public string? Body { get; set; } = null;
+    public string Title { get; set; } = null!;
+    public string Body { get; set; } = null!;
 
 }
 

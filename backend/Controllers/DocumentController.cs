@@ -17,6 +17,9 @@ public class DocumentController(IDocumentRepo repo, IUserRepo userRepo) : Contro
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
+        if (string.IsNullOrEmpty(model.Title) && string.IsNullOrEmpty(model.Body))
+            return BadRequest("model can't be empty");
+
         string? userIdStr = User.FindFirst("id")?.Value;
 
         if (userIdStr == null)

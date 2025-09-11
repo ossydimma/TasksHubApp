@@ -119,12 +119,12 @@ export default function page() {
       body: doc.content,
     });
 
-    if ( viewMode === "list" ) {
+    if (viewMode === "list") {
       setViewMode("form");
       localStorage.setItem("showDocuForm", "true");
     }
 
-    if(isReadonly) {
+    if (isReadonly) {
       localStorage.setItem("isReadonly", "true");
     } else {
       setBtnText("Update");
@@ -155,22 +155,21 @@ export default function page() {
   };
 
   const deleteIsSuccess = (id: string, docs: DocumentType[]) => {
-      setDocuments(docs);
-      setFilteredDocuments(docs);
-      setIsFeedBack(!isFeedBack);
-      setFeedbackText("Dcument deleted Successfully.");
+    setDocuments(docs);
+    setFilteredDocuments(docs);
+    setIsFeedBack(!isFeedBack);
+    setFeedbackText("Dcument deleted Successfully.");
 
-      if (id === content.id) {
-        setContent({ title: "", body: "", id: "" });
-      }
-  }
+    if (id === content.id) {
+      setContent({ title: "", body: "", id: "" });
+    }
+  };
 
   const deleteDocument = async (id: string) => {
-
     setSearching(true);
     try {
       const docs = await DocServices.delete(id);
-      deleteIsSuccess(id, docs)
+      deleteIsSuccess(id, docs);
     } catch (err) {
       console.error(err);
       setIsFeedBack(!isFeedBack);
@@ -206,7 +205,8 @@ export default function page() {
         body: draftData.body ?? "",
       });
 
-      const isReadOnlyFromStorage = localStorage.getItem("isReadonly") === "true";
+      const isReadOnlyFromStorage =
+        localStorage.getItem("isReadonly") === "true";
 
       if (draftData.id) {
         // If a document ID exists, determine the correct mode (read-only or update)
@@ -216,13 +216,11 @@ export default function page() {
           setIsReadOnly(false);
           setBtnText("Update");
         }
-
       } else {
         // If no document ID exists, it's a new document
         setIsReadOnly(false);
         setBtnText("Create");
       }
-
     }
   };
 
@@ -241,29 +239,53 @@ export default function page() {
     }
   };
 
+  const validateCreateDocForm = (): boolean => {
+    if (content.body.length < 2 && content.title.length < 2) {
+      return false;
+    }
+    return true;
+  };
+
+  const apiIsSuccess = (docs: DocumentType[], method: "create" | "update" ) => {
+    setDocuments(docs);
+    setFilteredDocuments(docs);
+    setContent({ title: "", body: "", id: "" });
+    setIsFeedBack(!isFeedBack);
+    
+    if (method == "update") {
+      setBtnText("Create");
+      setFeedbackText("Document has been updated.");
+    } else {
+
+      setFeedbackText("Document has been created.");
+    }
+  };
+
+  const mapCreatePayload = () => {
+    const payload = {
+      Title: content.title,
+      Body: content.body,
+    };
+    return payload;
+  };
+
   const createDocument = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (content.body.length < 2 && content.title.length < 2) {
+    if (!validateCreateDocForm()) {
       setIsFeedBack(!isFeedBack);
       setFeedbackText(
         "Title or content body can't contain less that two characters"
       );
       return;
     }
+
+    const payload = mapCreatePayload();
     setIsLoading(true);
 
     try {
-      const res = await api.post("document/create", {
-        Title: content.title,
-        Body: content.body,
-      });
-      const docs = res.data.allDocuments;
-      setDocuments(docs);
-      setFilteredDocuments(docs);
-      setContent({ title: "", body: "", id: "" });
-      setIsFeedBack(!isFeedBack);
-      setFeedbackText("Document created Successfully");
+      const docs = await DocServices.create(payload);
+      apiIsSuccess(docs, "create");
     } catch (err: any) {
       console.error(err);
       setIsFeedBack(!isFeedBack);
@@ -273,44 +295,38 @@ export default function page() {
     }
   };
 
+  const validateUpdateDocForm = (): string | null => {
+    if (content.body === "" && content.title === "")
+      return "Document content can't be empty.";
+
+    if (content.body.length < 2 && content.title.length < 2)
+      return "Title or content body of Document can't contain less that two characters.";
+
+    if (content.id === "") return "Document id is missing, try again";
+
+    return null;
+  };
+
   const updateDocument = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (content.body === "" && content.title === "") {
-      setIsFeedBack(!isFeedBack);
-      setFeedbackText("Document content can't be empty. ");
-      return;
-    }
+    const validationError = validateUpdateDocForm();
 
-    if (content.body.length < 2 && content.title.length < 2) {
+    if (validationError) {
       setIsFeedBack(!isFeedBack);
-      setFeedbackText(
-        "Title or content body of Document can't contain less that two characters. "
-      );
-      return;
-    }
-
-    if (content.id === "") {
-      setIsFeedBack(!isFeedBack);
-      setFeedbackText("Document id is missing");
+      setFeedbackText(validationError);
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const res = await api.put("document/update", {
+      const docs = await DocServices.update({
         Title: content.title,
         Body: content.body,
         DocumentIdStr: content.id,
       });
-      const docs = res.data.allDocuments;
-      setDocuments(docs);
-      setFilteredDocuments(docs);
-      setContent({ title: "", body: "", id: "" });
-      setIsFeedBack(!isFeedBack);
-      setBtnText("Create");
-      setFeedbackText("updated Successfully.");
+      apiIsSuccess(docs, "update");
     } catch (err: any) {
       console.error(err);
       setIsFeedBack(!isFeedBack);
@@ -370,7 +386,7 @@ export default function page() {
 
       setFilterBy({ title: "", date: undefined });
       setShowFilter(false);
-      if(viewMode !== "list" && viewMode !== "both") {
+      if (viewMode !== "list" && viewMode !== "both") {
         setViewMode("list");
         localStorage.removeItem("showDocuForm");
       }
@@ -511,7 +527,8 @@ export default function page() {
           </div>
         </div>
 
-        {(viewMode === "list" || viewMode === "both" && documents.length > 0) && (
+        {(viewMode === "list" ||
+          (viewMode === "both" && documents.length > 0)) && (
           <div
             onClick={() => setShowFilter(true)}
             className=" border text-sm border-gray-600 rounded-md py-2 px-4 flex items-center gap-2 cursor-pointer hover:bg-black hover:text-white stroke-black hover:stroke-white"

@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TasksHubServer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2b390869acda10ed39daa29012ce90a13404e5f5")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cd46c0767f359b72d24de6dd29bc56209a19d898")]
 [assembly: System.Reflection.AssemblyProductAttribute("TasksHubServer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TasksHubServer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

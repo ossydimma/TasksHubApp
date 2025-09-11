@@ -24,8 +24,8 @@ public class DocumentRepo(IDistributedCache distributedCache, ApplicationDbConte
 
         var doc = new UserDocument
         {
-            Title = model.Title!,
-            Content = model.Body!,
+            Title = model.Title,
+            Content = model.Body,
             UserId = userId.Value
         };
 
