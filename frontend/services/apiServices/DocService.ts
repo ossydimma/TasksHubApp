@@ -6,6 +6,7 @@ interface DocServiceType {
   create(payload: any): Promise<any>;
   update(payload: any): Promise<any>;
   filter(payload: filterByPayloadType): Promise<any>;
+  filterDocByTitle(queryText: string): Promise<any>;
   delete(id: string): Promise<any>;
 }
 
@@ -27,6 +28,14 @@ export const DocServices: DocServiceType = {
 
   filter: async (payload: filterByPayloadType) => {
     const res = await api.post("document/filter-documents", payload);
+    return res.data.docs;
+  },
+
+  filterDocByTitle: async (queryText: string) => {
+    const res = await api.post("/document/get-documents-by-title", {
+      QueryText: queryText,
+    });
+
     return res.data.docs;
   },
 

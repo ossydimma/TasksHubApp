@@ -246,17 +246,16 @@ export default function page() {
     return true;
   };
 
-  const apiIsSuccess = (docs: DocumentType[], method: "create" | "update" ) => {
+  const apiIsSuccess = (docs: DocumentType[], method: "create" | "update") => {
     setDocuments(docs);
     setFilteredDocuments(docs);
     setContent({ title: "", body: "", id: "" });
     setIsFeedBack(!isFeedBack);
-    
+
     if (method == "update") {
       setBtnText("Create");
       setFeedbackText("Document has been updated.");
     } else {
-
       setFeedbackText("Document has been created.");
     }
   };
@@ -338,21 +337,45 @@ export default function page() {
 
   const getDocumentsByTitle = async () => {
     if (query.trim() === "") {
-      setIsLoading(false);
+      setSearching(false);
       return;
     }
-    try {
-      const res = await api.post("/document/get-documents-by-title", {
-        QueryText: query,
-      });
 
-      setFilteredDocuments(res.data.docs);
-      console.log(res.data.docs);
+    try {
+      const docs = await DocServices.filterDocByTitle(query);
+      setFilteredDocuments(docs);
     } catch (err: any) {
       console.error(err);
     } finally {
-      setIsLoading(false);
+      setMatch(query);
+      setSearching(false);
     }
+  };
+
+  const validateQuery = () => {
+    if (query.trim() === "") {
+      setFilteredDocuments(documents);
+      setSearching(false);
+      return;
+    }
+  };
+
+  const modifyUIBeforeFiltering = () => {
+    setFilterBy({ title: "", date: undefined });
+    setShowFilter(false);
+    if (viewMode !== "list" && viewMode !== "both") {
+      setViewMode("list");
+      localStorage.removeItem("showDocuForm");
+    }
+  };
+
+  const filterDocByTitle = () => {
+    const filtered: DocumentType[] = documents.filter((docs) =>
+      docs.title.toLowerCase().includes(query.toLowerCase())
+    );
+    setMatch(query);
+    setFilteredDocuments(filtered);
+    setSearching(false);
   };
 
   // USE EFFECTS
@@ -377,30 +400,10 @@ export default function page() {
     if (documents.length < 1) return;
 
     setSearching(true);
-
     const handler = setTimeout(() => {
-      if (query.trim() === "") {
-        setFilteredDocuments(documents);
-        return;
-      }
-
-      setFilterBy({ title: "", date: undefined });
-      setShowFilter(false);
-      if (viewMode !== "list" && viewMode !== "both") {
-        setViewMode("list");
-        localStorage.removeItem("showDocuForm");
-      }
-      // if (!showDocus && showForm) {
-      //   setShowForm(false);
-      //   setShowDocus(true);
-      // }
-
-      const filtered: DocumentType[] = documents.filter((docs) =>
-        docs.title.toLowerCase().includes(query.toLowerCase())
-      );
-      setMatch(query);
-      setSearching(false);
-      setFilteredDocuments(filtered);
+      validateQuery();
+      modifyUIBeforeFiltering();
+      filterDocByTitle();
     }, 300);
 
     return () => {
