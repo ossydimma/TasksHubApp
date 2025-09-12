@@ -1,17 +1,23 @@
 "use client";
 import { useState } from "react";
 import EnterOTP from "../components/enterOTP";
-import { PasswordType, ShowPasswordType } from "../../../Interfaces";
 import EyeIcon from "../components/EyeIcon";
+import { PasswordType, ShowPasswordType } from "../../../Interfaces";
+import LoadingSpinner from "../components/LoadingSpinner";
+import { getApiErrorMessage } from "../../../SharedFunctions";
+import { AuthService } from "../../../services/apiServices/AuthService";
+import { useRouter } from "next/navigation";
 
-export default function page() {
-  const [displayEmail, setDisplayEmail] = useState<boolean>(true);
-  const [displayModal, setDisplayModal] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [timeLeft, setTimeLeft] = useState<number>(0);
+const page = () => {
+  const router = useRouter();
+
+  const [step, setStep] = useState<"email" | "code" | "reset" | "success">(
+    "email"
+  );
   const [emailValue, setEmailValue] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
-
+  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [Loading, setLoading] = useState<boolean>(false);
   const [passwordType, setPasswordType] = useState<PasswordType>({
     newPassword: "password",
     confirmPassword: "password",
@@ -27,19 +33,7 @@ export default function page() {
     confirmPassword: true,
   });
 
-  //FUNCTIONS
-  const handleSendCode = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setDisplayEmail(false);
-    setDisplayModal(true);
-    setTimeLeft(60);
-  };
-
-  const handleVerifyCode = () => {
-    // Handle the verification code logic here
-    setDisplayModal(false);
-  };
-
+  // Functions
   const toggleNewPasword = () => {
     // Toggle the password type between "text" and "password"
     if (showPassword.newPassword) {
@@ -69,46 +63,71 @@ export default function page() {
     });
   };
 
-  const resetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
+    setLoading(true);
     setErrorMessage("");
 
     // Check if the password and confirm password match
     if (passwordValue.newPassword !== passwordValue.confirmPassword) {
-      setErrorMessage("Passwords do not match");
-      setIsLoading(false);
+      setErrorMessage("Passwords don't match.");
+      setLoading(false);
       return;
+    }
+
+    try {
+      await AuthService.resetPassword({
+        Password: passwordValue.newPassword,
+        Email: emailValue,
+      });
+      setStep("success");
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
+    } catch (err: any) {
+      const errorData = err.response?.data;
+      let errorMsg;
+      if (errorData.errors && errorData.errors.Password) {
+        errorMsg = errorData.errors.Password[0];
+      } else if (typeof errorData === "string") {
+        errorMsg = errorData;
+      }
+      setErrorMessage(errorMsg);
+    } finally {
+      setLoading(false);
     }
 
     // Perform reset password logic here
     console.log("Reset Password data:", passwordValue);
-    setIsLoading(false);
+    setLoading(false);
   };
 
-  return (
-    <>
-      {displayModal && (
-        <EnterOTP
-          aim="forgot password"
-          handleCancel={() => {
-            setDisplayModal(false);
-            setDisplayEmail(true);
-          }}
-          timeLeft={timeLeft}
-          setTimeLeft={setTimeLeft}
-          userEmail={emailValue}
-        />
-      )}
+  const handleSendCode = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!emailValue) return;
 
-      <div>
-        {displayEmail && (
-          <div className="w-[60%] sm:w-[50%] md:w-[40%] lg:w-[28%] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-gray-300 p-4 rounded-lg shadow-lg">
+    setLoading(true);
+    try {
+      await AuthService.sendOtp(emailValue);
+      setStep("code");
+    } catch (err: any) {
+      setErrorMessage(getApiErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Render different UIs based on the current step
+  const renderStep = () => {
+    switch (step) {
+      case "email":
+        return (
+          <div className="w-[80%] sm:w-[50%] md:w-[40%] lg:w-[28%] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-gray-300 p-4 rounded-lg shadow-lg">
             <a
               href="/login"
               className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-300 w-fit p-1 transition-all duration-300 ease-in-out "
               onClick={() => {
-                setDisplayModal(false);
+                // setDisplayModal(false);
               }}
             >
               <svg
@@ -148,6 +167,7 @@ export default function page() {
               onSubmit={handleSendCode}
               className="relative flex flex-col  mt-6"
             >
+              <p className="text-red-500">{errorMessage}</p>
               <div className="flex flex-col gap-2 ">
                 <label htmlFor="email">Email:</label>
                 <input
@@ -171,13 +191,28 @@ export default function page() {
               </button>
             </form>
           </div>
-        )}
+        );
 
-        {!displayEmail && !displayModal && (
-          <div className="w-[60%] sm:w-[50%] md:w-[40%] lg:w-[28%] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-gray-300 p-4 rounded-lg shadow-lg">
+      case "code":
+        return (
+          <EnterOTP
+            className="w-[80%] sm:w-[50%] md:w-[40%] lg:w-[28%] top-1/2"
+            aim={`reset password`}
+            userEmail={emailValue}
+            handleCancel={() => setStep("email")}
+            resetPassword={() => setStep("reset")}
+            timeLeft={timeLeft}
+            setTimeLeft={setTimeLeft}
+            setLoading={setLoading}
+          />
+        );
+
+      case "reset":
+        return (
+          <div className="w-[80%] sm:w-[50%] md:w-[40%] lg:w-[28%] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-gray-300 p-4 rounded-lg shadow-lg">
             <div
               className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-300 w-fit p-1 transition-all duration-300 ease-in-out "
-              onClick={() => setDisplayEmail(true)}
+              onClick={() => setStep("email")}
             >
               <svg
                 className="w-4"
@@ -214,7 +249,7 @@ export default function page() {
 
             <form
               action=""
-              onSubmit={resetPassword}
+              onSubmit={handleResetPassword}
               className=" flex flex-col gap-4"
             >
               <p className="text-red-500">{errorMessage}</p>
@@ -227,6 +262,7 @@ export default function page() {
                     type={passwordType.newPassword}
                     name="new-password"
                     id="new-password"
+                    required
                     // placeholder="Enter your new password"
                     onChange={(e) =>
                       setPasswordValue({
@@ -254,6 +290,7 @@ export default function page() {
                     type={passwordType.confirmPassword}
                     name="confirm-password"
                     id="confirm-password"
+                    required
                     onChange={(e) =>
                       setPasswordValue({
                         ...passwordValue,
@@ -275,7 +312,7 @@ export default function page() {
                 className="bg-black text-[1rem] text-white py-2 my-3 w-[100%] rounded-lg"
                 type="submit"
               >
-                {isLoading ? (
+                {Loading ? (
                   <div className="flex justify-center items-center h-10">
                     <div className="animate-spin rounded-full h-4 w-4 border-t-4 border-white border-solid"></div>
                   </div>
@@ -285,8 +322,38 @@ export default function page() {
               </button>
             </form>
           </div>
-        )}
-      </div>
-    </>
+        );
+
+      case "success":
+        return (
+          <div
+            className={`absolute -translate-x-1/2 left-1/2 top-4 bg-white shadow-xl py-5 px-12 border`}
+          >
+            Password has been reseted
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div>
+      {Loading && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
+          style={{ cursor: "not-allowed" }}
+        >
+          <LoadingSpinner
+            styles={{ svg: " h-10 w-10", span: "text-[1.2rem]" }}
+            text="Loading..."
+          />
+        </div>
+      )}
+      {renderStep()}
+    </div>
   );
-}
+};
+
+export default page;
