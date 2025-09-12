@@ -245,6 +245,35 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
 
     }
 
+    [HttpPost("auth/reset-password")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> ResetPassword(ResetPassword model)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        if (string.IsNullOrWhiteSpace(model.Password) || string.IsNullOrWhiteSpace(model.Email))
+            return BadRequest("credentials can't be empty.");
+
+        ApplicationUser? user = await _repo.GetUserByEmailAsync(model.Email);
+        if (user == null)
+            return NotFound("user not found.");
+
+        Hasher.HashPassword(model.Password, out byte[] passwordHash, out byte[] passwordSalt);
+
+        user.PasswordHash = passwordHash;
+        user.PasswordSalt = passwordSalt;
+
+        bool updated = await _repo.UpdateUserAsync(user);
+        if (!updated)
+            return BadRequest("Failed to update username");
+
+        await _emailSender.SendEmail(model.Email, "Forgot Password", "Your Password was reseted successfully.");
+
+        return Ok("Password has been reseted");
+    }
+
     [HttpPost("auth/logout")]
     [ProducesResponseType(200)]
     [ProducesResponseType(401)]
@@ -371,10 +400,10 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
         {
             await _emailSender.SendEmail(model.Email, "Change Password", "Your Password has been successfully changed.");
         }
-        else if (model.Aim == "forgot password")
-        {
-            await _emailSender.SendEmail(model.Email, "Forgot Password", "Your Password was resetted successfully.");
-        }
+        // else if (model.Aim == "forgot password")
+        // {
+        //     await _emailSender.SendEmail(model.Email, "Forgot Password", "Your Password was reseted successfully.");
+        // }
 
 
         return Ok("Code verified successfully.");
