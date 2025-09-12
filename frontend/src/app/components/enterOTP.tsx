@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../../services/axios";
-import { redirect, useRouter } from "next/navigation";
+import {  useRouter } from "next/navigation";
 import { LoginModelType } from "../../../Interfaces";
 import { useAuth } from "../../../context/AuthContext";
 import { AuthService } from "../../../services/apiServices/AuthService";
@@ -8,6 +8,7 @@ import { AuthService } from "../../../services/apiServices/AuthService";
 export default function enterOTP({
   className,
   handleCancel,
+  resetPassword,
   userEmail,
   newEmail,
   aim,
@@ -23,12 +24,12 @@ export default function enterOTP({
   setTimeLeft: React.Dispatch<React.SetStateAction<number>>;
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
   handleCancel: () => void;
+  resetPassword?: () => void;
 }) {
   const [OTP, setOTP] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isVerified, setIsVerified] = useState<boolean>(false);
 
-  const { isAuthenticated, setAccessToken } = useAuth();
   const router = useRouter();
 
   const getApiErrorMsg = (err: any): string => {
@@ -94,7 +95,7 @@ export default function enterOTP({
     }
   };
 
-  const verifySignupCode = async (e: React.FormEvent<HTMLFormElement>) => {
+  const verifyCode = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const formError = validateVerifyForm();
@@ -107,7 +108,11 @@ export default function enterOTP({
     setLoading(true);
     try {
       await AuthService.verifyOtp(payload);
-      setIsVerified(true);
+      if (aim === "reset password" && resetPassword) {
+        resetPassword();
+      } else {
+        setIsVerified(true);
+      }
     } catch (err: any) {
       const error = getApiErrorMsg(err);
       setErrorMessage(error);
@@ -116,28 +121,29 @@ export default function enterOTP({
     }
   };
 
-  const verifyLoginCode = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  // const verifyLoginCode = async (e: React.FormEvent<HTMLFormElement>) => {
+  //   e.preventDefault();
 
-    const formError = validateVerifyForm();
-    if (formError) {
-      setErrorMessage(formError);
-      return;
-    }
+  //   const formError = validateVerifyForm();
+  //   if (formError) {
+  //     setErrorMessage(formError);
+  //     return;
+  //   }
 
-    const payload = mapPayload();
-    // const payload = { email: userEmail, submittedOtp: OTP, Aim: aim };
-    setLoading(true);
-    try {
-      await AuthService.verifyOtp(payload);
-      setIsVerified(true);
-    } catch (err: any) {
-      const error = getApiErrorMsg(err);
-      setErrorMessage(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  //   const payload = mapPayload();
+  //   // const payload = { email: userEmail, submittedOtp: OTP, Aim: aim };
+  //   setLoading(true);
+  //   try {
+  //     await AuthService.verifyOtp(payload);
+  //     setIsVerified(true);
+  //   } catch (err: any) {
+  //     const error = getApiErrorMsg(err);
+  //     setErrorMessage(error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   useEffect(() => {
     if (timeLeft <= 0) return;
 
@@ -191,11 +197,9 @@ export default function enterOTP({
           <form
             action=""
             onSubmit={
-              aim === "signup"
-                ? verifySignupCode
-                : aim === "login"
-                ? verifyLoginCode
-                : verifyChangeEmailCode
+              aim === "change email"
+                ? verifyChangeEmailCode
+                : verifyCode
             }
             className="flex flex-col gap-2 mt-4"
           >
@@ -296,7 +300,7 @@ export default function enterOTP({
                 className="mt-4 bg-black text-white py-2 px-4 rounded-lg"
                 onClick={(e) => {
                   e.preventDefault();
-                  redirect("/login");
+                  router.push("/login");
                 }}
               >
                 Login
