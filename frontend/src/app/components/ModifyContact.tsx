@@ -53,11 +53,6 @@ export default function ModifyContact({
       {hasPhone ? (
         <div className="relative">
           <div>
-            {/* <div className="flex justify-between items-center gap-2 mt-5 mb-2">
-              <p className="text-lg md:text-[1rem] xl:text-lg font-[600] tracking-wider ml-auto">
-                {userInfo?.email}
-              </p>
-            </div> */}
             <div className=' flex gap-4 justify-center items-center'>
               <p className="text-[1rem] font-semibold mb-2">
                 Current:

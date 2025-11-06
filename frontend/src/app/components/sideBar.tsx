@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
+import { useNav } from "../../../context/NavContext";
 import Link from "next/link";
 import clsx from "clsx";
 import { NavBarToolTips } from "../../../Interfaces";
@@ -9,9 +10,10 @@ import { usePathname } from "next/navigation";
 
 export default function sideBar() {
   const pathname = usePathname();
+  
   const { isAuthenticated } = useAuth();
-  // const [width, setWidth] = useState<number>(0);
-  const [isMaximized, setIsMaximized] = useState<boolean>(true);
+  const {isMaximized, setIsMaximized} = useNav();
+
   const [showSideBar, setShowSideBar] = useState<boolean>(true);
   const [showToolTips, setShowToolTips] = useState<NavBarToolTips>({
     createTask: false,
@@ -28,7 +30,6 @@ export default function sideBar() {
     if (w >= 600) {
       setShowSideBar(true);
       setIsMaximized(w > 815);
-      // window.innerWidth <= 815 ? setIsMaximized(false) : setIsMaximized(true);
     } else {
       setShowSideBar(false);
       setIsMaximized(false);
@@ -98,7 +99,56 @@ export default function sideBar() {
                     ></path>
                   </g>
                 </svg>
+                {isMaximized && (
+                <div className=" flex items-center gap-1 ">
+                  <div className="p-2 rounded-lg bg-[#5577FF]">
+                    <svg
+                      className="w-4"
+                      viewBox="0 0 32 32"
+                      id="icon"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="#000000"
+                    >
+                      <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
+                      <g
+                        id="SVGRepo_tracerCarrier"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      ></g>
+                      <g id="SVGRepo_iconCarrier">
+                        <defs>
+                          <style>
+                            {`
+                                  .cls-1 {
+                                      fill: #fff;
+                                  }
+
+                                  .cls-2 {
+                                      fill: none;
+                                  }
+                              `}
+                          </style>
+                        </defs>
+                        <title>logo--tumblr</title>
+                        <path
+                          className="cls-1"
+                          d="M22.6,28h-4c-3.59,0-6.3-1.86-6.3-6.3V14.58H9V10.72A7.17,7.17,0,0,0,14.3,4h3.76v6.12h4.36v4.46H18.06v6.2c0,1.86.94,2.49,2.42,2.49H22.6Z"
+                        ></path>
+                        <rect
+                          id="_Transparent_Rectangle_"
+                          data-name="<Transparent Rectangle>"
+                          className="cls-2"
+                          width="32"
+                          height="32"
+                        ></rect>
+                      </g>
+                    </svg>
+                  </div>
+                  <h2 className=" md:text-[1rem] lg:text-lg font-extrabold">Taskhub</h2>
+                </div>
+                )}
               </div>
+                
             </li>
 
             {/* ----------------- CREATE TASK------------------ */}

@@ -7,13 +7,14 @@ using StackExchange.Redis;
 
 namespace TasksHubServer.Repositories;
 
-public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext Db) : IUserRepo
+public class UserRepo(IConnectionMultiplexer redisCache, ApplicationDbContext Db) : IUserRepo
 {
     private readonly ApplicationDbContext _db = Db;
-    private readonly IDistributedCache _distributedCache = distributedCache;
-    private readonly DistributedCacheEntryOptions _cacheOptions = new DistributedCacheEntryOptions()
-        .SetSlidingExpiration(TimeSpan.FromMinutes(5))
-        .SetAbsoluteExpiration(TimeSpan.FromMinutes(30));
+    private readonly IDatabase _cache  = redisCache.GetDatabase();
+    // private readonly IDistributedCache _cache = distributedCache;
+    // private readonly DistributedCacheEntryOptions TimeSpan.FromMinutes(30) = new DistributedCacheEntryOptions()
+    //     .SetSlidingExpiration(TimeSpan.FromMinutes(5))
+    //     .SetAbsoluteExpiration(TimeSpan.FromMinutes(30));
 
     public async Task<ApplicationUser?> CreateUserAsync(ApplicationUser user)
     {
@@ -24,7 +25,7 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
 
         if (affect == 1)
         {
-            await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(user), _cacheOptions);
+            await _cache.StringSetAsync(key, JsonConvert.SerializeObject(user), TimeSpan.FromMinutes(30));
             return user;
         }
 
@@ -50,7 +51,7 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
     public async Task<IEnumerable<ApplicationUser>> GetAllUsersAsync()
     {
         string key = "TasksHUB_Users";
-        string? cachedUsers = await _distributedCache.GetStringAsync(key);
+        string? cachedUsers = await _cache.StringGetAsync(key);
 
         if (cachedUsers != null)
         {
@@ -61,7 +62,7 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
             .Include(u => u.RefreshTokens)
             .ToListAsync();
 
-        await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(users), _cacheOptions);
+        await _cache.StringSetAsync(key, JsonConvert.SerializeObject(users), TimeSpan.FromMinutes(30));
 
         return users;
     }
@@ -72,7 +73,7 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
         string key = $"TasksHub_User_{userId}";
         try
         {
-            string? cachedUser = await _distributedCache.GetStringAsync(key);
+            string? cachedUser = await _cache.StringGetAsync(key);
 
             if (cachedUser != null)
             {
@@ -91,7 +92,7 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
 
         try
         {
-            await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(user), _cacheOptions);
+            await _cache.StringSetAsync(key, JsonConvert.SerializeObject(user), TimeSpan.FromMinutes(30));
 
         }
         catch (Exception ex)
@@ -124,7 +125,7 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
         string key = $"TasksHUB_UserGoogleSub_{googleSub}";
         try
         {
-            string? cachedUser = await _distributedCache.GetStringAsync(key);
+            string? cachedUser = await _cache.StringGetAsync(key);
             if (cachedUser is not null)
                 return JsonConvert.DeserializeObject<ApplicationUser>(cachedUser);
         }
@@ -141,7 +142,7 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
 
         try
         {
-            await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(user), _cacheOptions);
+            await _cache.StringSetAsync(key, JsonConvert.SerializeObject(user), TimeSpan.FromMinutes(30));
         }
         catch (Exception ex)
         {
@@ -166,7 +167,7 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
 
     //     if (affect > 0)
     //     {
-    //         await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(user), _cacheOptions);
+    //         await _cache.StringSetAsync(key, JsonConvert.SerializeObject(user), TimeSpan.FromMinutes(30));
     //         return true;
     //     }
 
@@ -187,7 +188,7 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
                 // Now that the save is successful, update the cache.
                 // You should also update your cached object here with the newly saved user
                 // to ensure it has the latest concurrency token.
-                await _distributedCache.SetStringAsync($"TasksHUB_User_{user.Id}", JsonConvert.SerializeObject(user), _cacheOptions);
+                await _cache.StringSetAsync($"TasksHUB_User_{user.Id}", JsonConvert.SerializeObject(user), TimeSpan.FromMinutes(30));
                 return true;
             }
         }
@@ -211,7 +212,7 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
     {
         string key = $"TasksHUB_UserRefreshToken_{refreshToken}";
 
-        string? cachedUser = await _distributedCache.GetStringAsync(key);
+        string? cachedUser = await _cache.StringGetAsync(key);
         if (cachedUser is not null)
         {
             return JsonConvert.DeserializeObject<ApplicationUser>(cachedUser);
@@ -223,7 +224,7 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
 
         if (user is null) return user;
 
-        await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(user), _cacheOptions);
+        await _cache.StringSetAsync(key, JsonConvert.SerializeObject(user), TimeSpan.FromMinutes(30));
 
         return user;
     }
@@ -236,6 +237,66 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
         return token;
     }
 
+    
+    public async Task<DataCountDto> UserDataCountsAsync(string userIdStr)
+    {
+        Guid userId = Guid.Parse(userIdStr);
+        string key = $"TasksHub_DataCounts_{userId}";
+
+        try 
+        {
+            string? dataCounts = await _cache.StringGetAsync(key);
+            if (dataCounts is not null) {
+                var cachedData = JsonConvert.DeserializeObject<DataCountDto>(dataCounts);
+            if (cachedData is not null)
+                return cachedData;
+            }
+        } 
+        catch (Exception ex)
+        {
+            Console.WriteLine("Redis is not avaliable:" + ex.Message);
+        }
+
+        DateOnly todayDate = DateOnly.FromDateTime(DateTime.Today);
+
+        var tasksCount = await _db.UserTasks
+            .Where(t => t.UserId == userId)
+            .CountAsync();
+
+        var overdueTasksCount =  await _db.UserTasks
+            .Where(t => t.UserId == userId && t.Status == "overdue")
+            .CountAsync();
+
+        var todaysTasksCount =  await _db.UserTasks
+            .Where(t => t.UserId == userId && t.Deadline == todayDate)
+            .CountAsync();
+
+        var documentCount =  await _db.UserDocuments
+            .Where(d => d.UserId == userId)
+            .CountAsync();
+
+
+        DataCountDto result = new DataCountDto
+        {
+            TotalTasks = tasksCount,
+            Documents =  documentCount,
+            OverdueTasks = overdueTasksCount,
+            TodaysTasks = todaysTasksCount
+        };
+
+        try 
+        {
+            await _cache.StringSetAsync(key, JsonConvert.SerializeObject(result), TimeSpan.FromMinutes(30));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Data was not cached:" + ex.Message);
+        }
+
+        return result;
+        
+    }
+
     public async Task<bool> UpdateRefreshToken(UserRefreshToken currentToken, UserRefreshToken newToken)
     {
         _db.UserRefreshTokens.Remove(currentToken);
@@ -246,6 +307,8 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
 
         return false;
     }
+
+
     public async Task<bool> RemoveRefreshTokenAsync(string refreshToken)
     {
         UserRefreshToken? token = await _db.UserRefreshTokens
@@ -264,7 +327,7 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
     // public async Task<IEnumerable<UserTask>> GetAllUserTasksAsync(Guid userId)
     // {
     //     var cacheKey = $"UserTasks_{userId}";
-    //     var cachedTasks = await _distributedCache.GetStringAsync(cacheKey);
+    //     var cachedTasks = await _cache.StringGetAsync(cacheKey);
 
     //     if (cachedTasks != null)
     //     {
@@ -275,7 +338,7 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
     //         .Where(t => t.UserId == userId)
     //         .ToListAsync();
 
-    //     await _distributedCache.SetStringAsync(cacheKey, JsonConvert.SerializeObject(tasks), _cacheOptions);
+    //     await _cache.StringSetAsync(cacheKey, JsonConvert.SerializeObject(tasks), TimeSpan.FromMinutes(30));
 
     //     return tasks;
     // }
@@ -295,7 +358,7 @@ public class UserRepo(IDistributedCache distributedCache, ApplicationDbContext D
         // Valid save chnges and remove user from cache
         if (affect == 1)
         {
-            _distributedCache.Remove(key);
+            _cache.KeyDelete(key);
             return true;
         }
 

@@ -1,15 +1,16 @@
 ﻿
 using System.Collections.Concurrent;
 using System.Text;
-using Microsoft.Extensions.Caching.Distributed;
+using StackExchange.Redis;
 
 namespace TasksHubServer.Services
 {
-    public class OTPService(IDistributedCache distributedCache)
+    public class OTPService(IConnectionMultiplexer redisCache)
     {
-        private readonly IDistributedCache _distributedCache = distributedCache;
-        private readonly DistributedCacheEntryOptions _cacheOptions = new DistributedCacheEntryOptions()
-            .SetSlidingExpiration(TimeSpan.FromMinutes(5));
+        
+        private readonly IDatabase _cache  = redisCache.GetDatabase();
+        // private readonly DistributedCacheEntryOptions TimeSpan.FromMinutes(5) = new DistributedCacheEntryOptions()
+        //     .SetSlidingExpiration(TimeSpan.FromMinutes(5));
 
         private static readonly Random _random = new();
         public async Task<string> GenerateAndStoreOtp(string userEmail, int length = 6)
@@ -30,7 +31,7 @@ namespace TasksHubServer.Services
 
             string otpCode = otpBuilder.ToString();
 
-            await _distributedCache.SetStringAsync(key, otpCode, _cacheOptions);
+            await _cache.StringSetAsync(key, otpCode, TimeSpan.FromMinutes(5));
 
             return otpCode;
         }
@@ -39,13 +40,13 @@ namespace TasksHubServer.Services
         {
             string normlizedEmail = NormalizedEmail(userEmail);
             string key = $"otp:{normlizedEmail}";
-            string? storedOtp = await _distributedCache.GetStringAsync(key);
+            string? storedOtp = await _cache.StringGetAsync(key);
 
             // Check if OTP is valid and not null
             if (storedOtp != null && storedOtp == submittedOtp)
             {
                 // Remove OTP after successful verification
-                await _distributedCache.RemoveAsync(key);
+                _cache.KeyDelete(key);
                 return true;
             }
 

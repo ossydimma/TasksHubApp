@@ -5,6 +5,7 @@ interface TaskService {
     createTask(values: TaskValuesType): Promise<any>;
     updateTask(payload: TaskModel) : Promise<any>;
     getAllTasks() : Promise<any>;
+    getCarouselTasks(): Promise<any>;
     getTask(taskId: string | string[] | undefined): Promise<any>;
     filterTask(payload : FilterTaskType): Promise<any>
     deleteTask(taskId: string | string[] | undefined): Promise<any>;
@@ -27,6 +28,11 @@ export const taskApi: TaskService = {
 
     getTask: async(taskId: string) => {
         const res = await api.get(`task/${taskId}`);
+        return res.data;
+    },
+
+    getCarouselTasks: async() => {
+        const res = await api.get("/task/get-carousel-tasks");
         return res.data;
     },
 

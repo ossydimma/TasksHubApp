@@ -53,3 +53,11 @@ public class VerifyEmailDto
     [Required]
     public string Otp { get; set; } = null!;
 }
+
+public class DataCountDto
+{
+    public int TotalTasks { get; set; }
+    public int Documents { get; set; }
+    public int OverdueTasks { get; set; }
+    public int TodaysTasks { get; set; }
+}

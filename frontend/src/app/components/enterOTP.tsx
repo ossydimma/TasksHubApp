@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../../services/axios";
 import {  useRouter } from "next/navigation";
-import { LoginModelType } from "../../../Interfaces";
-import { useAuth } from "../../../context/AuthContext";
 import { AuthService } from "../../../services/apiServices/AuthService";
 
 export default function enterOTP({
@@ -77,11 +75,6 @@ export default function enterOTP({
     }
     const payload = mapPayload("email");
 
-    // const payload = {
-    //   OldEmail: userEmail,
-    //   NewEmail: newEmail,
-    //   Otp: OTP,
-    // };
     setLoading(true);
 
     try {
@@ -120,29 +113,6 @@ export default function enterOTP({
       setLoading(false);
     }
   };
-
-  // const verifyLoginCode = async (e: React.FormEvent<HTMLFormElement>) => {
-  //   e.preventDefault();
-
-  //   const formError = validateVerifyForm();
-  //   if (formError) {
-  //     setErrorMessage(formError);
-  //     return;
-  //   }
-
-  //   const payload = mapPayload();
-  //   // const payload = { email: userEmail, submittedOtp: OTP, Aim: aim };
-  //   setLoading(true);
-  //   try {
-  //     await AuthService.verifyOtp(payload);
-  //     setIsVerified(true);
-  //   } catch (err: any) {
-  //     const error = getApiErrorMsg(err);
-  //     setErrorMessage(error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   useEffect(() => {
     if (timeLeft <= 0) return;

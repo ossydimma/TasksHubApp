@@ -3,16 +3,17 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using TasksHubServer.Data;
+using StackExchange.Redis;
 
 namespace TasksHubServer.Repositories;
 
-public class TaskRepo(IDistributedCache distributedCache, ApplicationDbContext Db) : ITaskRepo
+public class TaskRepo(IConnectionMultiplexer redisCache, ApplicationDbContext Db) : ITaskRepo
 {
     private readonly ApplicationDbContext _db = Db;
-    private readonly IDistributedCache _distributedCache = distributedCache;
-    private readonly DistributedCacheEntryOptions _cacheOptions = new DistributedCacheEntryOptions()
-        .SetSlidingExpiration(TimeSpan.FromMinutes(5))
-        .SetAbsoluteExpiration(TimeSpan.FromMinutes(30));
+    private readonly IDatabase _cache = redisCache.GetDatabase();
+    // private readonly DistributedCacheEntryOptions TimeSpan.FromMinutes(30) = new DistributedCacheEntryOptions()
+    //     .SetSlidingExpiration(TimeSpan.FromMinutes(5))
+    //     .SetAbsoluteExpiration(TimeSpan.FromMinutes(30));
 
     public async Task<bool> CreateTaskAsync(UserTask newTask)
     {
@@ -25,7 +26,7 @@ public class TaskRepo(IDistributedCache distributedCache, ApplicationDbContext D
         {
             try
             {
-                await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(newTask), _cacheOptions);
+                await _cache.StringSetAsync(key, JsonConvert.SerializeObject(newTask), TimeSpan.FromMinutes(30));
             }
             catch (Exception ex)
             {
@@ -53,7 +54,7 @@ public class TaskRepo(IDistributedCache distributedCache, ApplicationDbContext D
 
         try
         {
-            await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(task), _cacheOptions);
+            await _cache.StringSetAsync(key, JsonConvert.SerializeObject(task), TimeSpan.FromMinutes(30));
         }
         catch (Exception ex)
         {
@@ -90,7 +91,7 @@ public class TaskRepo(IDistributedCache distributedCache, ApplicationDbContext D
 
         try
         {
-            string? fromCache = await _distributedCache.GetStringAsync(key);
+            string? fromCache = await _cache.StringGetAsync(key);
 
 
             if (!string.IsNullOrEmpty(fromCache))
@@ -114,7 +115,7 @@ public class TaskRepo(IDistributedCache distributedCache, ApplicationDbContext D
 
         try
         {
-            await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(task), _cacheOptions);
+            await _cache.StringSetAsync(key, JsonConvert.SerializeObject(task), TimeSpan.FromMinutes(30));
         }
         catch (Exception ex)
         {
@@ -124,102 +125,78 @@ public class TaskRepo(IDistributedCache distributedCache, ApplicationDbContext D
         return task;
     }
 
-    // public async Task<List<TaskDto>> FilterTaskByCreationDateAsync(DateOnly creationDate, Guid? userId)
-    // {
-    //     DateTime startDay = creationDate.ToDateTime(TimeOnly.MinValue);
-    //     DateTime nextDayStart = creationDate.AddDays(1).ToDateTime(TimeOnly.MinValue);
+    public async Task<UserTaskGroupsDto> GetUserTaskGroupsAsync(Guid? userId)
+    {
+        string key = $"TasksHub_TaskGroup_{userId}";
 
-    //     List<TaskDto> tasks = await _db.UserTasks
-    //         .Where(t =>
-    //             t.UserId == userId &&
-    //             t.Created_at >= startDay &&
-    //             t.Created_at < nextDayStart
-    //         )
-    //         .Select(t => new TaskDto
-    //         {
-    //             Id = t.Id,
-    //             Title = t.Title,
-    //             Description = t.Description,
-    //             Category = t.Category,
-    //             Status = t.Status,
-    //             CreationDate = t.Created_at,
-    //             Deadline = t.Deadline
-    //         })
-    //         .OrderByDescending(t => t.CreationDate)
-    //         .ToListAsync();
+        try
+        {
+            string? cached = await _cache.StringGetAsync(key);
+            if (cached is not null)
+            {
+                UserTaskGroupsDto? cachedData = JsonConvert.DeserializeObject<UserTaskGroupsDto>(cached);
+                if (cachedData is not null)
+                    return cachedData;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Redis unavailable: " + ex.Message);
+        }
 
-    //     return tasks;
-    // }
+        DateOnly todayDate = DateOnly.FromDateTime(DateTime.Today);
 
-    // public async Task<List<TaskDto>> FilterTaskByDeadlineAsync(DateOnly deadline, Guid? userId)
-    // {
-    //     List<TaskDto> tasks = await _db.UserTasks
-    //         .Where(t =>
-    //             t.UserId == userId &&
-    //             t.Deadline == deadline
-    //         )
-    //         .Select(t => new TaskDto
-    //         {
-    //             Id = t.Id,
-    //             Title = t.Title,
-    //             Description = t.Description,
-    //             Category = t.Category,
-    //             Status = t.Status,
-    //             CreationDate = t.Created_at,
-    //             Deadline = t.Deadline
-    //         })
-    //         .OrderByDescending(t => t.CreationDate)
-    //         .ToListAsync();
+        List<CarouselTaskDto> tasks = await _db.UserTasks
+            .Where(t => t.UserId == userId)
+            .OrderByDescending(t => t.Created_at)
+            .Select(t => new CarouselTaskDto
+            {
+                Id = t.Id,
+                Title = t.Title,
+                Category = t.Category,
+                Deadline = t.Deadline,
+                Status = t.Status
+            })
+            .Take(2)
+            .ToListAsync();
 
-    //     return tasks;
-    // }
+        List<CarouselTaskDto> overdueTasks = await _db.UserTasks
+            .Where(t => t.UserId == userId && t.Status == "Overdue")
+            .OrderByDescending(t => t.Created_at)
+            .Select(t => new CarouselTaskDto
+            {
+                Id = t.Id,
+                Title = t.Title,
+                Category = t.Category,
+                Deadline = t.Deadline,
+                Status = t.Status
+            })
+            .Take(2)
+            .ToListAsync();
 
-    // public async Task<List<TaskDto>> FilterTaskByStatusAsync(string status, Guid? userId)
-    // {
-    //     List<TaskDto> tasks = await _db.UserTasks
-    //         .Where(t =>
-    //             t.UserId == userId &&
-    //             t.Status == status
-    //         )
-    //         .Select(t => new TaskDto
-    //         {
-    //             Id = t.Id,
-    //             Title = t.Title,
-    //             Description = t.Description,
-    //             Category = t.Category,
-    //             Status = t.Status,
-    //             CreationDate = t.Created_at,
-    //             Deadline = t.Deadline
-    //         })
-    //         .OrderByDescending(t => t.CreationDate)
-    //         .ToListAsync();
+        List<CarouselTaskDto> todaysTasks = await _db.UserTasks
+            .Where(t => t.UserId == userId && t.Deadline == todayDate)
+            .OrderByDescending(t => t.Created_at)
+            .Select(t => new CarouselTaskDto
+            {
+                Id = t.Id,
+                Title = t.Title,
+                Category = t.Category,
+                Deadline = t.Deadline,
+                Status = t.Status
+            })
+            .Take(2)
+            .ToListAsync();
 
-    //     return tasks;
-    // }
+        return new UserTaskGroupsDto
+        {
+            AllTasks = tasks,
+            OverdueTasks = overdueTasks,
+            TodaysTasks = todaysTasks
 
-    // public async Task<List<TaskDto>> FilterTaskByCategoryAsync(string category, Guid? userId)
-    // {
-    //     List<TaskDto> tasks = await _db.UserTasks
-    //         .Where(t =>
-    //             t.UserId == userId &&
-    //             t.Category == category
-    //         )
-    //         .Select(t => new TaskDto
-    //         {
-    //             Id = t.Id,
-    //             Title = t.Title,
-    //             Description = t.Description,
-    //             Category = t.Category,
-    //             Status = t.Status,
-    //             CreationDate = t.Created_at,
-    //             Deadline = t.Deadline
-    //         })
-    //         .OrderByDescending(t => t.CreationDate)
-    //         .ToListAsync();
+        };
 
-    //     return tasks;
-    // }
-
+    }
     public async Task<List<TaskDto>> FilterTasksAsync(FilterTaskDto filter, Guid? userId)
     {
 
@@ -237,7 +214,7 @@ public class TaskRepo(IDistributedCache distributedCache, ApplicationDbContext D
         }
 
         if (filter.Deadline.HasValue)
-        { 
+        {
             tasks = tasks.Where(t => t.Deadline == filter.Deadline);
         }
 
@@ -280,7 +257,7 @@ public class TaskRepo(IDistributedCache distributedCache, ApplicationDbContext D
         {
             try
             {
-                _distributedCache.Remove(key);
+                _cache.KeyDelete(key);
             }
             catch (Exception ex)
             {

@@ -1,14 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
+import { useNav } from "../../../context/NavContext";
 import Link from "next/link";
 import moment from "moment";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function header() {
   const [showDate, setShowDate] = useState<boolean>(true);
-  const [formattedDate, setFormattedDate] = useState<string>('');
+  const [formattedDate, setFormattedDate] = useState<string>("");
 
-  // const formattedDate = moment().format("dddd, MMMM D");
+  const { isMaximized } = useNav();
+  const { userInfo } = useAuth();
 
   const handleResize = () => {
     const w = window.innerWidth;
@@ -29,28 +33,28 @@ export default function header() {
     };
   }, []);
 
-
   return (
-    <div className="  w-[100%] h-[8vh] px-2 md:px-6 sm:pt-[6vh] sm:pb-[4vh]  flex items-center justify-between border-dashed @GetResponsiveClass()">
-      <div className=" flex items-center gap-1 ">
-        <div className="p-2 rounded-lg bg-[#5577FF]">
-          <svg
-            className="w-4"
-            viewBox="0 0 32 32"
-            id="icon"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="#000000"
-          >
-            <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-            <g
-              id="SVGRepo_tracerCarrier"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            ></g>
-            <g id="SVGRepo_iconCarrier">
-              <defs>
-                <style>
-                  {`
+    <div className="  w-full h-[10vh] px-2 md:px-6 sm:py-[5.7vh] flex items-center justify-between border-dashed border-gray-500 border-b-2 ">
+      {!isMaximized && (
+        <div className=" flex items-center gap-1 ">
+          <div className="p-2 rounded-lg bg-[#5577FF]">
+            <svg
+              className="w-2 sm:w-4"
+              viewBox="0 0 32 32"
+              id="icon"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="#000000"
+            >
+              <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
+              <g
+                id="SVGRepo_tracerCarrier"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              ></g>
+              <g id="SVGRepo_iconCarrier">
+                <defs>
+                  <style>
+                    {`
                         .cls-1 {
                             fill: #fff;
                         }
@@ -59,66 +63,33 @@ export default function header() {
                             fill: none;
                         }
                     `}
-                </style>
-              </defs>
-              <title>logo--tumblr</title>
-              <path
-                className="cls-1"
-                d="M22.6,28h-4c-3.59,0-6.3-1.86-6.3-6.3V14.58H9V10.72A7.17,7.17,0,0,0,14.3,4h3.76v6.12h4.36v4.46H18.06v6.2c0,1.86.94,2.49,2.42,2.49H22.6Z"
-              ></path>
-              <rect
-                id="_Transparent_Rectangle_"
-                data-name="<Transparent Rectangle>"
-                className="cls-2"
-                width="32"
-                height="32"
-              ></rect>
-            </g>
-          </svg>
+                  </style>
+                </defs>
+                <title>logo--tumblr</title>
+                <path
+                  className="cls-1"
+                  d="M22.6,28h-4c-3.59,0-6.3-1.86-6.3-6.3V14.58H9V10.72A7.17,7.17,0,0,0,14.3,4h3.76v6.12h4.36v4.46H18.06v6.2c0,1.86.94,2.49,2.42,2.49H22.6Z"
+                ></path>
+                <rect
+                  id="_Transparent_Rectangle_"
+                  data-name="<Transparent Rectangle>"
+                  className="cls-2"
+                  width="32"
+                  height="32"
+                ></rect>
+              </g>
+            </svg>
+          </div>
+          <h2 className=" text-xs md:text-[1rem] lg:text-lg font-extrabold">
+            Taskhub
+          </h2>
         </div>
-        <h2 className=" md:text-[1rem] lg:text-lg font-extrabold">Taskhub</h2>
-      </div>
+      )}
 
-      {/* @*      SEARCH BAR           *@ */}
-      <div className=" w-[30%] lg:w-[45%] hidden sm:flex items-center justify-between  px-3.5 border border-gray-600 rounded-3xl ">
-        <input
-          type="text"
-          placeholder="Search"
-          className="w-[90%] bg-inherit py-2 outline-none"
-        />
-        <svg
-          className="w-7 cursor-pointer "
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-          <g
-            id="SVGRepo_tracerCarrier"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          ></g>
-          <g id="SVGRepo_iconCarrier">
-            <g clipPath="url(#clip0_15_152)">
-              <circle
-                cx="10.5"
-                cy="10.5"
-                r="6.5"
-                stroke="#000000"
-                strokeLinejoin="round"
-              ></circle>
-              <path
-                d="M19.6464 20.3536C19.8417 20.5488 20.1583 20.5488 20.3536 20.3536C20.5488 20.1583 20.5488 19.8417 20.3536 19.6464L19.6464 20.3536ZM20.3536 19.6464L15.3536 14.6464L14.6464 15.3536L19.6464 20.3536L20.3536 19.6464Z"
-                fill="#000000"
-              ></path>
-            </g>
-            <defs>
-              <clipPath id="clip0_15_152">
-                <rect width="24" height="24" fill="white"></rect>
-              </clipPath>
-            </defs>
-          </g>
-        </svg>
+      <div>
+        <h1 className="text-sm xs:text-[1rem] sm:text-xl lmd:text-3xl py-5 px-6 lmd:px-8 font-extrabold tracking-wid italic">
+          Good Day, {userInfo?.userName}!
+        </h1>
       </div>
 
       <div className=" flex items-center gap-1.5 md:gap-3">

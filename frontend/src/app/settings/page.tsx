@@ -11,7 +11,6 @@ import ChangeContact from "../components/ChangeContact";
 import ModifyContact from "../components/ModifyContact";
 import { useAuth } from "../../../context/AuthContext";
 import { useRouter } from "next/navigation";
-import { api } from "../../../services/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { SettingsServices } from "../../../services/apiServices/SettingsService";
 import { getApiErrorMessage } from "../../../SharedFunctions";
@@ -22,7 +21,7 @@ interface MsgType {
 }
 
 export default function page() {
-  const { userInfo, isAuthenticated, setAccessToken, setUserInfo, logout } =
+  const { userInfo, isAuthenticated, setAccessToken, setUserInfo } =
     useAuth();
   const { data: session, status } = useSession();
   const hasRunRef = useRef<boolean>(false);

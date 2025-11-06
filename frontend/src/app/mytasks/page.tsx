@@ -7,6 +7,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { FilterTaskType, UserTaskType } from "../../../Interfaces";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { taskApi } from "../../../services/apiServices/TaskApiService";
+import Link from "next/link";
 
 export default function page() {
   const router = useRouter();
@@ -45,6 +46,25 @@ export default function page() {
     { id: 4, label: "Others", value: "others" },
   ];
 
+  let filterPayload: FilterTaskType = {
+    deadline: null,
+    created: null,
+    category: null,
+    status: null,
+  };
+
+  const handleFilterApiCall = async (payload : FilterTaskType) => {
+    try {
+      let tasks = await taskApi.filterTask(payload);
+      setFilteredTasks(validateOrder() ? tasks.reverse() : tasks);
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setSearching(false);
+      setShowFilter(false);
+    }
+  }
+
   const validateFilterForm = (): boolean => {
     if (!Object.values(filterBy).some((val) => val !== "")) {
       return false;
@@ -58,39 +78,25 @@ export default function page() {
     return true;
   };
 
-  const handleFilterBy = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleFilterByForm = (e: React.FormEvent<HTMLFormElement>) => { 
     e.preventDefault();
 
-    console.log(filterBy.deadline);
     const formError = validateFilterForm();
     if (!formError) {
       return;
     }
     setSearching(true);
 
-    const filterPayload = {
-      ...filterBy,
+    filterPayload = {
       deadline: filterBy.deadline ? filterBy.deadline : null,
       created: filterBy.created ? filterBy.created : null,
       category: filterBy.category || null,
       status: filterBy.status || null,
     };
 
-    console.log(filterPayload);
-
-    try {
-      let tasks = await taskApi.filterTask(filterPayload);
-
-      setFilteredTasks(validateOrder() ? tasks.reverse() : tasks);
-    } catch (err: any) {
-      console.error(err);
-    } finally {
-      setSearching(false);
-      setShowFilter(!showFilter);
-    }
+    handleFilterApiCall(filterPayload);
+    
   };
-
-  async function getTaskByTitle() {}
 
   function resetFilterBy() {
     setFilterBy({
@@ -101,7 +107,6 @@ export default function page() {
     });
     setFilteredTasks(tasks);
     setShowFilter(false);
-    console.log(filterBy);
   }
 
   async function getAllTasks() {
@@ -112,7 +117,6 @@ export default function page() {
 
       setTasks(allTasks);
       setFilteredTasks(validateOrder() ? allTasks.reverse() : allTasks);
-      console.log(allTasks);
     } catch (err: any) {
       console.error("Failed to fetch tasks:", err);
     } finally {
@@ -130,8 +134,27 @@ export default function page() {
     return false;
   }
 
+  const fetchTasks = () => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const params = searchParams.get("filter");
+    switch(params) {
+      case "overdue":
+        filterPayload.status = "overdue";
+        handleFilterApiCall(filterPayload);
+        setMatch(`You got no overdue task. `);
+        break;
+      case "todays":
+        filterPayload.deadline = formatDate(new Date(), "standard");
+        handleFilterApiCall(filterPayload);
+        setMatch(`You got no task that will be due today. `);
+        break;
+      default:
+        getAllTasks();
+    }
+  };
+
   useEffect(() => {
-    getAllTasks();
+    fetchTasks();
   }, []);
 
   useEffect(() => {
@@ -234,12 +257,12 @@ export default function page() {
 
           <div
             className="bg-gray-700 hover:bg-black w-[18%] md:w-[15%] lmd:w-[12.5%] py-2 cursor-pointer "
-            onClick={getTaskByTitle}
+            // onClick={getTaskByTitle}
             role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") getTaskByTitle();
-            }}
+            // tabIndex={0}
+            // onKeyDown={(e) => {
+            //   if (e.key === "Enter") getTaskByTitle();
+            // }}
           >
             <svg
               className="w-5 lmd:w-7 mx-auto"
@@ -318,7 +341,7 @@ export default function page() {
               <form
                 action=""
                 className="flex flex-col gap-2 border-2 rounded-xl p-4 italic"
-                onSubmit={handleFilterBy}
+                onSubmit={handleFilterByForm}
               >
                 <div className={`flex flex-col text-sm w-[100%]`}>
                   <label className=" font-medium">Creation date</label>
@@ -493,9 +516,17 @@ export default function page() {
               text="Searching..."
             />
           </div>
-        ) : tasks.length === 0 ? (
-          <div className="h-full w-full flex justify-center items-center text-[0.910rem] sm:text-[1.2rem] md:text-[0.8rem] lmd:text-[0.910rem]">
+        ) : tasks.length < 0 ? (
+          <div className="h-full w-full flex flex-col gap-1 justify-center items-center font-bold text-[0.910rem] sm:text-[1.2rem] md:text-[0.8rem] lmd:text-[0.910rem]">
             <p>You have no task yet.</p>
+            <div>
+              <button
+                onClick={() => router.push("/mytasks/createtask")}
+                className="py-4 px-6 text-sm bg-black text-white rounded-2xl"
+              >
+                Create task
+              </button>
+            </div>
           </div>
         ) : filteredTasks.length === 0 ? (
           <div className="h-full w-full flex justify-center items-center text-[0.910rem] sm:text-[1.2rem] md:text-[0.8rem] lmd:text-[0.910rem]">

@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { formatDate, getApiErrorMessage } from "../../../SharedFunctions";
 import { DocumentType, DocumentInputType } from "../../../Interfaces";
 import { useAuth } from "../../../context/AuthContext";
-import { api } from "../../../services/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useRouter } from "next/navigation";
 import { DocServices } from "../../../services/apiServices/DocService";
@@ -531,7 +530,7 @@ export default function page() {
         </div>
 
         {(viewMode === "list" ||
-          (viewMode === "both" && documents.length > 0)) && (
+          (viewMode === "both")) && (
           <div
             onClick={() => setShowFilter(true)}
             className=" border text-sm border-gray-600 rounded-md py-2 px-4 flex items-center gap-2 cursor-pointer hover:bg-black hover:text-white stroke-black hover:stroke-white"
@@ -761,16 +760,6 @@ export default function page() {
                     onChange={(e) => {
                       setContent({ ...content, title: e.target.value });
                     }}
-                    // onFocus={() =>
-                    //   content.body.length > 2
-                    //     ? setIsDisabled({ discardBtn: false, saveBtn: false })
-                    //     : setIsDisabled({ discardBtn: true, saveBtn: true })
-                    // }
-                    // onMouseOut={() =>
-                    //   content.title.length > 2
-                    //     ? setIsDisabled({ discardBtn: false, saveBtn: false })
-                    //     : setIsDisabled({ discardBtn: true, saveBtn: true })
-                    // }
                     className="w-[100%] h-[13%] outline-none border-b border-gray-700  py-4 px-4 bg-transparent font-serif font-bold "
                   />
                 </div>
@@ -783,16 +772,6 @@ export default function page() {
                     onChange={(e) => {
                       setContent({ ...content, body: e.target.value });
                     }}
-                    // onFocus={() =>
-                    //   content.title.length > 2
-                    //     ? setIsDisabled({ discardBtn: false, saveBtn: false })
-                    //     : setIsDisabled({ discardBtn: true, saveBtn: true })
-                    // }
-                    // onMouseLeave={() =>
-                    //   content.body.length > 2
-                    //     ? setIsDisabled({ discardBtn: false, saveBtn: false })
-                    //     : setIsDisabled({ discardBtn: true, saveBtn: true })
-                    // }
                     className="w-full p-4 bg-transparent outline-none h-full"
                   ></textarea>
                 </div>
@@ -825,9 +804,6 @@ export default function page() {
                             ? `bg-gray-400 cursor-not-allowed `
                             : `bg-black hover:text-black hover:bg-white hover:border border-black cursor-pointer  `
                         }  `}
-                        // onClick={
-                        //   btnText === "Create" ? createDocument : updateDocument
-                        // }
                       >
                         {btnText}
                       </button>
@@ -932,7 +908,7 @@ export default function page() {
                   />
                 </div>
               ) : documents.length === 0 ? (
-                <div className="h-full w-full flex justify-center items-center text-[0.910rem] sm:text-[1.2rem] md:text-[0.8rem] lmd:text-[0.910rem]">
+                <div className="h-full w-full flex justify-center items-center font-bold text-[0.910rem] sm:text-[1.2rem] md:text-[0.8rem] lmd:text-[0.910rem]">
                   <p>You have no documents yet.</p>
                 </div>
               ) : filteredDocuments.length === 0 ? (

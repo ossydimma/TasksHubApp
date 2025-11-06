@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using TasksHubServer.Data;
 using TasksHubServer.Repositories;
 using TasksHubServer.Services;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,16 +40,42 @@ builder.Services.AddHangfire(configuration => configuration
 // Add the processing server as IHostedService
 builder.Services.AddHangfireServer();
 
-builder.Services.AddDbContext<ApplicationDbContext>(options => 
-    options.UseSqlServer(connectionString));
+Action<DbContextOptionsBuilder> dbContextOptionsBuilder = options => 
+{
+    options.UseSqlServer(connectionString);
+};
+
+builder.Services.AddDbContext<ApplicationDbContext>(dbContextOptionsBuilder);
+
+// builder.Services.AddDbContextFactory<ApplicationDbContext>(dbContextOptionsBuilder);
 
 // Add Redis services to the container.
-builder.Services.AddStackExchangeRedisCache(options =>
+var redisConfigOptions = new ConfigurationOptions
 {
-    options.Configuration = builder.Configuration.GetConnectionString("RedisConnections");
-    options.InstanceName = "SampleDb";
-});
+    EndPoints = { "massive-ocelot-8368.upstash.io:6379" }, 
+    Password = "ASCwAAImcDJhZWExMjVjNTBjZTU0MDVlOWJmM2FkNmEyYWEwMTg0YnAyODM2OA",
+    Ssl = true, // MANDATORY for rediss://
+    AbortOnConnectFail = false,
+    ConnectTimeout = 15000,
+    SyncTimeout = 15000
+};
 
+
+
+IConnectionMultiplexer? multiplexer = null;
+
+try
+{
+    multiplexer = ConnectionMultiplexer.Connect(redisConfigOptions);
+    
+    builder.Services.AddSingleton<IConnectionMultiplexer>(multiplexer);
+    Console.WriteLine("✅ Connected to Redis successfully");
+}
+catch (Exception ex)
+{
+    // Log the error but allow the application to start
+    Console.WriteLine($"❌ Failed to connect to Redis: {ex.Message}");
+}
 
 builder.Services.AddScoped<IUserRepo, UserRepo>();
 builder.Services.AddScoped<IDocumentRepo, DocumentRepo>();
@@ -122,12 +149,12 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
     }
 });
 
-var serviceProvider = app.Services.CreateScope().ServiceProvider;
-var taskMaintenanceService = serviceProvider.GetRequiredService<TaskMaintenanceService>();
+// var serviceProvider = app.Services.CreateScope().ServiceProvider;
+// var taskMaintenanceService = serviceProvider.GetRequiredService<TaskMaintenanceService>();
 
-RecurringJob.AddOrUpdate(
+RecurringJob.AddOrUpdate<TaskMaintenanceService>(
     "UpdateOverdueTasksJob",
-    () => taskMaintenanceService.UpdateOverdueTasksAsync(),
+    service => service.UpdateOverdueTasksAsync(),
     Cron.Daily(1, 0),
     new RecurringJobOptions
     {

@@ -213,6 +213,27 @@ public class ProfileController(IUserRepo repo, IConfiguration config, OTPService
     
     }
 
+    [HttpGet("get-data-counts")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(401)]
+    public async Task<IActionResult> GetUsersDataCounts() 
+    {
+        string? userIdStr = User.FindFirst("id")?.Value;
+        if (userIdStr == null)
+            return Unauthorized();
+        try 
+        {
+            DataCountDto result = await _repo.UserDataCountsAsync(userIdStr);
+            return Ok(result);
+        } 
+        catch (Exception ex) 
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred. Please try again.");
+        }
+
+
+    }
+
 
     private Cloudinary GetCloudinaryInstance()
     {

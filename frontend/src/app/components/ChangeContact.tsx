@@ -1,10 +1,8 @@
-import { signIn, signOut, useSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import "react-phone-input-2/lib/style.css";
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { api } from "../../../services/axios";
-import { useRouter } from "next/navigation";
-import GoogleLoginBtn from "./GoogleLoginBtn";
 
 export default function ChangeContact({
   setShowChangeContact,
@@ -23,39 +21,12 @@ export default function ChangeContact({
     getCodeBtn: true,
     getCodeInput: true,
   });
-  // const [password, setPassword] = useState<string>("");
 
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isEnterOtp, setIsEnterOtp] = useState<boolean>(false);
   const [newEmail, setNewEmail] = useState<string>("");
 
   // FUNCTIONS
-
-  // const handleGetCode = async (e: React.MouseEvent<HTMLButtonElement>) => {
-  //   e.preventDefault();
-  //   setDisable({ ...disable, getCodeInput: false, getCodeBtn: true });
-  //   setTimeLeft(60);
-  //   if (userInfo?.email) {
-  //     try {
-  //       await api.post("/settings/verify-email-change", {
-  //         Email: userInfo?.email,
-  //       });
-  //     } catch (err: any) {
-  //       console.error(err.response.data);
-  //       // Try to extract the first error message if available
-  //       const errorData = err.response?.data;
-  //       let errorMsg = "An error occurred";
-  //       if (errorData?.errors) {
-  //         // Get the first error message from the errors object
-  //         const firstKey = Object.keys(errorData.errors)[0];
-  //         errorMsg = errorData.errors[firstKey][0];
-  //       } else if (typeof errorData === "string") {
-  //         errorMsg = errorData;
-  //       }
-  //       setErrorMessage(errorMsg);
-  //     }
-  //   }
-  // };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

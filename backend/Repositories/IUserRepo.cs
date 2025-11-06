@@ -17,6 +17,7 @@ namespace TasksHubServer.Repositories
         Task<bool> RemoveRefreshTokenAsync(string refreshToken);
         Task SaveChangesAsync();
         Task<bool> UpdateUserAsync(ApplicationUser user);
+        Task<DataCountDto> UserDataCountsAsync(string userId);
         Task<bool> DeleteUserAsync(Guid id);
     }
 }

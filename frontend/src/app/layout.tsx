@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import SideBar from "./components/sideBar";
 import "./globals.css";
 import { AuthProvider } from "../../context/AuthContext";
+import { NavProvider } from "../../context/NavContext";
 import SessionProviderWrapper from "./components/SessionProviderWrapper";
 
 
@@ -34,10 +35,12 @@ export default function RootLayout({
       >
         <SessionProviderWrapper>
           <AuthProvider>
-            <SideBar />
-            <div className="relative bg-[#f6f5f5] h-[98Vh]  overflow-x-hidden overflow-y-scroll md:overflow-hidden my-0 sm:my-[1vh]  w-screen sm:rounded-[2rem]">
-              {children}
-            </div>
+            <NavProvider>
+              <SideBar />
+              <div className="relative bg-[#f6f5f5] h-[98Vh]  overflow-x-hidden overflow-y-scroll md:overflow-hidden my-0 sm:my-[1vh]  w-screen sm:rounded-[2rem]">
+                {children}
+              </div>
+            </NavProvider>
           </AuthProvider>
         </SessionProviderWrapper>
 

@@ -142,6 +142,20 @@ public class TaskController(ITaskRepo repo, IUserRepo userRepo) : ControllerBase
         return Ok(new { tasks = FilteredTasks });
     }
 
+    [HttpGet("get-carousel-tasks")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(401)]
+    public async Task<IActionResult> GetUserTaskInGroupsAsync()
+    {
+        Guid? userId = GetUserId();
+        if (userId == null)
+            return Unauthorized("Invalid or missing user ID");
+
+        UserTaskGroupsDto result = await _repo.GetUserTaskGroupsAsync(userId);
+
+        return Ok(result);
+    }
+
     [HttpDelete("{taskId}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(401)]

@@ -57,7 +57,7 @@ export interface TaskModel {
 }
 
 export interface FilterTaskType {
-     deadline: string | null;
+    deadline: string | null;
     created: string | null;
     category: string | null;
     status: string | null;
@@ -103,6 +103,11 @@ export interface AuthContextType {
     setLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
+export interface NavContextType {
+    isMaximized: boolean;
+    setIsMaximized: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
 export interface DocumentInputType{
     id: string;
     title: string;
@@ -114,4 +119,25 @@ export interface TaskValuesType {
   deadline: string,
   description: string,
   category: string
+}
+
+export interface DataCountsType {
+    totalTasks: number;
+    documents: number;
+    overdueTasks: number;
+    todaysTasks: number
+}
+
+export interface TasksCarousel {
+    id: string;
+    title: string;
+    category: string;
+    status: string;
+    deadline: string:
+}
+
+export interface GroupTasksCarousel {
+    allTasks: TasksCarousel;
+    overduewTasks: TasksCarousel;
+    todaysTasks: TasksCarousel;
 }

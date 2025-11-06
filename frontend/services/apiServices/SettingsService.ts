@@ -4,7 +4,8 @@ interface SettingsServiceType {
   updateUserImage(data: FormData): Promise<any>;
   updateUsername(name: string): Promise<string>;
   changePassword(payload: any): Promise<any>;
-  changeGoogleAccount(credential: any): Promise<any>
+  changeGoogleAccount(credential: any): Promise<any>;
+  getUserDataCounts(): Promise<any>;
 }
 
 export const SettingsServices: SettingsServiceType = {
@@ -29,5 +30,10 @@ export const SettingsServices: SettingsServiceType = {
       Token: credential,
     });
     return res.data.accessToken;
-  },
+  }, 
+  
+  getUserDataCounts: async () => {
+    const res = await api.get("/settings/get-data-counts");
+    return res;
+  }
 };

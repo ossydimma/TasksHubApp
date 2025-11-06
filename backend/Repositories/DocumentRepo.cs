@@ -5,16 +5,17 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using TasksHubServer.Data;
+using StackExchange.Redis;
 
 namespace TasksHubServer.Repositories;
 
-public class DocumentRepo(IDistributedCache distributedCache, ApplicationDbContext Db) : IDocumentRepo
+public class DocumentRepo(IConnectionMultiplexer redisCache, ApplicationDbContext Db) : IDocumentRepo
 {
     private readonly ApplicationDbContext _db = Db;
-    private readonly IDistributedCache _distributedCache = distributedCache;
-    private readonly DistributedCacheEntryOptions _cacheOptions = new DistributedCacheEntryOptions()
-        .SetSlidingExpiration(TimeSpan.FromMinutes(5))
-        .SetAbsoluteExpiration(TimeSpan.FromMinutes(30));
+    private readonly IDatabase _cache  = redisCache.GetDatabase();
+    // private readonly DistributedCacheEntryOptions TimeSpan.FromMinutes(30) = new DistributedCacheEntryOptions()
+    //     .SetSlidingExpiration(TimeSpan.FromMinutes(5))
+    //     .SetAbsoluteExpiration(TimeSpan.FromMinutes(30));
 
     public async Task<bool> CreateDocumentAsync(CreateDocumentDto model, string userIdStr)
     {
@@ -52,7 +53,7 @@ public class DocumentRepo(IDistributedCache distributedCache, ApplicationDbConte
         {
             try
             {
-                await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(doc), _cacheOptions);
+                await _cache.StringSetAsync(key, JsonConvert.SerializeObject(doc), TimeSpan.FromMinutes(30));
             }
             catch (Exception ex)
             {
@@ -90,7 +91,7 @@ public class DocumentRepo(IDistributedCache distributedCache, ApplicationDbConte
 
         try
         {
-            string? fromCache = await _distributedCache.GetStringAsync(key);
+            string? fromCache = await _cache.StringGetAsync(key);
             if (!string.IsNullOrEmpty(fromCache))
             {
                 doc = JsonConvert.DeserializeObject<UserDocument>(fromCache);
@@ -110,7 +111,7 @@ public class DocumentRepo(IDistributedCache distributedCache, ApplicationDbConte
 
         try
         {
-            await _distributedCache.SetStringAsync(key, JsonConvert.SerializeObject(doc), _cacheOptions);
+            await _cache.StringSetAsync(key, JsonConvert.SerializeObject(doc), TimeSpan.FromMinutes(30));
         }
         catch (Exception ex)
         {
@@ -199,7 +200,7 @@ public class DocumentRepo(IDistributedCache distributedCache, ApplicationDbConte
         {
             try
             {
-                _distributedCache.Remove(key);
+                _cache.KeyDelete(key);
             }
             catch (Exception ex)
             {

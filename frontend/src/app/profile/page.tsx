@@ -8,11 +8,14 @@ import { api } from "../../../services/axios";
 import axios from "axios";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { SettingsServices } from "../../../services/apiServices/SettingsService";
+import DataDetailCard from ".././components/DataDetailCard";
+import { DataCountsType } from "../../../Interfaces";
 
 export default function Page() {
   const { userInfo, isAuthenticated } = useAuth();
 
   const [imgSrc, setImgSrc] = useState<string | undefined>(userInfo?.imageSrc);
+  const [dataCounts, setDataCounts] = useState<DataCountsType | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
   const validate = (
@@ -47,6 +50,19 @@ export default function Page() {
     }
   };
 
+    const getCounts = async () => {
+    try {
+      const res = await SettingsServices.getUserDataCounts();
+      setDataCounts(res.data);
+    } catch (err) {
+      console.error(err)
+    }
+  };
+
+  useEffect(()=> {
+    getCounts();
+  }, []);
+
   useEffect(() => {
     if (!isAuthenticated && !loading) {
       redirect("/login");
@@ -66,7 +82,7 @@ export default function Page() {
           />
         </div>
       )}
-      <h1 className=" w-full text-center font-serif text-3xl font-bold border-b-2 border-gray-400 border-dashed pb-2 mb-4 md:mb-14">
+      <h1 className=" w-full text-center font-serif text-3xl font-bold border-b-2 border-gray-400 border-dashed pb-2 mb-4 md:mb-2">
         Profile
       </h1>
 
@@ -125,13 +141,14 @@ export default function Page() {
         </div>
       </div>
 
-      <div className="flex flex-col items-center pb-[2.2rem] border-b-2 border-gray-400 border-dashed w-full">
+      <div className="flex flex-col items-center pb-2 border-b-2 border-gray-400 border-dashed w-full">
         <h2 className="font-bold text-xl">{userInfo?.fullName}</h2>
         <h2 className="font-medium text-[1.15rem]">{userInfo?.email}</h2>
       </div>
 
-      <section className=" flex flex-col gap-4 md:flex-row md:gap-8 w-full justify-between items-center pt-2 pb-4 border-b-2 border-gray-400 border-dashed">
-        <div className=" w-full md:w-[calc(1/4-1rem)] text-white text-center py-4 cursor-pointer bg-black rounded-2xl border">
+      <section className=" flex flex-col gap-4 md:flex-row md:gap-8 w-full justify-between items-center  py-4">
+        <DataDetailCard counts={dataCounts} />
+        {/* <div className=" w-full md:w-[calc(1/4-1rem)] text-white text-center py-4 cursor-pointer bg-black rounded-2xl border">
           <h2 className="font-extrabold text-[1rem]">All Task</h2>
           <p className="text-sm font-bold  ">1000</p>
         </div>
@@ -153,7 +170,7 @@ export default function Page() {
         >
           <h2 className="font-extrabold text-[1rem]">Documents</h2>
           <p className="text-sm font-bold ">1000</p>
-        </Link>
+        </Link> */}
       </section>
     </div>
   );
