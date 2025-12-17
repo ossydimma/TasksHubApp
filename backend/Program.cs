@@ -18,6 +18,8 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
     ?? throw new NullReferenceException("Connection string 'default' not found in configuration");
 string? hangfireUser = builder.Configuration.GetSection("HangfireSettings:User").Value;
 string? hangfirePass = builder.Configuration.GetSection("HangfireSettings:Pass").Value;
+var redisHost = builder.Configuration["REDIS_HOST"];
+var redisPassword = builder.Configuration["REDIS_PASSWORD"];
 
 // --- Configure Hangfire Services ---
 builder.Services.AddHangfire(configuration => configuration
@@ -49,8 +51,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Add Redis services to the container.
 var redisConfigOptions = new ConfigurationOptions
 {
-    EndPoints = { "massive-ocelot-8368.upstash.io:6379" },
-    Password = "ASCwAAImcDJhZWExMjVjNTBjZTU0MDVlOWJmM2FkNmEyYWEwMTg0YnAyODM2OA",
+    EndPoints = { redisHost! },
+    Password = redisPassword,
     Ssl = true, // MANDATORY for rediss://
     AbortOnConnectFail = false,
     ConnectTimeout = 15000,
