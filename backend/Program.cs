@@ -9,6 +9,7 @@ using TasksHubServer.Data;
 using TasksHubServer.Repositories;
 using TasksHubServer.Services;
 using StackExchange.Redis;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -109,6 +110,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 
+// Register the Health Check service
+builder.Services.AddHealthChecks();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -150,4 +154,13 @@ RecurringJob.AddOrUpdate<TaskMaintenanceService>(
         TimeZone = TimeZoneInfo.Utc,
     }
 );
+
+// Essential for Render/Docker deployments
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+
+app.MapHealthChecks("/healthz");
+
 app.Run();
