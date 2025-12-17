@@ -1,6 +1,6 @@
 using System.Text;
 using Hangfire;
-using Hangfire.SqlServer;
+using Hangfire.PostgreSql;
 using HangfireBasicAuthenticationFilter;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -12,13 +12,8 @@ using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
-// Get the PostgreSQL connection string
-// var hangfireConnStr = builder.Configuration.GetConnectionString("HangfireConnection");
-
 // Get and add the connection strings
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new NullReferenceException("Connection string 'default' not found in configuration");
 string? hangfireUser = builder.Configuration.GetSection("HangfireSettings:User").Value;
 string? hangfirePass = builder.Configuration.GetSection("HangfireSettings:Pass").Value;
@@ -28,31 +23,32 @@ builder.Services.AddHangfire(configuration => configuration
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
     .UseSimpleAssemblyNameTypeSerializer()
     .UseRecommendedSerializerSettings()
-    .UseSqlServerStorage(connectionString, new SqlServerStorageOptions
+    .UsePostgreSqlStorage(options =>
     {
-        CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
-        SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
-        QueuePollInterval = TimeSpan.Zero,
-        UseRecommendedIsolationLevel = true,
-        DisableGlobalLocks = true
+        options.UseNpgsqlConnection(connectionString);
+    }, new PostgreSqlStorageOptions
+    {
+        InvisibilityTimeout = TimeSpan.FromMinutes(5),
+        QueuePollInterval = TimeSpan.FromSeconds(3),
+        DistributedLockTimeout = TimeSpan.FromMinutes(10),
+        PrepareSchemaIfNecessary = true,
+        SchemaName = "hangfire"
     }));
 
 // Add the processing server as IHostedService
-builder.Services.AddHangfireServer();
-
-Action<DbContextOptionsBuilder> dbContextOptionsBuilder = options => 
+builder.Services.AddHangfireServer(options =>
 {
-    options.UseSqlServer(connectionString);
-};
+    options.WorkerCount = 5; // Limits concurrent database connections
+});
 
-builder.Services.AddDbContext<ApplicationDbContext>(dbContextOptionsBuilder);
-
-// builder.Services.AddDbContextFactory<ApplicationDbContext>(dbContextOptionsBuilder);
+// --- Configure EF Core for PostgreSQL ---
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(connectionString));
 
 // Add Redis services to the container.
 var redisConfigOptions = new ConfigurationOptions
 {
-    EndPoints = { "massive-ocelot-8368.upstash.io:6379" }, 
+    EndPoints = { "massive-ocelot-8368.upstash.io:6379" },
     Password = "ASCwAAImcDJhZWExMjVjNTBjZTU0MDVlOWJmM2FkNmEyYWEwMTg0YnAyODM2OA",
     Ssl = true, // MANDATORY for rediss://
     AbortOnConnectFail = false,
@@ -60,14 +56,12 @@ var redisConfigOptions = new ConfigurationOptions
     SyncTimeout = 15000
 };
 
-
-
 IConnectionMultiplexer? multiplexer = null;
 
 try
 {
     multiplexer = ConnectionMultiplexer.Connect(redisConfigOptions);
-    
+
     builder.Services.AddSingleton<IConnectionMultiplexer>(multiplexer);
     Console.WriteLine("✅ Connected to Redis successfully");
 }
@@ -114,7 +108,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 
 var app = builder.Build();
 
@@ -123,7 +116,6 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    // app.MapOpenApi();
 }
 
 app.UseHttpsRedirection();
@@ -149,9 +141,6 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
     }
 });
 
-// var serviceProvider = app.Services.CreateScope().ServiceProvider;
-// var taskMaintenanceService = serviceProvider.GetRequiredService<TaskMaintenanceService>();
-
 RecurringJob.AddOrUpdate<TaskMaintenanceService>(
     "UpdateOverdueTasksJob",
     service => service.UpdateOverdueTasksAsync(),
@@ -159,7 +148,6 @@ RecurringJob.AddOrUpdate<TaskMaintenanceService>(
     new RecurringJobOptions
     {
         TimeZone = TimeZoneInfo.Utc,
-        // Queue = "default" // optional, can be omitted if you're not using custom queues
     }
 );
 app.Run();

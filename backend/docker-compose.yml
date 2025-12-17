@@ -1,0 +1,12 @@
+services:
+  api:
+    build: .
+    container_name: taskshub_backend
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=${DB_CONNECTION_STRING}
+    volumes:
+      # Map local Windows secrets folder to the container's Linux secrets path
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro

@@ -64,19 +64,23 @@
             },
             "Hangfire.AspNetCore": {
               "target": "Package",
-              "version": "[1.8.20, )"
+              "version": "[1.8.22, )"
             },
             "Hangfire.Core": {
               "target": "Package",
-              "version": "[1.8.21, )"
+              "version": "[1.8.22, )"
             },
             "Hangfire.Dashboard.Basic.Authentication": {
               "target": "Package",
               "version": "[8.0.0, )"
             },
-            "Hangfire.SqlServer": {
+            "Hangfire.NetCore": {
               "target": "Package",
-              "version": "[1.8.21, )"
+              "version": "[1.8.22, )"
+            },
+            "Hangfire.PostgreSql": {
+              "target": "Package",
+              "version": "[1.20.13, )"
             },
             "MailKit": {
               "target": "Package",
@@ -91,10 +95,6 @@
               "version": "[9.0.4, )"
             },
             "Microsoft.EntityFrameworkCore": {
-              "target": "Package",
-              "version": "[9.0.4, )"
-            },
-            "Microsoft.EntityFrameworkCore.SqlServer": {
               "target": "Package",
               "version": "[9.0.4, )"
             },
@@ -119,6 +119,10 @@
             "Newtonsoft.Json": {
               "target": "Package",
               "version": "[13.0.3, )"
+            },
+            "Npgsql.EntityFrameworkCore.PostgreSQL": {
+              "target": "Package",
+              "version": "[9.0.3, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
