@@ -10,6 +10,7 @@ using TasksHubServer.Repositories;
 using TasksHubServer.Services;
 using StackExchange.Redis;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,6 +67,11 @@ try
     multiplexer = ConnectionMultiplexer.Connect(redisConfigOptions);
 
     builder.Services.AddSingleton<IConnectionMultiplexer>(multiplexer);
+
+    builder.Services.AddDataProtection()
+        .SetApplicationName("TasksHubApp")
+        .PersistKeysToStackExchangeRedis(multiplexer, "DataProtection-Keys");
+
     Console.WriteLine("✅ Connected to Redis successfully");
 }
 catch (Exception ex)
