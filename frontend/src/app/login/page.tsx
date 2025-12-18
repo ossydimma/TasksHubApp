@@ -92,19 +92,19 @@ export default function Page() {
     }
   };
 
-  const validateReqirements = (): boolean => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const shouldExchange = searchParams.get("postGoogleLogin") === "true";
-
-    if (status !== "authenticated") return false;
-    if (!shouldExchange) return false;
-
-    if (hasExchangedRef.current) return false;
-    hasExchangedRef.current = true;
-    return true;
-  };
-
   useEffect(() => {
+    const validateReqirements = (): boolean => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const shouldExchange = searchParams.get("postGoogleLogin") === "true";
+
+      if (status !== "authenticated") return false;
+      if (!shouldExchange) return false;
+
+      if (hasExchangedRef.current) return false;
+      hasExchangedRef.current = true;
+      return true;
+    };
+
     const exchangeToken = async () => {
       if (!validateReqirements()) {
         return;

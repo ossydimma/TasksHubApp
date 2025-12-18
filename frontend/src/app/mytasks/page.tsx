@@ -164,7 +164,7 @@ export default function Page() {
     };
 
     fetchTasks();
-  }, [filterPayload, handleFilterApiCall]);
+  }, [filterPayload, handleFilterApiCall, validateOrder]);
 
   useEffect(() => {
     if (tasks.length < 1) {

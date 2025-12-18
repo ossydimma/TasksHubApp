@@ -411,7 +411,7 @@ export default function Page() {
     return () => {
       clearTimeout(handler);
     };
-  }, [query, document, viewMode, documents.length]);
+  }, [query, documents, viewMode, documents.length]);
 
   useEffect(() => {
     if (!isAuthenticated && !loading) {

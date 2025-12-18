@@ -16,36 +16,34 @@ export default function ModifyContact({
 
   const { userInfo } = useAuth();
 
-  useEffect(() => {
-    const now = Date.now();
+  // useEffect(() => {
 
-    const value: string | null = localStorage.getItem("changeNext");
+  //   const value: string | null = localStorage.getItem("changeNext");
 
-    // if (value === null) {
-    //   setDisabled(false);
-    //   return;
-    // }
+  //   // if (value === null) {
+  //   //   setDisabled(false);
+  //   //   return;
+  //   // }
 
-    const storedTime: number = Number(value);
 
-    // if (isNaN(storedTime)) {
-    //   setDisabled(false);
-    //   return;
-    // }
+  //   // if (isNaN(storedTime)) {
+  //   //   setDisabled(false);
+  //   //   return;
+  //   // }
 
-    // const diff = storedTime - now;
+  //   // const diff = storedTime - now;
 
-    // if (diff > 0) {
-    //   const hours = Math.floor(diff / (1000 * 60 * 60));
-    //   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  //   // if (diff > 0) {
+  //   //   const hours = Math.floor(diff / (1000 * 60 * 60));
+  //   //   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
-    // //   setTimeMessage(`Will be avaible again in ${hours} hour${hours !== 1 ? "s" : ""} : ${minutes} minute${minutes !== 1 ? "s" : ""}.`);
-    // //   setDisabled(true);
-    // // } else {
-    // //   setTimeMessage("");
-    // //   setDisabled(false);
-    // }
-  }, []);
+  //   // //   setTimeMessage(`Will be avaible again in ${hours} hour${hours !== 1 ? "s" : ""} : ${minutes} minute${minutes !== 1 ? "s" : ""}.`);
+  //   // //   setDisabled(true);
+  //   // // } else {
+  //   // //   setTimeMessage("");
+  //   // //   setDisabled(false);
+  //   // }
+  // }, []);
   return (
     <div>
       {/* {hasPhone ? (
