@@ -129,7 +129,7 @@ export default function Page() {
       await handleGoogleAuth();
     };
     exchangeToken();
-  }, [session, setAccessToken]);
+  }, [session, setAccessToken, router]);
 
   return (
     <div className="relative w-screen h-screen flex justify-center items-center">

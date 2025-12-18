@@ -131,7 +131,7 @@ export default function Page() {
       hasExchangedRef.current = true;
       return true;
     };
-    
+
     const exchangeToken = async () => {
       if (!validateReqirements()) {
         return;
@@ -157,7 +157,7 @@ export default function Page() {
       await handleGoogleAuth();
     };
     exchangeToken();
-  }, [session, setAccessToken, router]);
+  }, [session, setAccessToken, router, status]);
 
   // useEffect(() => {
   //   const exchangeToken = async () => {

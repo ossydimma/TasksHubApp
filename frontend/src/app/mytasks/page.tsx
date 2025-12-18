@@ -1,7 +1,7 @@
 "use client";
 
 import { categories, formatDate } from "../../../SharedFunctions";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
 import { FilterTaskType, UserTaskType } from "../../../Interfaces";
@@ -45,12 +45,27 @@ export default function Page() {
     { id: 4, label: "Others", value: "others" },
   ];
 
-  let filterPayload: FilterTaskType = {
-    deadline: null,
-    created: null,
-    category: null,
-    status: null,
-  };
+  let filterPayload: FilterTaskType = useMemo(
+    () => ({
+      deadline: null,
+      created: null,
+      category: null,
+      status: null,
+    }),
+    []
+  );
+
+  const validateOrder = useCallback((): boolean => {
+    const order = localStorage.getItem("orderBy");
+
+    if (order === "oldest") {
+      // Added a check for the specific value
+      setActiveOrderBy({ latest: false, oldest: true });
+      return true;
+    }
+
+    return false;
+  }, [setActiveOrderBy]); // Added setActiveOrderBy as a stable dependency
 
   const handleFilterApiCall = useCallback(
     async (payload: FilterTaskType) => {
@@ -64,7 +79,7 @@ export default function Page() {
         setShowFilter(false);
       }
     },
-    [ validateOrder, setFilteredTasks, setSearching, setShowFilter]
+    [validateOrder, setFilteredTasks, setSearching, setShowFilter]
   );
 
   const validateFilterForm = (): boolean => {
@@ -109,16 +124,6 @@ export default function Page() {
     setFilteredTasks(tasks);
     setShowFilter(false);
   }, [tasks]);
-
-  function validateOrder(): boolean {
-    const order = localStorage.getItem("orderBy");
-    if (order) {
-      setActiveOrderBy({ latest: false, oldest: true });
-      return true;
-    }
-
-    return false;
-  }
 
   useEffect(() => {
     const fetchTasks = () => {

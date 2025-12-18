@@ -15,11 +15,11 @@ export default function ChangeContact({
 
   const [OTP, setOTP] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [disable, setDisable] = useState({
-    submitBtn: true,
-    getCodeBtn: true,
-    getCodeInput: true,
-  });
+  // const [disable, setDisable] = useState({
+  //   submitBtn: true,
+  //   getCodeBtn: true,
+  //   getCodeInput: true,
+  // });
 
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isEnterOtp, setIsEnterOtp] = useState<boolean>(false);
@@ -64,7 +64,7 @@ export default function ChangeContact({
   useEffect(() => {
     if (timeLeft <= 0) return;
 
-    setDisable((prev) => ({ ...prev, getCodeBtn: false }));
+    // setDisable((prev) => ({ ...prev, getCodeBtn: false }));
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => prev - 1);

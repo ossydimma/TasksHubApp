@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import "react-phone-input-2/lib/style.css";
 import { useAuth } from "../../../context/AuthContext";
 
@@ -33,18 +33,18 @@ export default function ModifyContact({
     //   return;
     // }
 
-    const diff = storedTime - now;
+    // const diff = storedTime - now;
 
-    if (diff > 0) {
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    // if (diff > 0) {
+    //   const hours = Math.floor(diff / (1000 * 60 * 60));
+    //   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
-    //   setTimeMessage(`Will be avaible again in ${hours} hour${hours !== 1 ? "s" : ""} : ${minutes} minute${minutes !== 1 ? "s" : ""}.`);
-    //   setDisabled(true);
-    // } else {
-    //   setTimeMessage("");
-    //   setDisabled(false);
-    }
+    // //   setTimeMessage(`Will be avaible again in ${hours} hour${hours !== 1 ? "s" : ""} : ${minutes} minute${minutes !== 1 ? "s" : ""}.`);
+    // //   setDisabled(true);
+    // // } else {
+    // //   setTimeMessage("");
+    // //   setDisabled(false);
+    // }
   }, []);
   return (
     <div>
