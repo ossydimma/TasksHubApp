@@ -1,8 +1,9 @@
 import { signIn } from "next-auth/react";
 import "react-phone-input-2/lib/style.css";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { api } from "../../../services/axios";
+import { getApiErrorMessage } from "../../../SharedFunctions";
 
 export default function ChangeContact({
   setShowChangeContact,
@@ -45,18 +46,8 @@ export default function ChangeContact({
         setOTP("");
         setNewEmail("");
         setTimeLeft(60);
-      } catch (err: any) {
-        console.error(err.response.data);
-        // Try to extract the first error message if available
-        const errorData = err.response?.data;
-        let errorMsg = "An error occurred";
-        if (errorData?.errors) {
-          // Get the first error message from the errors object
-          const firstKey = Object.keys(errorData.errors)[0];
-          errorMsg = errorData.errors[firstKey][0];
-        } else if (typeof errorData === "string") {
-          errorMsg = errorData;
-        }
+      } catch (err: unknown) {
+        const errorMsg = getApiErrorMessage(err)
         setErrorMessage(errorMsg);
       } finally {
         setLoading(false);
@@ -93,7 +84,7 @@ export default function ChangeContact({
               className="flex items-center gap-2 cursor-pointer hover:bg-gray-300 w-fit p-1 transition-all duration-300 ease-in-out "
               onClick={() => {
                 setShowChangeContact(false);
-                option = undefined;
+                option = '';
               }}
             >
               <svg

@@ -2,7 +2,6 @@
 import { useState, useEffect, useRef } from "react";
 import EyeIcon from "../components/EyeIcon";
 import { LoginModelType } from "../../../Interfaces";
-import { api } from "../../../services/axios";
 import { useAuth } from "../../../context/AuthContext";
 import { useRouter } from "next/navigation";
 import GoogleLoginBtn from "../components/GoogleLoginBtn";
@@ -10,8 +9,9 @@ import { useSession } from "next-auth/react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import EnterOTP from "../components/enterOTP";
 import { AuthService } from "../../../services/apiServices/AuthService";
+import { getApiErrorMessage } from "../../../SharedFunctions";
 
-export default function page() {
+export default function Page() {
   const { data: session, status } = useSession();
   const hasExchangedRef = useRef(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -52,25 +52,16 @@ export default function page() {
     return null;
   };
 
-  const apiErrorMsg = async (err: any): Promise<string> => {
-    console.error(err.response.data);
-    // Try to extract the first error message if available
-    const errorData = err.response?.data;
+  const apiErrorMsg = async (error: unknown): Promise<string> => {
+    console.error(error);
+    
+    const errorMsg = getApiErrorMessage(error) ;
 
-    let errorMsg = "An error occurred";
-    if (errorData?.errors) {
-      // Get the first error message from the errors object
-      const firstKey = Object.keys(errorData.errors)[0];
-      errorMsg = errorData.errors[firstKey][0];
-    } else if (typeof errorData === "string") {
-      errorMsg = errorData;
-    }
 
     if (errorMsg.includes("Email not verified")) {
       await AuthService.sendOtp(loginModal.email);
       setDisplayModal(true);
       setTimeLeft(60);
-      console.log(errorData);
       return "";
     } else {
       return errorMsg;
@@ -94,7 +85,7 @@ export default function page() {
 
       setAccessToken(token);
       router.push("/home");
-    } catch (err: any) {
+    } catch (err: unknown) {
       const error = await apiErrorMsg(err);
       setErrorMessage(error);
     } finally {
@@ -123,7 +114,7 @@ export default function page() {
       setLoading(false);
       router.replace("/home");
       
-    } catch (err: any) {
+    } catch (err) {
       console.error("[GoogleLoginBtn] Failed to change Google account:", err);
       setLoading(false);
     }

@@ -7,7 +7,7 @@ import Link from "next/link";
 import moment from "moment";
 import { useAuth } from "../../../context/AuthContext";
 
-export default function header() {
+export default function Header() {
   const [showDate, setShowDate] = useState<boolean>(true);
   const [formattedDate, setFormattedDate] = useState<string>("");
 

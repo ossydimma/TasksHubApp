@@ -5,13 +5,11 @@ import { useAuth } from "../../../context/AuthContext";
 export default function ModifyContact({
   setShowChangeNumber,
   handleCancel,
-  option,
 }: {
   setShowChangeNumber: React.Dispatch<React.SetStateAction<boolean>>;
   handleCancel: () => void;
-  option: string | undefined;
 }) {
-  const [hasPhone, setHasPhone] = useState<boolean>(true);
+  // const [hasPhone, setHasPhone] = useState<boolean>(true);
   const [disabled, setDisabled] = useState<boolean>();
   const [confirm, setConfirm] = useState<boolean>();
   const [timeMessage, setTimeMessage] = useState<string>("");
@@ -50,7 +48,7 @@ export default function ModifyContact({
   }, []);
   return (
     <div>
-      {hasPhone ? (
+      {/* {hasPhone ? (
         <div className="relative">
           <div>
             <div className=' flex gap-4 justify-center items-center'>
@@ -99,7 +97,7 @@ export default function ModifyContact({
             </div>
           </form>
         </div>
-      )}
+      )} */}
       {confirm && (
         <div className=" pt-10 pb-12 px-10 md:px-6 xl:px-10  absolute  left-1/2 transform -translate-x-1/2 z-10 bg-white shadow-xl h-[21rem] xxs:h-[19.2rem] xs:h-[19.5rem] md:h-[22rem] lmd:h-[21rem]  top-6 lmd:top-2  w-[95%] md:w-[95%] rounded-2xl ">
           <h2 className="font-serif font-bold text-xl text-center border-b-2 border-dashed pb-2">

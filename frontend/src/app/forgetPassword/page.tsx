@@ -8,7 +8,7 @@ import { getApiErrorMessage } from "../../../SharedFunctions";
 import { AuthService } from "../../../services/apiServices/AuthService";
 import { useRouter } from "next/navigation";
 
-const page = () => {
+const Page = () => {
   const router = useRouter();
 
   const [step, setStep] = useState<"email" | "code" | "reset" | "success">(
@@ -84,14 +84,8 @@ const page = () => {
       setTimeout(() => {
         router.push("/login");
       }, 2000);
-    } catch (err: any) {
-      const errorData = err.response?.data;
-      let errorMsg;
-      if (errorData.errors && errorData.errors.Password) {
-        errorMsg = errorData.errors.Password[0];
-      } else if (typeof errorData === "string") {
-        errorMsg = errorData;
-      }
+    } catch (err: unknown) {
+      const errorMsg = getApiErrorMessage(err);
       setErrorMessage(errorMsg);
     } finally {
       setLoading(false);
@@ -110,7 +104,7 @@ const page = () => {
     try {
       await AuthService.sendOtp(emailValue);
       setStep("code");
-    } catch (err: any) {
+    } catch (err: unknown) {
       setErrorMessage(getApiErrorMessage(err));
     } finally {
       setLoading(false);
@@ -356,4 +350,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;

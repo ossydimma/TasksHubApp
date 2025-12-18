@@ -20,7 +20,7 @@ interface MsgType {
   body: string;
 }
 
-export default function page() {
+export default function Page() {
   const { userInfo, isAuthenticated, setAccessToken, setUserInfo } =
     useAuth();
   const { data: session, status } = useSession();
@@ -98,7 +98,7 @@ export default function page() {
     try {
       const name = await SettingsServices.updateUsername(edited);
       apiSuccessAction(name);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       setIsSuccess(false);
       const errorMsg = getApiErrorMessage(err);
@@ -152,7 +152,7 @@ export default function page() {
     try {
       await SettingsServices.changePassword(payload);
       apiSuccessActions();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsSuccess(false);
       const errorMsg = getApiErrorMessage(err);
       setMessage({ ...message, body: errorMsg });
@@ -257,7 +257,7 @@ export default function page() {
         setSwitchSuccess("You are now set to log in using your new email.");
 
         console.log("after a successful call.");
-      } catch (err: any) {
+      } catch (err: unknown) {
         const errorMsg = getApiErrorMessage(err);
         setSwitchError(errorMsg);
 
@@ -603,7 +603,7 @@ export default function page() {
           {selectedOption === "number" && (
             <ModifyContact
               setShowChangeNumber={setShowChangeContact}
-              option={selectedOption}
+              // option={selectedOption}
               handleCancel={handleCancel}
             />
           )}
@@ -613,7 +613,7 @@ export default function page() {
           {selectedOption === "email" && (
             <ModifyContact
               setShowChangeNumber={setShowChangeContact}
-              option={selectedOption}
+              // option={selectedOption}
               handleCancel={handleCancel}
             />
           )}

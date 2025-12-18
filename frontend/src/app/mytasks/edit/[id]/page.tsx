@@ -51,7 +51,7 @@ export default function EditTaskPage() {
           category: res.category,
           status: res.status, 
         });
-      } catch (err: any) {
+      } catch (err) {
         console.error(err);
         setErrorMessage("An unexpected error occured, try reloading the page.");
       }
@@ -119,7 +119,7 @@ export default function EditTaskPage() {
         router.push("/mytasks");
         setIsSuccess(false);
       }, 2000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       //Error handling step
       const errorMsg = getApiErrorMessage(err);
       setErrorMessage(errorMsg);

@@ -6,17 +6,6 @@ import { AuthProvider } from "../../context/AuthContext";
 import { NavProvider } from "../../context/NavContext";
 import SessionProviderWrapper from "./components/SessionProviderWrapper";
 
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
   title: "TasksHub",
   description: "Apllication to manage your tasks and help you document",

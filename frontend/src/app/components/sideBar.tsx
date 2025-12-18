@@ -8,7 +8,7 @@ import clsx from "clsx";
 import { NavBarToolTips } from "../../../Interfaces";
 import { usePathname } from "next/navigation";
 
-export default function sideBar() {
+export default function SideBar() {
   const pathname = usePathname();
   
   const { isAuthenticated } = useAuth();

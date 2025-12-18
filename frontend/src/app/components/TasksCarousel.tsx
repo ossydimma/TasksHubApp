@@ -60,7 +60,7 @@ export default function TaskCarousel({
       className="mx- md:mr-6 md:ml-2 w-full md:w-[58%] mb-10 md:mb-0 h-auto"
     >
       {Object.entries(tasks)
-        .filter(([_, arr]) => arr.length > 0)
+        .filter(([__, arr]) => arr.length > 0)
         .map(([name, arr]) => (
           <SwiperSlide key={name}>
             <div className="flex justify-between items-center text-black  md:mb-2 lmd:mb-2 font-serif px-5">

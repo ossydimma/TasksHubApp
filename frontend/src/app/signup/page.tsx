@@ -8,14 +8,14 @@ import {
   ShowPasswordType,
   SignupModelType,
 } from "../../../Interfaces";
-import { api } from "../../../services/axios";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
 import { useSession } from "next-auth/react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { AuthService } from "../../../services/apiServices/AuthService";
+import { getApiErrorMessage } from "../../../SharedFunctions";
 
-export default function page() {
+export default function Page() {
   const { isAuthenticated, setAccessToken } = useAuth();
   const { data: session, status } = useSession();
   const hasExchangedRef = useRef(false);
@@ -85,14 +85,14 @@ export default function page() {
     return null;
   };
 
-  const getApiErrorMsg = (err: any): string => {
-    if (err.response) {
-      return err.response.data?.error || err.response.data || "signup failed";
-    } else {
-      console.log("Network or other error:", err.message);
-      return "Network error or server not reachable";
-    }
-  };
+  // const getApiErrorMsg = (err: any): string => {
+  //   if (err.response) {
+  //     return err.response.data?.error || err.response.data || "signup failed";
+  //   } else {
+  //     console.log("Network or other error:", err.message);
+  //     return "Network error or server not reachable";
+  //   }
+  // };
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -111,8 +111,8 @@ export default function page() {
       await AuthService.completeSignup(signupModel);
       setDisplayModal(true);
       setTimeLeft(60);
-    } catch (err: any) {
-      const error = getApiErrorMsg(err);
+    } catch (err: unknown) {
+      const error = getApiErrorMessage(err);
       setErrorMessage(error);
     }
 
@@ -140,7 +140,7 @@ export default function page() {
       setLoading(false);
       router.replace("/home");
       
-    } catch (err: any) {
+    } catch (err) {
       console.error("[GoogleLoginBtn] Failed to change Google account:", err);
       setLoading(false);
     }

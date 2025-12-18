@@ -11,7 +11,7 @@ import {
 } from "../../../../SharedFunctions";
 import { taskApi } from "../../../../services/apiServices/TaskApiService";
 
-export default function page() {
+export default function Page() {
   const router = useRouter();
   const { isAuthenticated, loading } = useAuth();
 
@@ -47,7 +47,7 @@ export default function page() {
    */
   const validateForm = (): string | null => {
     const emptyFields = Object.entries(taskValues)
-      .filter(([key, value]) => value === "")
+      .filter(([__key, value]) => value === "")
       .map(([key]) => key);
 
     if (emptyFields.length > 0) {
@@ -84,7 +84,7 @@ export default function page() {
       await taskApi.createTask(taskValues);
 
       successfulApiCall();
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errorMsg = getApiErrorMessage(err);
       setMessage(errorMsg);
     } finally {

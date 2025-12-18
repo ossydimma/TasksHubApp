@@ -2,14 +2,15 @@ import { FaExclamation, FaCalendar, FaCheck, FaFile } from "react-icons/fa6";
 import { DataCountsType } from "../../../Interfaces";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import { useRouter } from "next/navigation";
 
 export default function DataDetailCard({
   counts,
-  handleDisplayData,
 }: {
   counts: DataCountsType | null;
-  handleDisplayData: (type: string) => void;
 }) {
+
+  const router = useRouter();
 
   if (!counts) {
     return (
@@ -65,6 +66,32 @@ export default function DataDetailCard({
       iconBg: "bg-gray-500",
     },
   ];
+
+      const navigateToTasksPage = () => {
+    router.push("/mytasks");
+  };
+
+  const navToTaskPageWithFiltering = (by: string) => {
+    const url = `/mytasks?filter=${by}`;
+    router.push(url);
+  };
+
+    const handleDisplayData = (type: string) => {
+    switch (type) {
+      case "Overdue Tasks":
+        navToTaskPageWithFiltering("overdue");
+        break;
+      case "Today's Task":
+        navToTaskPageWithFiltering("todays");
+        break;
+      case "Total Tasks":
+        navigateToTasksPage();
+        break;
+      case "Documents":
+        router.push("/documentation");
+        break;
+    }
+  };
 
   return (
     <section

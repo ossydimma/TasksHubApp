@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { api } from "../../../services/axios";
 import {  useRouter } from "next/navigation";
 import { AuthService } from "../../../services/apiServices/AuthService";
+import { getApiErrorMessage } from "../../../SharedFunctions";
 
-export default function enterOTP({
+export default function EnterOTP({
   className,
   handleCancel,
   resetPassword,
@@ -24,43 +25,43 @@ export default function enterOTP({
   handleCancel: () => void;
   resetPassword?: () => void;
 }) {
-  const [OTP, setOTP] = useState<string>("");
+  const [otp, setOtp] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isVerified, setIsVerified] = useState<boolean>(false);
 
   const router = useRouter();
 
-  const getApiErrorMsg = (err: any): string => {
-    if (err.response) {
-      return (
-        err.response.data?.error || err.response.data || "Verification failed"
-      );
-    } else {
-      console.log("Network or other error:", err.message);
-      return "Network error or server not reachable";
-    }
-  };
+  // const getApiErrorMsg = (err: unknown): string => {
+  //   if (err.response) {
+  //     return (
+  //       err.response.data?.error || err.response.data || "Verification failed"
+  //     );
+  //   } else {
+  //     console.log("Network or other error:", err.message);
+  //     return "Network error or server not reachable";
+  //   }
+  // };
 
   const validateChangeEmailForm = (): string | null => {
-    if (userEmail !== "" && OTP !== "" && newEmail !== "") {
+    if (userEmail !== "" && otp !== "" && newEmail !== "") {
       return null;
     }
     return "Fill in the fields";
   };
 
   const validateVerifyForm = (): string | null => {
-    if (userEmail !== "" && OTP !== "") {
+    if (userEmail !== "" && otp !== "") {
       return null;
     }
     return "Fill in the fields";
   };
 
-  const mapPayload = (change?: string): any => {
+  const mapPayload = (change?: string) => {
     let payload;
     if (change) {
-      payload = { OldEmail: userEmail, NewEmail: newEmail, Otp: OTP };
+      payload = { OldEmail: userEmail, NewEmail: newEmail, Otp: otp };
     } else {
-      payload = { email: userEmail, submittedOtp: OTP, Aim: aim };
+      payload = { email: userEmail, submittedOtp: otp, Aim: aim };
     }
     return payload;
   };
@@ -80,8 +81,8 @@ export default function enterOTP({
     try {
       await AuthService.verifyNewEmail(payload);
       setIsVerified(true);
-    } catch (err: any) {
-      const error = getApiErrorMsg(err);
+    } catch (err: unknown) {
+      const error = getApiErrorMessage(err);
       setErrorMessage(error);
     } finally {
       setLoading(false);
@@ -106,8 +107,8 @@ export default function enterOTP({
       } else {
         setIsVerified(true);
       }
-    } catch (err: any) {
-      const error = getApiErrorMsg(err);
+    } catch (err: unknown) {
+      const error = getApiErrorMessage(err);
       setErrorMessage(error);
     } finally {
       setLoading(false);
@@ -189,16 +190,16 @@ export default function enterOTP({
               type="text"
               id="otp"
               placeholder="Enter Code"
-              value={OTP}
-              onChange={(e) => setOTP(e.target.value)}
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
               className="border border-gray-300 outline-none mt-1 py-1 px-2 rounded-lg "
               required
             />
             <button
               className={`mt-4 bg-black text-white py-2 rounded-lg ${
-                OTP.length < 4 ? "opacity-50 cursor-not-allowed" : ""
+                otp.length < 4 ? "opacity-50 cursor-not-allowed" : ""
               }`}
-              disabled={OTP.length < 4}
+              disabled={otp.length < 4}
               type="submit"
             >
               Verify
@@ -214,7 +215,7 @@ export default function enterOTP({
               <p
                 onClick={async () => {
                   setTimeLeft(60);
-                  setOTP("");
+                  setOtp("");
 
                   const payload =
                     aim === "signup"
@@ -231,22 +232,12 @@ export default function enterOTP({
                       `/sendOTP?email=${encodeURIComponent(payload)}`
                     );
                   } catch (err: any) {
-                    console.error(err.response.data);
-                    // Try to extract the first error message if available
-                    const errorData = err.response?.data;
-                    let errorMsg = "An error occurred";
-                    if (errorData?.errors) {
-                      // Get the first error message from the errors object
-                      const firstKey = Object.keys(errorData.errors)[0];
-                      errorMsg = errorData.errors[firstKey][0];
-                    } else if (typeof errorData === "string") {
-                      errorMsg = errorData;
-                    }
+                    const errorMsg = getApiErrorMessage(err);
                     setErrorMessage(errorMsg);
                   }
                 }}
               >
-                Didn't receive code?{" "}
+                Didn&apos;t receive code?{" "}
                 <span className="text-blue-500 hover:underline cursor-pointer">
                   Resend code
                 </span>

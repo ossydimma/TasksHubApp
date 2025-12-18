@@ -1,10 +1,8 @@
 "use client";
 import Image from "next/image";
-import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { redirect } from "next/navigation";
-import { api } from "../../../services/axios";
 import axios from "axios";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { SettingsServices } from "../../../services/apiServices/SettingsService";

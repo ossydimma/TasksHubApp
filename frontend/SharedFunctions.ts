@@ -46,27 +46,44 @@ export function validateDeadline(deadline: string): string | null {
 
 /**
  * Extract user-friendly error message from Api error response
- * @param {any} error - An error object
+ * @param {unknown} error - An error object
  * @return {string} - user friendly error message
  */
-export function getApiErrorMessage(error: any): string {
-  console.error(error.response?.data || error);
-
-  const data = error.response?.data;
-
+export function getApiErrorMessage(error: unknown): string {
+  console.error(error);
   let message = "";
 
-  // Try to get the message from known places
-  if (data?.error) {
-    const firstKey = Object.keys(data.errors)[0];
-    message = data.errors[firstKey]?.[0] || "";
-  } else if (typeof data === "string") {
-    message = data;
-  } else if (error.message) {
+  // Check if it's an Axios-style error object
+  if (typeof error === "object" && error !== null && "response" in error) {
+    const axiosError = error as { response?: { data: unknown } };
+    const data = axiosError.response?.data;
+
+    if (data && typeof data === "object") {
+      const errorData = data as {
+        errors?: Record<string, string[]>;
+        title?: string;
+        detail?: string;
+      };
+
+      if (errorData.errors) {
+        const firstKey = Object.keys(errorData.errors)[0];
+        message = errorData.errors[firstKey]?.[0] || "";
+      } else if (errorData.title) {
+        message = errorData.title;
+      } else if (errorData.detail) {
+        message = errorData.detail;
+      }
+    } else if (typeof data === "string") {
+      message = data;
+    }
+  }
+  
+  // Fallback to generic Error message (like "Network Error")
+  if (!message && error instanceof Error) {
     message = error.message;
   }
 
-  // If message looks too long, consider it unfriendly
+  // Final check for length and existence
   if (message && message.length <= 200) {
     return message;
   }
@@ -74,15 +91,14 @@ export function getApiErrorMessage(error: any): string {
   return "An unexpected error occurred.";
 }
 
-
-export const formatDate = (isoString: string, format?: string ) => {
+export const formatDate = (isoString: string, format?: string) => {
   const date = new Date(isoString);
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   const year = date.getFullYear();
 
-  if(format) {
-     return `${year}-${month}-${day}`;
+  if (format) {
+    return `${year}-${month}-${day}`;
   }
 
   return `${month}-${day}-${year}`;

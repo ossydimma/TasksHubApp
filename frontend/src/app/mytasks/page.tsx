@@ -7,9 +7,8 @@ import { useAuth } from "../../../context/AuthContext";
 import { FilterTaskType, UserTaskType } from "../../../Interfaces";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { taskApi } from "../../../services/apiServices/TaskApiService";
-import Link from "next/link";
 
-export default function page() {
+export default function Page() {
   const router = useRouter();
   const { loading, isAuthenticated } = useAuth();
 
@@ -55,9 +54,9 @@ export default function page() {
 
   const handleFilterApiCall = async (payload : FilterTaskType) => {
     try {
-      let tasks = await taskApi.filterTask(payload);
+      const tasks = await taskApi.filterTask(payload);
       setFilteredTasks(validateOrder() ? tasks.reverse() : tasks);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
     } finally {
       setSearching(false);
@@ -71,7 +70,7 @@ export default function page() {
     }
 
     const filledCred = Object.entries(filterBy)
-      .filter(([key, value]) => value !== null && value !== "")
+      .filter(([__key, value]) => value !== null && value !== "")
       .map(([key, value]) => `${key}: ${value}`);
 
     setMatch(`No matching tasks found for "${filledCred.join(" or ")}". `);
@@ -113,11 +112,11 @@ export default function page() {
     setIsLoading(true);
 
     try {
-      let allTasks = await taskApi.getAllTasks();
+      const allTasks = await taskApi.getAllTasks();
 
       setTasks(allTasks);
       setFilteredTasks(validateOrder() ? allTasks.reverse() : allTasks);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Failed to fetch tasks:", err);
     } finally {
       setIsLoading(false);
@@ -144,7 +143,7 @@ export default function page() {
         setMatch(`You got no overdue task. `);
         break;
       case "todays":
-        filterPayload.deadline = formatDate(new Date(), "standard");
+        filterPayload.deadline = formatDate(new Date().toISOString(), "standard");
         handleFilterApiCall(filterPayload);
         setMatch(`You got no task that will be due today. `);
         break;

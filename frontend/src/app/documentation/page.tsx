@@ -17,7 +17,7 @@ export interface filterByPayloadType {
   Date: string;
 }
 
-export default function page() {
+export default function Page() {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
 
@@ -98,7 +98,7 @@ export default function page() {
     try {
       const docs = await DocServices.filter(payload);
       setFilteredDocuments(docs);
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errorMsg = getApiErrorMessage(err);
       setFeedbackText(errorMsg);
     } finally {
@@ -230,7 +230,7 @@ export default function page() {
       const docs = await DocServices.getDocs();
       setDocuments(docs);
       setFilteredDocuments(docs);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
     } finally {
       setSearching(false);
@@ -284,7 +284,7 @@ export default function page() {
     try {
       const docs = await DocServices.create(payload);
       apiIsSuccess(docs, "create");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       setIsFeedBack(!isFeedBack);
       setFeedbackText("Failed to create document");
@@ -325,7 +325,7 @@ export default function page() {
         DocumentIdStr: content.id,
       });
       apiIsSuccess(docs, "update");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       setIsFeedBack(!isFeedBack);
       setFeedbackText("Fail to update.");
@@ -343,7 +343,7 @@ export default function page() {
     try {
       const docs = await DocServices.filterDocByTitle(query);
       setFilteredDocuments(docs);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
     } finally {
       setMatch(query);

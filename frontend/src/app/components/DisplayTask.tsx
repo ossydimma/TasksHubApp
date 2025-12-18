@@ -15,7 +15,6 @@ export default function DisplayTask() {
   const params = useParams();
   const taskId = params.id;
 
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [task, setTask] = useState<UserTaskType | null>(null);
   const [validate, setValidate] = useState<boolean>(false);
   const [deleted, setDeleted] = useState<boolean>(false);
@@ -23,7 +22,6 @@ export default function DisplayTask() {
   const DeletePage = pathname.includes("delete");
 
   const successfulDeletion = () => {
-    setIsLoading(false);
     setDeleted(true);
     setTimeout(() => {
       router.push("/mytasks");
@@ -31,28 +29,22 @@ export default function DisplayTask() {
   };
 
   async function deleteTask() {
-    setIsLoading(true);
 
     try {
       await taskApi.deleteTask(taskId);
       successfulDeletion();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
+    } 
   }
 
   async function getTask() {
-    setIsLoading(true);
 
     try {
       const res = await taskApi.getTask(taskId);
       setTask(res);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-    } finally {
-      setIsLoading(false);
     }
   }
 

@@ -1,5 +1,4 @@
 "use client";
-import TimeTracker from ".././components/TimeTracker";
 import DataDetailCard from ".././components/DataDetailCard";
 import Calendar from "react-calendar";
 import Header from ".././components/header";
@@ -20,24 +19,6 @@ export default function Home() {
   const [dataCounts, setDataCounts] = useState<DataCountsType | null>(null);
   const [tasks, setTasks] = useState<GroupTasksCarousel | null>(null)
 
-  const displayedTask = [
-    {
-      id: 1,
-      filterBy: "Today's tasks",
-      title: "Landing PageTitle Agency Creative",
-      category: "Work",
-      status: "Pending",
-      dueDate: "10-06-2024"
-    },
-    {
-      id: 2,
-      filterBy: "Today's tasks",
-      title: "Landing PageTitle Agency Creative",
-      category: "Pending",
-      status: "Pending",
-      dueDate: "10-06-2024"
-    }
-  ];
 
   const getCounts = async () => {
     try {
@@ -53,7 +34,7 @@ export default function Home() {
       const res = await taskApi.getCarouselTasks();
       setTasks(res);
     } catch (err) {
-
+      console.error(err)
     }
   };
 
@@ -99,7 +80,7 @@ export default function Home() {
     <main className="text-black mb-[5.5rem] sm:mb-[1.5rem] md:mb-0">
       <Header />
       <div className={`mt-5`}>
-        <DataDetailCard counts={dataCounts} handleDisplayData={handleDisplayData} />
+        <DataDetailCard counts={dataCounts} />
       </div>
 
 
