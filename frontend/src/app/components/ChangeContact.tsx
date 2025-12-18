@@ -6,11 +6,9 @@ import { api } from "../../../services/axios";
 import { getApiErrorMessage } from "../../../SharedFunctions";
 
 export default function ChangeContact({
-  setShowChangeContact,
-  option,
+  setShowChangeContact
 }: {
   setShowChangeContact: React.Dispatch<React.SetStateAction<boolean>>;
-  option: string | undefined;
 }) {
   const { userInfo, setLoading } = useAuth();
 
@@ -66,14 +64,14 @@ export default function ChangeContact({
   useEffect(() => {
     if (timeLeft <= 0) return;
 
-    if (timeLeft === 1) setDisable({ ...disable, getCodeBtn: false });
+    setDisable((prev) => ({ ...prev, getCodeBtn: false }));
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => prev - 1);
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timeLeft]);
+  }, [timeLeft, setTimeLeft]);
 
   return (
     <div className="">
@@ -84,7 +82,6 @@ export default function ChangeContact({
               className="flex items-center gap-2 cursor-pointer hover:bg-gray-300 w-fit p-1 transition-all duration-300 ease-in-out "
               onClick={() => {
                 setShowChangeContact(false);
-                option = '';
               }}
             >
               <svg

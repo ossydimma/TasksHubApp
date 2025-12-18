@@ -37,32 +37,12 @@ export default function EditTaskPage() {
     status: "",
   });
 
-  async function getTask() {
-    setIsLoading(true);
-
-    try {
-        const res = await taskApi.getTask(taskId);
-        setTask(res);
-        setEditedTask({
-          id: res.id,
-          title: res.title,
-          deadline: res.deadline,
-          description: res.description,
-          category: res.category,
-          status: res.status, 
-        });
-      } catch (err) {
-        console.error(err);
-        setErrorMessage("An unexpected error occured, try reloading the page.");
-      }
-  }
   /**
    * map update payload value from task and editedTask values
    * @return {UserTaskType} - return mapped payload
    */
 
   function mapPayload(): TaskModel {
-    
     const payload: TaskModel = {
       id: editedTask.id,
       title: editedTask.title,
@@ -128,6 +108,26 @@ export default function EditTaskPage() {
   };
 
   useEffect(() => {
+    async function getTask() {
+      setIsLoading(true);
+
+      try {
+        const res = await taskApi.getTask(taskId);
+        setTask(res);
+        setEditedTask({
+          id: res.id,
+          title: res.title,
+          deadline: res.deadline,
+          description: res.description,
+          category: res.category,
+          status: res.status,
+        });
+      } catch (err) {
+        console.error(err);
+        setErrorMessage("An unexpected error occured, try reloading the page.");
+      }
+    }
+    
     getTask();
   }, [taskId]);
 
@@ -136,45 +136,45 @@ export default function EditTaskPage() {
   }, [task]);
 
   if (!task) {
-      return (
-        <div className="py-4 sm:py-8 pb absolute left-1/2 top-4 sm:top-1/2 transform -translate-x-1/2 sm:-translate-y-1/2 z-10 bg-white shadow-xl w-[90%] md:w-[80%] lmd:w-[48%] rounded-3xl">
-          {/* Header */}
-          <div className="w-[80%] mx-auto px-4 py-2 border-b-2 border-dashed border-gray-500">
-            <Skeleton height={30} width="60%" className="mx-auto" />
-          </div>
-  
-          {/* Content */}
-          <div className="h-[85%] w-[80%] mx-auto overflow-hidden overflow-x-hidden pb-6">
-            <dl className="flex flex-col gap-2 sm:gap-3 mt-[2rem] text-sm sm:text-[1rem] italic">
-              {Array(5)
-                .fill(0)
-                .map((_, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between border border-gray-300 p-3"
-                  >
-                    <Skeleton width="30%" height={20} />
-                    <Skeleton width="50%" height={20} />
-                  </div>
-                ))}
-  
-              {/* Description */}
-              <div className="flex flex-col gap-2 border border-gray-300 p-3">
-                <Skeleton width="40%" height={20} />
-                <div className="ml-6 flex flex-col gap-1">
-                  <Skeleton count={3} height={15} width="90%" />
+    return (
+      <div className="py-4 sm:py-8 pb absolute left-1/2 top-4 sm:top-1/2 transform -translate-x-1/2 sm:-translate-y-1/2 z-10 bg-white shadow-xl w-[90%] md:w-[80%] lmd:w-[48%] rounded-3xl">
+        {/* Header */}
+        <div className="w-[80%] mx-auto px-4 py-2 border-b-2 border-dashed border-gray-500">
+          <Skeleton height={30} width="60%" className="mx-auto" />
+        </div>
+
+        {/* Content */}
+        <div className="h-[85%] w-[80%] mx-auto overflow-hidden overflow-x-hidden pb-6">
+          <dl className="flex flex-col gap-2 sm:gap-3 mt-[2rem] text-sm sm:text-[1rem] italic">
+            {Array(5)
+              .fill(0)
+              .map((_, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between border border-gray-300 p-3"
+                >
+                  <Skeleton width="30%" height={20} />
+                  <Skeleton width="50%" height={20} />
                 </div>
+              ))}
+
+            {/* Description */}
+            <div className="flex flex-col gap-2 border border-gray-300 p-3">
+              <Skeleton width="40%" height={20} />
+              <div className="ml-6 flex flex-col gap-1">
+                <Skeleton count={3} height={15} width="90%" />
               </div>
-            </dl>
-  
-            {/* Footer action */}
-            <div className="mt-4 text-right">
-              <Skeleton width={100} height={20} />
             </div>
+          </dl>
+
+          {/* Footer action */}
+          <div className="mt-4 text-right">
+            <Skeleton width={100} height={20} />
           </div>
         </div>
-      );
-    }
+      </div>
+    );
+  }
 
   return (
     <main className="pb-[3.6rem] sm:pb-0 relative w-full h-full">
@@ -282,11 +282,16 @@ export default function EditTaskPage() {
                     <input
                       type="checkbox"
                       id="status"
-                      defaultChecked={editedTask.status !== "Completed" ? false : true}
+                      defaultChecked={
+                        editedTask.status !== "Completed" ? false : true
+                      }
                       onChange={(e) => {
                         setEditedTask((prev) => ({
                           ...prev,
-                          status: e.target.checked === true ? "Completed" : task?.status ?? ''
+                          status:
+                            e.target.checked === true
+                              ? "Completed"
+                              : task?.status ?? "",
                         }));
                         setErrorMessage("");
                       }}

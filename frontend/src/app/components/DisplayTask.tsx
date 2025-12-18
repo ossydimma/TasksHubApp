@@ -29,26 +29,23 @@ export default function DisplayTask() {
   };
 
   async function deleteTask() {
-
     try {
       await taskApi.deleteTask(taskId);
       successfulDeletion();
-    } catch (err: unknown) {
-      console.error(err);
-    } 
-  }
-
-  async function getTask() {
-
-    try {
-      const res = await taskApi.getTask(taskId);
-      setTask(res);
     } catch (err: unknown) {
       console.error(err);
     }
   }
 
   useEffect(() => {
+    async function getTask() {
+      try {
+        const res = await taskApi.getTask(taskId);
+        setTask(res);
+      } catch (err: unknown) {
+        console.error(err);
+      }
+    }
     getTask();
   }, [taskId]);
   if (!task) {

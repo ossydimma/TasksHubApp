@@ -54,9 +54,8 @@ export default function Page() {
 
   const apiErrorMsg = async (error: unknown): Promise<string> => {
     console.error(error);
-    
-    const errorMsg = getApiErrorMessage(error) ;
 
+    const errorMsg = getApiErrorMessage(error);
 
     if (errorMsg.includes("Email not verified")) {
       await AuthService.sendOtp(loginModal.email);
@@ -105,26 +104,27 @@ export default function Page() {
     return true;
   };
 
-  const handleGoogleAuth = async () => {
-    if (!session?.idToken) return;
-    setLoading(true);
-    try {
-      const token = await AuthService.googleAuth(session.idToken);
-      setAccessToken(token);
-      setLoading(false);
-      router.replace("/home");
-      
-    } catch (err) {
-      console.error("[GoogleLoginBtn] Failed to change Google account:", err);
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     const exchangeToken = async () => {
       if (!validateReqirements()) {
         return;
       }
+      const handleGoogleAuth = async () => {
+        if (!session?.idToken) return;
+        setLoading(true);
+        try {
+          const token = await AuthService.googleAuth(session.idToken);
+          setAccessToken(token);
+          setLoading(false);
+          router.replace("/home");
+        } catch (err) {
+          console.error(
+            "[GoogleLoginBtn] Failed to change Google account:",
+            err
+          );
+          setLoading(false);
+        }
+      };
 
       await handleGoogleAuth();
     };

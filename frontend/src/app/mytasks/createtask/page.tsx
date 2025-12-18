@@ -47,7 +47,7 @@ export default function Page() {
    */
   const validateForm = (): string | null => {
     const emptyFields = Object.entries(taskValues)
-      .filter(([__key, value]) => value === "")
+      .filter(([, value]) => value === "")
       .map(([key]) => key);
 
     if (emptyFields.length > 0) {
@@ -120,7 +120,7 @@ export default function Page() {
     if (!isAuthenticated && !loading) {
       router.push("/login");
     }
-  }, [isAuthenticated, loading]);
+  }, [isAuthenticated, loading, router]);
 
   useEffect(() => {
     retrieveDraft();

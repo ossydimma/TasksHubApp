@@ -123,7 +123,7 @@ export default function EnterOTP({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timeLeft]);
+  }, [timeLeft,  setTimeLeft]);
   return (
     <div
       className={` ${className}  absolute  left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-gray-300 p-4 rounded-lg shadow-lg`}
@@ -231,7 +231,7 @@ export default function EnterOTP({
                     await api.post(
                       `/sendOTP?email=${encodeURIComponent(payload)}`
                     );
-                  } catch (err: any) {
+                  } catch (err: unknown) {
                     const errorMsg = getApiErrorMessage(err);
                     setErrorMessage(errorMsg);
                   }

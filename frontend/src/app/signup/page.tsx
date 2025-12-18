@@ -119,7 +119,7 @@ export default function Page() {
     setLoading(false);
   };
 
-    const validateReqirements = (): boolean => {
+  const validateReqirements = (): boolean => {
     const searchParams = new URLSearchParams(window.location.search);
     const shouldExchange = searchParams.get("postGoogleLogin") === "true";
 
@@ -131,25 +131,28 @@ export default function Page() {
     return true;
   };
 
-  const handleGoogleAuth = async () => {
-    if (!session?.idToken) return;
-    setLoading(true);
-    try {
-      const token = await AuthService.googleAuth(session.idToken);
-      setAccessToken(token);
-      setLoading(false);
-      router.replace("/home");
-      
-    } catch (err) {
-      console.error("[GoogleLoginBtn] Failed to change Google account:", err);
-      setLoading(false);
-    }
-  };
   useEffect(() => {
     const exchangeToken = async () => {
       if (!validateReqirements()) {
         return;
       }
+
+      const handleGoogleAuth = async () => {
+        if (!session?.idToken) return;
+        setLoading(true);
+        try {
+          const token = await AuthService.googleAuth(session.idToken);
+          setAccessToken(token);
+          setLoading(false);
+          router.replace("/home");
+        } catch (err) {
+          console.error(
+            "[GoogleLoginBtn] Failed to change Google account:",
+            err
+          );
+          setLoading(false);
+        }
+      };
 
       await handleGoogleAuth();
     };
@@ -196,7 +199,7 @@ export default function Page() {
     if (isAuthenticated) {
       router.push("/home");
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, router]);
 
   return (
     <div className="relative w-screen h-screen flex justify-center items-center">

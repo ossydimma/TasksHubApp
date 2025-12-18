@@ -272,13 +272,13 @@ export default function Page() {
     };
 
     sendToken();
-  }, [session, status, userInfo?.id]);
+  }, [session, setAccessToken, status, userInfo?.id]);
 
   useEffect(() => {
     if (!isAuthenticated && !loading) {
       router.push("/login");
     }
-  }, [isAuthenticated, loading]);
+  }, [isAuthenticated, loading, router]);
 
   return (
     <div className="px-10 pt-7 pb-20 md:pb-0 w-full h-auto md:h-full font-serif relative">
@@ -718,7 +718,6 @@ export default function Page() {
       {showChangeContact && (
         <ChangeContact
           setShowChangeContact={setShowChangeContact}
-          option={selectedOption}
         />
       )}
     </div>

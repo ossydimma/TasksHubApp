@@ -13,7 +13,7 @@ export default function Home() {
     } else {
       router.push("/login");
     }
-  }, [isAuthenticated, loading]);
+  }, [isAuthenticated, loading, router]);
 
 
 }

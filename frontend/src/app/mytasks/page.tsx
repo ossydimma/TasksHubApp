@@ -1,7 +1,7 @@
 "use client";
 
 import { categories, formatDate } from "../../../SharedFunctions";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
 import { FilterTaskType, UserTaskType } from "../../../Interfaces";
@@ -52,7 +52,7 @@ export default function Page() {
     status: null,
   };
 
-  const handleFilterApiCall = async (payload : FilterTaskType) => {
+  const handleFilterApiCall = async (payload: FilterTaskType) => {
     try {
       const tasks = await taskApi.filterTask(payload);
       setFilteredTasks(validateOrder() ? tasks.reverse() : tasks);
@@ -62,7 +62,7 @@ export default function Page() {
       setSearching(false);
       setShowFilter(false);
     }
-  }
+  };
 
   const validateFilterForm = (): boolean => {
     if (!Object.values(filterBy).some((val) => val !== "")) {
@@ -70,14 +70,14 @@ export default function Page() {
     }
 
     const filledCred = Object.entries(filterBy)
-      .filter(([__key, value]) => value !== null && value !== "")
+      .filter(([, value]) => value !== null && value !== "")
       .map(([key, value]) => `${key}: ${value}`);
 
     setMatch(`No matching tasks found for "${filledCred.join(" or ")}". `);
     return true;
   };
 
-  const handleFilterByForm = (e: React.FormEvent<HTMLFormElement>) => { 
+  const handleFilterByForm = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const formError = validateFilterForm();
@@ -94,10 +94,9 @@ export default function Page() {
     };
 
     handleFilterApiCall(filterPayload);
-    
   };
 
-  function resetFilterBy() {
+  const resetFilterBy = useCallback(() => {
     setFilterBy({
       status: null,
       created: null,
@@ -106,7 +105,7 @@ export default function Page() {
     });
     setFilteredTasks(tasks);
     setShowFilter(false);
-  }
+  }, [])
 
   async function getAllTasks() {
     setIsLoading(true);
@@ -133,26 +132,29 @@ export default function Page() {
     return false;
   }
 
-  const fetchTasks = () => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const params = searchParams.get("filter");
-    switch(params) {
-      case "overdue":
-        filterPayload.status = "overdue";
-        handleFilterApiCall(filterPayload);
-        setMatch(`You got no overdue task. `);
-        break;
-      case "todays":
-        filterPayload.deadline = formatDate(new Date().toISOString(), "standard");
-        handleFilterApiCall(filterPayload);
-        setMatch(`You got no task that will be due today. `);
-        break;
-      default:
-        getAllTasks();
-    }
-  };
-
   useEffect(() => {
+    const fetchTasks = () => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const params = searchParams.get("filter");
+      switch (params) {
+        case "overdue":
+          filterPayload.status = "overdue";
+          handleFilterApiCall(filterPayload);
+          setMatch(`You got no overdue task. `);
+          break;
+        case "todays":
+          filterPayload.deadline = formatDate(
+            new Date().toISOString(),
+            "standard"
+          );
+          handleFilterApiCall(filterPayload);
+          setMatch(`You got no task that will be due today. `);
+          break;
+        default:
+          getAllTasks();
+      }
+    };
+    
     fetchTasks();
   }, []);
 
@@ -187,7 +189,7 @@ export default function Page() {
     if (!isAuthenticated && !loading) {
       router.push("/login");
     }
-  }, [loading, isAuthenticated]);
+  }, [loading, isAuthenticated, router]);
 
   return (
     <main className="text-xs xs:text-sm md:text-[1rem] border-gray-500 h-full w-full overflow-hidden ">

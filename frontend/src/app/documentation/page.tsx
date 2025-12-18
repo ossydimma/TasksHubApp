@@ -83,7 +83,9 @@ export default function Page() {
   };
   const handleFilterBy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    query ? setQuery("") : null;
+    if (query) {
+      setQuery("");
+    }
 
     if (!validateFilterByForm()) {
       setIsFeedBack(true);
@@ -351,31 +353,6 @@ export default function Page() {
     }
   };
 
-  const validateQuery = () => {
-    if (query.trim() === "") {
-      setFilteredDocuments(documents);
-      setSearching(false);
-      return;
-    }
-  };
-
-  const modifyUIBeforeFiltering = () => {
-    setFilterBy({ title: "", date: undefined });
-    setShowFilter(false);
-    if (viewMode !== "list" && viewMode !== "both") {
-      setViewMode("list");
-      localStorage.removeItem("showDocuForm");
-    }
-  };
-
-  const filterDocByTitle = () => {
-    const filtered: DocumentType[] = documents.filter((docs) =>
-      docs.title.toLowerCase().includes(query.toLowerCase())
-    );
-    setMatch(query);
-    setFilteredDocuments(filtered);
-    setSearching(false);
-  };
 
   // USE EFFECTS
   useEffect(() => {
@@ -398,6 +375,32 @@ export default function Page() {
   useEffect(() => {
     if (documents.length < 1) return;
 
+      const validateQuery = () => {
+        if (query.trim() === "") {
+          setFilteredDocuments(documents);
+          setSearching(false);
+          return;
+        }
+      };
+
+      const modifyUIBeforeFiltering = () => {
+        setFilterBy({ title: "", date: undefined });
+        setShowFilter(false);
+        if (viewMode !== "list" && viewMode !== "both") {
+          setViewMode("list");
+          localStorage.removeItem("showDocuForm");
+        }
+      };
+
+      const filterDocByTitle = () => {
+        const filtered: DocumentType[] = documents.filter((docs) =>
+          docs.title.toLowerCase().includes(query.toLowerCase())
+        );
+        setMatch(query);
+        setFilteredDocuments(filtered);
+        setSearching(false);
+      };
+
     setSearching(true);
     const handler = setTimeout(() => {
       validateQuery();
@@ -408,13 +411,13 @@ export default function Page() {
     return () => {
       clearTimeout(handler);
     };
-  }, [query]);
+  }, [query, documents.length]);
 
   useEffect(() => {
     if (!isAuthenticated && !loading) {
       router.push("/login");
     }
-  }, [isAuthenticated, loading]);
+  }, [isAuthenticated, loading, router]);
 
   return (
     <>
@@ -529,8 +532,7 @@ export default function Page() {
           </div>
         </div>
 
-        {(viewMode === "list" ||
-          (viewMode === "both")) && (
+        {(viewMode === "list" || viewMode === "both") && (
           <div
             onClick={() => setShowFilter(true)}
             className=" border text-sm border-gray-600 rounded-md py-2 px-4 flex items-center gap-2 cursor-pointer hover:bg-black hover:text-white stroke-black hover:stroke-white"
@@ -913,7 +915,7 @@ export default function Page() {
                 </div>
               ) : filteredDocuments.length === 0 ? (
                 <div className="h-full w-full flex justify-center items-center text-[0.910rem] sm:text-[1.2rem] md:text-[0.8rem] lmd:text-[0.910rem]">
-                  <p>No matching documents found for "{match}".</p>
+                  <p>No matching documents found for &quot;{match}&quot;.</p>
                 </div>
               ) : (
                 <div className="flex flex-col md:mb-0 gap-[1.1rem]  sm:gap-[1rem] md:gap-[1.4rem]  px-4 md:px-2 h-full w-full md:w-[100%] ">

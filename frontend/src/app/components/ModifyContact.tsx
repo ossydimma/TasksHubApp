@@ -10,9 +10,9 @@ export default function ModifyContact({
   handleCancel: () => void;
 }) {
   // const [hasPhone, setHasPhone] = useState<boolean>(true);
-  const [disabled, setDisabled] = useState<boolean>();
-  const [confirm, setConfirm] = useState<boolean>();
-  const [timeMessage, setTimeMessage] = useState<string>("");
+  // const [disabled, setDisabled] = useState<boolean>();
+  // const [confirm, setConfirm] = useState<boolean>();
+  // const [timeMessage, setTimeMessage] = useState<string>("");
 
   const { userInfo } = useAuth();
 
@@ -21,17 +21,17 @@ export default function ModifyContact({
 
     const value: string | null = localStorage.getItem("changeNext");
 
-    if (value === null) {
-      setDisabled(false);
-      return;
-    }
+    // if (value === null) {
+    //   setDisabled(false);
+    //   return;
+    // }
 
     const storedTime: number = Number(value);
 
-    if (isNaN(storedTime)) {
-      setDisabled(false);
-      return;
-    }
+    // if (isNaN(storedTime)) {
+    //   setDisabled(false);
+    //   return;
+    // }
 
     const diff = storedTime - now;
 
@@ -39,11 +39,11 @@ export default function ModifyContact({
       const hours = Math.floor(diff / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
-      setTimeMessage(`Will be avaible again in ${hours} hour${hours !== 1 ? "s" : ""} : ${minutes} minute${minutes !== 1 ? "s" : ""}.`);
-      setDisabled(true);
-    } else {
-      setTimeMessage("");
-      setDisabled(false);
+    //   setTimeMessage(`Will be avaible again in ${hours} hour${hours !== 1 ? "s" : ""} : ${minutes} minute${minutes !== 1 ? "s" : ""}.`);
+    //   setDisabled(true);
+    // } else {
+    //   setTimeMessage("");
+    //   setDisabled(false);
     }
   }, []);
   return (
@@ -98,7 +98,7 @@ export default function ModifyContact({
           </form>
         </div>
       )} */}
-      {confirm && (
+      { (
         <div className=" pt-10 pb-12 px-10 md:px-6 xl:px-10  absolute  left-1/2 transform -translate-x-1/2 z-10 bg-white shadow-xl h-[21rem] xxs:h-[19.2rem] xs:h-[19.5rem] md:h-[22rem] lmd:h-[21rem]  top-6 lmd:top-2  w-[95%] md:w-[95%] rounded-2xl ">
           <h2 className="font-serif font-bold text-xl text-center border-b-2 border-dashed pb-2">
             Are you Sure?

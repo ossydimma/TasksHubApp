@@ -74,7 +74,7 @@ export default function Home() {
     if (!isAuthenticated && !loading) {
       router.push("/login");
     }
-  }, [isAuthenticated, loading]);
+  }, [isAuthenticated, loading, router]);
 
   return (
     <main className="text-black mb-[5.5rem] sm:mb-[1.5rem] md:mb-0">
