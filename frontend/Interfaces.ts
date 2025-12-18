@@ -133,7 +133,7 @@ export interface TasksCarousel {
     title: string;
     category: string;
     status: string;
-    deadline: string:
+    deadline: string;
 }
 
 export interface GroupTasksCarousel {
