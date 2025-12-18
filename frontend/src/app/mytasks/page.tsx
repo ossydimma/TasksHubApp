@@ -52,17 +52,20 @@ export default function Page() {
     status: null,
   };
 
-  const handleFilterApiCall = async (payload: FilterTaskType) => {
-    try {
-      const tasks = await taskApi.filterTask(payload);
-      setFilteredTasks(validateOrder() ? tasks.reverse() : tasks);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSearching(false);
-      setShowFilter(false);
-    }
-  };
+  const handleFilterApiCall = useCallback(
+    async (payload: FilterTaskType) => {
+      try {
+        const tasks = await taskApi.filterTask(payload);
+        setFilteredTasks(validateOrder() ? tasks.reverse() : tasks);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setSearching(false);
+        setShowFilter(false);
+      }
+    },
+    [taskApi, validateOrder, setFilteredTasks, setSearching, setShowFilter]
+  );
 
   const validateFilterForm = (): boolean => {
     if (!Object.values(filterBy).some((val) => val !== "")) {
@@ -105,22 +108,7 @@ export default function Page() {
     });
     setFilteredTasks(tasks);
     setShowFilter(false);
-  }, [])
-
-  async function getAllTasks() {
-    setIsLoading(true);
-
-    try {
-      const allTasks = await taskApi.getAllTasks();
-
-      setTasks(allTasks);
-      setFilteredTasks(validateOrder() ? allTasks.reverse() : allTasks);
-    } catch (err) {
-      console.error("Failed to fetch tasks:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  }, [tasks]);
 
   function validateOrder(): boolean {
     const order = localStorage.getItem("orderBy");
@@ -136,6 +124,21 @@ export default function Page() {
     const fetchTasks = () => {
       const searchParams = new URLSearchParams(window.location.search);
       const params = searchParams.get("filter");
+
+      async function getAllTasks() {
+        setIsLoading(true);
+
+        try {
+          const allTasks = await taskApi.getAllTasks();
+
+          setTasks(allTasks);
+          setFilteredTasks(validateOrder() ? allTasks.reverse() : allTasks);
+        } catch (err) {
+          console.error("Failed to fetch tasks:", err);
+        } finally {
+          setIsLoading(false);
+        }
+      }
       switch (params) {
         case "overdue":
           filterPayload.status = "overdue";
@@ -154,9 +157,9 @@ export default function Page() {
           getAllTasks();
       }
     };
-    
+
     fetchTasks();
-  }, []);
+  }, [filterPayload]);
 
   useEffect(() => {
     if (tasks.length < 1) {
@@ -183,7 +186,7 @@ export default function Page() {
     return () => {
       clearTimeout(handler);
     };
-  }, [query]);
+  }, [query, tasks]);
 
   useEffect(() => {
     if (!isAuthenticated && !loading) {

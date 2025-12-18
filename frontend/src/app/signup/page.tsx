@@ -157,7 +157,7 @@ export default function Page() {
       await handleGoogleAuth();
     };
     exchangeToken();
-  }, [session, setAccessToken]);
+  }, [session, setAccessToken, router]);
 
   // useEffect(() => {
   //   const exchangeToken = async () => {
