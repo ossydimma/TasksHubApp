@@ -64,7 +64,7 @@ export default function Page() {
         setShowFilter(false);
       }
     },
-    [taskApi, validateOrder, setFilteredTasks, setSearching, setShowFilter]
+    [ validateOrder, setFilteredTasks, setSearching, setShowFilter]
   );
 
   const validateFilterForm = (): boolean => {
@@ -159,7 +159,7 @@ export default function Page() {
     };
 
     fetchTasks();
-  }, [filterPayload]);
+  }, [filterPayload, handleFilterApiCall]);
 
   useEffect(() => {
     if (tasks.length < 1) {
@@ -186,7 +186,7 @@ export default function Page() {
     return () => {
       clearTimeout(handler);
     };
-  }, [query, tasks]);
+  }, [query, tasks, resetFilterBy]);
 
   useEffect(() => {
     if (!isAuthenticated && !loading) {
