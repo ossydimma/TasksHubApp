@@ -37,7 +37,8 @@ namespace TasksHubServer.Services
             try
             {
                 // Connect to the SMTP server
-                await client.ConnectAsync("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
+                // await client.ConnectAsync("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
+                await client.ConnectAsync("smtp.gmail.com", 465, SecureSocketOptions.SslOnConnect);
 
                 // Authenticate using your email and password
                 await client.AuthenticateAsync(email, password);
