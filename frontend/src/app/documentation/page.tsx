@@ -658,6 +658,7 @@ export default function Page() {
           </div>
         )}
       </header>
+
       <main className="relative flex justify-between items-center flex-col gap-1 md:gap-2 md:flex-row h-[85%] pt-4 md:pt-5 pb-[3.6rem] sm:pb-0">
         {validate && (
           <div
@@ -795,7 +796,6 @@ export default function Page() {
                           Discard
                         </button>
                       )}
-
                       <button
                         disabled={
                           content.title.length < 2 || content.body.length < 2

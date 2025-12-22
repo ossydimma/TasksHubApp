@@ -3,6 +3,7 @@ import { Autoplay } from "swiper/modules";
 import { GroupTasksCarousel, TasksCarousel } from "../../../Interfaces";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import MyButton from "./MyButton";
 
 import "swiper/css";
 import { useRouter } from "next/navigation";
@@ -20,7 +21,7 @@ export default function TaskCarousel({
     allTasks: "All Tasks",
     overdueTasks: "Overdue Tasks",
     todayTasks: "Today's Tasks",
-  }
+  };
 
   // Loading State
   if (!tasks) {
@@ -57,7 +58,7 @@ export default function TaskCarousel({
   }
 
   // Validation Logic
-  const hasNoTasks = Object.entries(tasks).every(([ ,arr]) => arr.length === 0);
+  const hasNoTasks = Object.entries(tasks).every(([, arr]) => arr.length === 0);
 
   if (hasNoTasks) {
     return (
@@ -65,12 +66,11 @@ export default function TaskCarousel({
         <div className="h-full w-full flex flex-col gap-2.5 justify-center items-center font-bold text-[1rem] sm:text-[1.2rem] md:text-[0.9rem] lmd:text-[1.2rem]">
           <p>You have no task yet.</p>
           <div>
-            <button
-              onClick={() => router.push("/mytasks/createtask")}
-              className="py-4 px-6 text-sm bg-black text-white rounded-2xl"
-            >
-              Create task
-            </button>
+            <MyButton
+              label="Create task"
+              styles="text-lg"
+              handleClickEvent={() => router.push("/mytasks/createtask")}
+            />
           </div>
         </div>
       </div>
@@ -97,9 +97,7 @@ export default function TaskCarousel({
               </h2>
               <p
                 className=" text-right text-sm sm:text-lg font-medium cursor-pointer"
-                onClick={() =>
-                  handleDisplayData(labelMap[name] || name)
-                }
+                onClick={() => handleDisplayData(labelMap[name] || name)}
               >
                 view all
               </p>

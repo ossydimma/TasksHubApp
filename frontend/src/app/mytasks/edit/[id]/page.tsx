@@ -11,6 +11,7 @@ import {
 import { taskApi } from "../../../../../services/apiServices/TaskApiService";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import MyButton from "@/app/components/MyButton";
 
 export default function EditTaskPage() {
   const params = useParams();
@@ -319,10 +320,8 @@ export default function EditTaskPage() {
               ></textarea>
             </div>
 
-            <div className="bg-black  text-white px-4 py-3 text-center rounded-2xl sm:mt-2 ml-auto ">
-              <button type="submit" className="">
-                Save Changes
-              </button>
+            <div className=" sm:mt-2 ml-auto ">
+              <MyButton label="Save Changes" type="submit" />
             </div>
           </form>
         </div>

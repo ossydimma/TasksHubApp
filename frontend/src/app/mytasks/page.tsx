@@ -7,6 +7,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { FilterTaskType, UserTaskType } from "../../../Interfaces";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { taskApi } from "../../../services/apiServices/TaskApiService";
+import MyButton from "../components/MyButton";
 
 export default function Page() {
   const router = useRouter();
@@ -523,12 +524,12 @@ export default function Page() {
           <div className="h-full w-full flex flex-col gap-2.5 justify-center items-center font-bold text-[0.910rem] sm:text-[1.2rem] md:text-[0.8rem] lmd:text-[0.910rem]">
             <p>You have no task yet.</p>
             <div>
-              <button
-                onClick={() => router.push("/mytasks/createtask")}
-                className="py-4 px-6 text-sm bg-black text-white rounded-2xl"
-              >
-                Create task
-              </button>
+              <MyButton
+                type="button"
+                label="Create task"
+                styles="text-lg"
+                handleClickEvent={() => router.push("/mytasks/createtask")}
+              />
             </div>
           </div>
         ) : filteredTasks.length === 0 ? (

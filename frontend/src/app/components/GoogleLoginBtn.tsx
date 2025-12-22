@@ -29,7 +29,7 @@ export default function GoogleLoginBtn({
     <>
       <div
         onClick={handleGoogleSignIn}
-        className={`${styles} w-[100%] rounded-lg flex justify-center items-center gap-7 my-4 cursor-pointer`}
+        className={`${styles} w-[100%] rounded-lg flex justify-center items-center gap-7 my-4 cursor-pointer hover:bg-gray-300`}
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {

@@ -10,6 +10,7 @@ import {
   validateDeadline,
 } from "../../../../SharedFunctions";
 import { taskApi } from "../../../../services/apiServices/TaskApiService";
+import MyButton from "@/app/components/MyButton";
 
 export default function Page() {
   const router = useRouter();
@@ -94,7 +95,7 @@ export default function Page() {
     console.log(taskValues);
   }
 
-  const retrieveDraft = ()=> {
+  const retrieveDraft = () => {
     const draft = localStorage.getItem("newtaskValues");
 
     if (draft) {
@@ -104,17 +105,16 @@ export default function Page() {
         title: draftData.title,
         deadline: draftData.deadline,
         description: draftData.description,
-        category: draftData.category
-      })
-
+        category: draftData.category,
+      });
     }
-  }
+  };
 
   useEffect(() => {
-      setTimeout(() => {
-        localStorage.setItem("newtaskValues", JSON.stringify(taskValues));
-      }, 300);
-    }, [taskValues]);
+    setTimeout(() => {
+      localStorage.setItem("newtaskValues", JSON.stringify(taskValues));
+    }, 300);
+  }, [taskValues]);
 
   useEffect(() => {
     if (!isAuthenticated && !loading) {
@@ -124,7 +124,7 @@ export default function Page() {
 
   useEffect(() => {
     retrieveDraft();
-  }, [])
+  }, []);
 
   return (
     <main className="pb-[3.6rem] sm:pb-0 relative w-full h-full">
@@ -236,12 +236,16 @@ export default function Page() {
               />
             </div>
             <div className="ml-auto ">
-              <button
+              <MyButton
+                label="Create"
+                type="submit"
+              />
+              {/* <button
                 type="submit"
                 className="bg-black  text-white w-[8rem] py-4 text-center rounded-2xl "
               >
                 Create
-              </button>
+              </button> */}
             </div>
           </form>
         </div>
