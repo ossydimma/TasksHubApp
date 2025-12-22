@@ -2,7 +2,8 @@
 import DataDetailCard from ".././components/DataDetailCard";
 import Calendar from "react-calendar";
 import Header from ".././components/header";
-import "react-calendar/dist/Calendar.css";
+// import "react-calendar/dist/Calendar.css";
+import "../calendar-custom.css";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
@@ -92,7 +93,7 @@ export default function Home() {
             //   console.log("hello", e);
             // }}
             value={date}
-            className=" py-10 px-4 rounded-2xl  mx-2 md:mx-0 h-full"
+            className=" py-10 px-4 rounded-2xl  mx-2 md:mx-0 h-full  react-calendar"
           />
         </div>
         
