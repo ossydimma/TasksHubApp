@@ -70,8 +70,9 @@ export default function Page() {
   const handleFilterApiCall = useCallback(
     async (payload: FilterTaskType) => {
       try {
-        const tasks = await taskApi.filterTask(payload);
-        setFilteredTasks(validateOrder() ? tasks.reverse() : tasks);
+        const data = await taskApi.filterTask(payload);
+        setFilteredTasks(validateOrder() ? tasks.reverse() : data);
+        console.log(tasks);
       } catch (err) {
         console.error(err);
       } finally {
@@ -135,7 +136,6 @@ export default function Page() {
 
         try {
           const allTasks = await taskApi.getAllTasks();
-
           setTasks(allTasks);
           setFilteredTasks(validateOrder() ? allTasks.reverse() : allTasks);
         } catch (err) {
@@ -144,6 +144,7 @@ export default function Page() {
           setIsLoading(false);
         }
       }
+
       switch (params) {
         case "overdue":
           filterPayload.status = "overdue";
@@ -266,12 +267,7 @@ export default function Page() {
 
           <div
             className="bg-gray-700 hover:bg-black w-[18%] md:w-[15%] lmd:w-[12.5%] py-2 cursor-pointer "
-            // onClick={getTaskByTitle}
             role="button"
-            // tabIndex={0}
-            // onKeyDown={(e) => {
-            //   if (e.key === "Enter") getTaskByTitle();
-            // }}
           >
             <svg
               className="w-5 lmd:w-7 mx-auto"
@@ -364,7 +360,6 @@ export default function Page() {
                         created: e.target.value,
                       }));
                     }}
-                    // placeholder="DD/MM/YYYY"
                     className="border border-gray-600 text-black rounded-lg outline-none py-2 px-2 w-full"
                   />
                 </div>
@@ -406,7 +401,6 @@ export default function Page() {
                         deadline: e.target.value,
                       }));
                     }}
-                    // placeholder="DD/MM/YYYY"
                     className="border border-gray-600 text-black rounded-lg outline-none py-2 px-2 w-full"
                   />
                 </div>
@@ -525,8 +519,8 @@ export default function Page() {
               text="Searching..."
             />
           </div>
-        ) : tasks.length < 0 ? (
-          <div className="h-full w-full flex flex-col gap-1 justify-center items-center font-bold text-[0.910rem] sm:text-[1.2rem] md:text-[0.8rem] lmd:text-[0.910rem]">
+        ) : tasks.length === 0 && filteredTasks.length === 0 ? (
+          <div className="h-full w-full flex flex-col gap-2.5 justify-center items-center font-bold text-[0.910rem] sm:text-[1.2rem] md:text-[0.8rem] lmd:text-[0.910rem]">
             <p>You have no task yet.</p>
             <div>
               <button
