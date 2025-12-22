@@ -16,9 +16,16 @@ export default function TaskCarousel({
 }) {
   const router = useRouter();
 
+  const labelMap: Record<string, string> = {
+    allTasks: "All Tasks",
+    overdueTasks: "Overdue Tasks",
+    todayTasks: "Today's Tasks",
+  }
+
+  // Loading State
   if (!tasks) {
     return (
-      <div className="mx- md:mr-6 md:ml-2 w-full md:w-[58%] mb-10 md:mb-0 overflow-scroll">
+      <div className="md:mr-6 md:ml-2 w-full md:w-[58%] mb-10 md:mb-0 overflow-scroll">
         {Array(3)
           .fill(0)
           .map((_, i) => (
@@ -49,6 +56,27 @@ export default function TaskCarousel({
     );
   }
 
+  // Validation Logic
+  const hasNoTasks = Object.entries(tasks).every(([ ,arr]) => arr.length === 0);
+
+  if (hasNoTasks) {
+    return (
+      <div className=" w-full md:w-[58%] flex justify-center items-center">
+        <div className="h-full w-full flex flex-col gap-2.5 justify-center items-center font-bold text-[1rem] sm:text-[1.2rem] md:text-[0.9rem] lmd:text-[1.2rem]">
+          <p>You have no task yet.</p>
+          <div>
+            <button
+              onClick={() => router.push("/mytasks/createtask")}
+              className="py-4 px-6 text-sm bg-black text-white rounded-2xl"
+            >
+              Create task
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Swiper
       modules={[Autoplay]}
@@ -60,27 +88,17 @@ export default function TaskCarousel({
       className="mx- md:mr-6 md:ml-2 w-full md:w-[58%] mb-10 md:mb-0 h-auto"
     >
       {Object.entries(tasks)
-        .filter(([ , arr]) => arr.length > 0)
+        .filter(([, arr]) => arr.length > 0)
         .map(([name, arr]) => (
           <SwiperSlide key={name}>
             <div className="flex justify-between items-center text-black  md:mb-2 lmd:mb-2 font-serif px-5">
               <h2 className="font-bold text-xl sm:text-2xl">
-                {name == "allTasks"
-                  ? "All Tasks"
-                  : name === "overdueTasks"
-                  ? "Overdue Tasks"
-                  : "Today's Tasks"}
+                {labelMap[name] || name}
               </h2>
               <p
                 className=" text-right text-sm sm:text-lg font-medium cursor-pointer"
                 onClick={() =>
-                  handleDisplayData(
-                    name == "allTasks"
-                      ? "Total Tasks"
-                      : name === "overdueTasks"
-                      ? "Overdue Tasks"
-                      : "Today's Tasks"
-                  )
+                  handleDisplayData(labelMap[name] || name)
                 }
               >
                 view all
