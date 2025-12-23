@@ -10,17 +10,23 @@ namespace TasksHubServer.Services
         public async Task SendEmail(string userEmail, string subject, string body)
         {
 
-            string? email = _config["EmailSettings:Email"];
-            string? apiKey = _config["EmailSettings:ApiKey"];
+            // string? email = _config["EmailSettings:Email"];
+            // string? apiKey = _config["EmailSettings:ApiKey"];
 
-            if (string.IsNullOrEmpty(apiKey))
+            string? user = _config["SMTP_USER"];
+            string? pass = _config["SMTP_PASS"];
+            string? host = _config["SMTP_HOST"];
+            string? sender = _config["SMTP_FROM"];
+
+
+            if (string.IsNullOrEmpty(pass))
             {
-                Console.WriteLine("Error: Resend API Key is missing from configuration.");
+                Console.WriteLine("Error: Brevo SMTP Key is missing from configuration.");
                 return;
             }
 
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("TasksHub", email));
+            message.From.Add(new MailboxAddress("TasksHub", sender));
             message.To.Add(MailboxAddress.Parse(userEmail));
             message.Subject = subject;
             message.Body = new TextPart("html")
@@ -33,14 +39,14 @@ namespace TasksHubServer.Services
             {
                 // Connect to the SMTP server
                 // await client.ConnectAsync("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
-                await client.ConnectAsync("smtp.resend.com", 465, SecureSocketOptions.SslOnConnect);
+                await client.ConnectAsync(host, 587, SecureSocketOptions.StartTls);
 
                 // Authenticate using your email and password
                 // await client.AuthenticateAsync(email, password);
-                await client.AuthenticateAsync("resend", apiKey);
+                await client.AuthenticateAsync(user, pass);
                 // Send the email
                 await client.SendAsync(message);
-                Console.WriteLine("Email sent successfully via Resend!");
+                Console.WriteLine("Email sent successfully via Brevo!");
             }
             catch (Exception ex)
             {
