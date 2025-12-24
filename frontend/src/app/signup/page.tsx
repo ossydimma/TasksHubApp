@@ -14,6 +14,7 @@ import { useSession } from "next-auth/react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { AuthService } from "../../../services/apiServices/AuthService";
 import { getApiErrorMessage } from "../../../SharedFunctions";
+import AuthButton from "../components/AuthButton";
 
 export default function Page() {
   const { isAuthenticated, setAccessToken } = useAuth();
@@ -141,15 +142,19 @@ export default function Page() {
         if (!session?.idToken) return;
         setLoading(true);
         try {
-          const token = await AuthService.googleAuth(session.idToken);
+          const token = await AuthService.googleSignup(session.idToken);
           setAccessToken(token);
           setLoading(false);
           router.replace("/home");
-        } catch (err) {
-          console.error(
-            "[GoogleLoginBtn] Failed to change Google account:",
-            err
-          );
+        } catch (err: unknown) {
+          const error = getApiErrorMessage(err);
+          setErrorMessage(error);
+        } finally {
+          // Remove param
+          const url = new URL(window.location.href);
+          url.searchParams.delete("postGoogleLogin");
+          window.history.replaceState({}, "", url.toString());
+
           setLoading(false);
         }
       };
@@ -307,18 +312,18 @@ export default function Page() {
               </div>
             </div>
 
-            <button
-              className="bg-black text-[1rem] text-white py-2 mt-3 w-[100%] rounded-lg"
-              type="submit"
-            >
-              {loading ? (
-                <div className="flex justify-center items-center h-10">
-                  <div className="animate-spin rounded-full h-4 w-4 border-t-4 border-white border-solid"></div>
-                </div>
-              ) : (
-                <span>Sign up</span>
-              )}
-            </button>
+            <AuthButton
+              styles="mt-3"
+              label={
+                loading ? (
+                  <div className="flex justify-center items-center h-10">
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-4 border-white border-solid"></div>
+                  </div>
+                ) : (
+                  <span>Sign up</span>
+                )
+              }
+            />
           </form>
 
           <GoogleLoginBtn

@@ -9,10 +9,7 @@ namespace TasksHubServer.Services
 
         public async Task SendEmail(string userEmail, string subject, string body)
         {
-
-            // string? email = _config["EmailSettings:Email"];
-            // string? apiKey = _config["EmailSettings:ApiKey"];
-
+            
             string? user = _config["SMTP_USER"];
             string? pass = _config["SMTP_PASS"];
             string? host = _config["SMTP_HOST"];
@@ -38,12 +35,11 @@ namespace TasksHubServer.Services
             try
             {
                 // Connect to the SMTP server
-                // await client.ConnectAsync("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
                 await client.ConnectAsync(host, 2525, SecureSocketOptions.StartTls);
 
                 // Authenticate using your email and password
-                // await client.AuthenticateAsync(email, password);
                 await client.AuthenticateAsync(user, pass);
+
                 // Send the email
                 await client.SendAsync(message);
                 Console.WriteLine("Email sent successfully via Brevo!");

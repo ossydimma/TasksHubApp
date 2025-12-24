@@ -4,7 +4,8 @@ import { api } from "../axios";
 interface AuthServiceType {
   completeSignup(payload: SignupModelType): Promise<any>;
   signup(payload: SignupModelType): Promise<any>;
-  googleAuth(credential: string): Promise<any>;
+  googleLogin(credential: string): Promise<any>;
+  googleSignup(credential: string): Promise<any>;
   login(payload: LoginModelType): Promise<any>;
   logout(): Promise<any>;
   sendOtp(email: string): Promise<any>;
@@ -23,9 +24,20 @@ export const AuthService: AuthServiceType = {
     await api.post("/auth/signup", payload);
   },
 
-  googleAuth: async (credential: string) => {
+  googleLogin: async (credential: string) => {
     const res = await api.post(
-      "/auth/google",
+      "/auth/google/login",
+      { credential: credential },
+      { withCredentials: true }
+    );
+
+    const token = res.data.accessToken;
+    return token;
+  },
+
+  googleSignup: async (credential: string) => {
+    const res = await api.post(
+      "/auth/google/signup",
       { credential: credential },
       { withCredentials: true }
     );

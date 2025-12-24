@@ -16,7 +16,7 @@ export default function GoogleLoginBtn({
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
-    const callbackUrl = `/${source}?postGoogleLogin=true`;
+  const callbackUrl = `/${source}?postGoogleLogin=true`;
 
     await signIn("google", {
       callbackUrl,

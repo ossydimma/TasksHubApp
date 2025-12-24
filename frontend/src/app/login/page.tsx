@@ -10,6 +10,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import EnterOTP from "../components/enterOTP";
 import { AuthService } from "../../../services/apiServices/AuthService";
 import { getApiErrorMessage } from "../../../SharedFunctions";
+import AuthButton from "../components/AuthButton";
 
 export default function Page() {
   const { data: session, status } = useSession();
@@ -56,13 +57,16 @@ export default function Page() {
     console.error(error);
 
     const errorMsg = getApiErrorMessage(error);
+    console.error("login error", errorMsg);
 
     if (errorMsg.includes("Email not verified")) {
       await AuthService.sendOtp(loginModal.email);
       setDisplayModal(true);
       setTimeLeft(60);
+      setLoading(false);
       return "";
     } else {
+      setLoading(false);
       return errorMsg;
     }
   };
@@ -113,15 +117,19 @@ export default function Page() {
         if (!session?.idToken) return;
         setLoading(true);
         try {
-          const token = await AuthService.googleAuth(session.idToken);
+          const token = await AuthService.googleLogin(session.idToken);
           setAccessToken(token);
           setLoading(false);
           router.replace("/home");
-        } catch (err) {
-          console.error(
-            "[GoogleLoginBtn] Failed to change Google account:",
-            err
-          );
+        } catch (err: unknown) {
+          const error = await apiErrorMsg(err);
+          setErrorMessage(error);
+        } finally {
+          // Remove param
+          const url = new URL(window.location.href);
+          url.searchParams.delete("postGoogleLogin");
+          window.history.replaceState({}, "", url.toString());
+          
           setLoading(false);
         }
       };
@@ -216,18 +224,17 @@ export default function Page() {
                 </a>
               </div>
             </div>
-            <button
-              type="submit"
-              className="bg-black text-[1rem] text-white py-2 w-[100%] rounded-lg"
-            >
-              {loading ? (
-                <div className="flex justify-center items-center h-10">
-                  <div className="animate-spin rounded-full h-4 w-4 border-t-4 border-white border-solid"></div>
-                </div>
-              ) : (
-                <span>Log In</span>
-              )}
-            </button>
+            <AuthButton
+              label={
+                loading ? (
+                  <div className="flex justify-center items-center h-10">
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-4 border-white border-solid"></div>
+                  </div>
+                ) : (
+                  <span>Log In</span>
+                )
+              }
+            />
           </form>
 
           {/* external-auth */}

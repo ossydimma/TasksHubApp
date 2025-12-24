@@ -62,7 +62,7 @@ export default function TaskCarousel({
 
   if (hasNoTasks) {
     return (
-      <div className=" w-full md:w-[58%] flex justify-center items-center">
+      <div className=" w-full md:w-[58%] mt-5 mb-10 md:my-0 flex justify-center items-center">
         <div className="h-full w-full flex flex-col gap-2.5 justify-center items-center font-bold text-[1rem] sm:text-[1.2rem] md:text-[0.9rem] lmd:text-[1.2rem]">
           <p>You have no task yet.</p>
           <div>

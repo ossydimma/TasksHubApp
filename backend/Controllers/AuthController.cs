@@ -40,12 +40,13 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
 
     }
 
-    [HttpPost("auth/google")]
+    [HttpPost("auth/google/login")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
-    public async Task<IActionResult> GoogleAuth([FromBody] GoogleAuthDto model)
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleAuthDto model) 
     {
-        try
+        try 
         {
             var payload = await GoogleJsonWebSignature.ValidateAsync(model.Credential);
             var normalizedEmail = payload.Email.Trim().ToLower();
@@ -58,53 +59,26 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
                 user = await _repo.GetUserByEmailAsync(normalizedEmail);
                 if (user != null)
                 {
-                    user.GoogleSub = payload.Subject;
+                    // Account exists but was created via Password, not Google
+                    return BadRequest("This email is already registered. Please log in with your password." );
                 }
+
+                return NotFound($"No TasksHub account found for this email:{normalizedEmail}");
             }
 
-            if (user == null)
-            {
-                // Create a new user if not found by Google sub or email
-                user = new ApplicationUser
-                {
-                    GoogleSub = payload.Subject,
-                    Email = payload.Email,
-                    FullName = payload.Name,
-                    UserName = payload.Name.Split(" ")[0],
-                    ProfilePicture = payload.Picture ?? null,
-                };
+            // Update email if user changed it on Google
+            if (user.Email != payload.Email) user.Email = payload.Email;
 
-                // Add the new user to the context
-                await _repo.CreateUserAsync(user);
-            }
-            else
-            {
-                // Update email if user changed it on Google
-                if (user.Email != payload.Email)
-                {
-                    user.Email = payload.Email;
-                }
-            }
-
-            // Add the refresh token to the user object
+            // Generate tokens
             UserRefreshToken refreshToken = JwtTokenGenerator.GenerateRefreshToken(user.Id);
-
-            if (!await _repo.CreateRefreshToken(refreshToken))
-            {
-                return BadRequest("Failed to update user refresh token");
-            }
-
-            // Now, perform a single save operation for all changes
-            bool updated = await _repo.UpdateUserAsync(user);
-            if (!updated)
-            {
-                // Log the error and handle the failure gracefully
-                return BadRequest("Failed to update ");
-            }
-
-            // ... rest of the code for generating tokens and cookies
             string accessToken = JwtTokenGenerator.GenerateToken(user, HttpContext.RequestServices.GetRequiredService<IConfiguration>());
 
+            if (!await _repo.CreateRefreshToken(refreshToken) || !await _repo.UpdateUserAsync(user))
+            {
+                return StatusCode(500, "An error occurred while updating your session.");
+            }
+
+            // Set Secure Cookie
             var cookieoptions = new CookieOptions
             {
                 HttpOnly = true,
@@ -116,6 +90,7 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
             Response.Cookies.Append("refreshToken", refreshToken.Token, cookieoptions);
 
             return Ok(new { AccessToken = accessToken });
+
         }
         catch (InvalidJwtException)
         {
@@ -126,6 +101,161 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
             return StatusCode(500, ex.Message);
         }
     }
+
+    [HttpPost("auth/google/signup")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GoogleSignup([FromBody] GoogleAuthDto model)  
+    {
+        try 
+        {
+            var payload = await GoogleJsonWebSignature.ValidateAsync(model.Credential);
+            var normalizedEmail = payload.Email.Trim().ToLower();
+
+            // Prevent Duplicate Signup
+            var existingBySub = await _repo.GetUserByGoogleSubAsync(payload.Subject);
+            var existingByEmail = await _repo.GetUserByEmailAsync(normalizedEmail);
+
+            // Check both GoogleSub and Email to ensure no account exists yet
+            if (existingBySub != null || existingByEmail != null) 
+            {
+                return BadRequest("An account with this email already exists. Please log in instead." );  
+            }
+
+            // Create a new user if not found by Google sub or email
+            var user = new ApplicationUser
+            {
+                GoogleSub = payload.Subject,
+                Email = payload.Email,
+                FullName = payload.Name,
+                UserName = (payload.Name?.Replace(" ", "") ?? payload.Email.Split('@')[0]).ToLower(),
+                ProfilePicture = payload.Picture ?? null,
+                IsEmailVerified = true,
+            };
+
+            await _repo.CreateUserAsync(user);
+
+            // Generate tokens
+            UserRefreshToken refreshToken = JwtTokenGenerator.GenerateRefreshToken(user.Id);
+            string accessToken = JwtTokenGenerator.GenerateToken(user, HttpContext.RequestServices.GetRequiredService<IConfiguration>());
+
+            if (!await _repo.CreateRefreshToken(refreshToken))
+            {
+                // If token fails, user is created but not logged in - handle as needed
+                return StatusCode(500, "User created, but failed to generate session.");
+            }
+
+            // Set Secure Cookie
+            var cookieoptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTime.UtcNow.AddDays(7)
+            };
+
+            Response.Cookies.Append("refreshToken", refreshToken.Token, cookieoptions);
+
+            return Ok(new { AccessToken = accessToken });
+
+        }
+        catch (InvalidJwtException)
+        {
+            return Unauthorized("Invalid Google token.");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
+    }
+
+    // [HttpPost("auth/google")]
+    // [ProducesResponseType(200)]
+    // [ProducesResponseType(400)]
+    // public async Task<IActionResult> GoogleAuth([FromBody] GoogleAuthDto model)
+    // {
+    //     try
+    //     {
+    //         var payload = await GoogleJsonWebSignature.ValidateAsync(model.Credential);
+    //         var normalizedEmail = payload.Email.Trim().ToLower();
+
+    //         ApplicationUser? user = await _repo.GetUserByGoogleSubAsync(payload.Subject);
+
+    //         if (user == null)
+    //         {
+    //             // Fallback to email lookup for first-time linking
+    //             user = await _repo.GetUserByEmailAsync(normalizedEmail);
+    //             if (user != null)
+    //             {
+    //                 user.GoogleSub = payload.Subject;
+    //             }
+    //         }
+
+    //         if (user == null)
+    //         {
+    //             // Create a new user if not found by Google sub or email
+    //             user = new ApplicationUser
+    //             {
+    //                 GoogleSub = payload.Subject,
+    //                 Email = payload.Email,
+    //                 FullName = payload.Name,
+    //                 UserName = payload.Name.Split(" ")[0],
+    //                 ProfilePicture = payload.Picture ?? null,
+    //             };
+
+    //             // Add the new user to the context
+    //             await _repo.CreateUserAsync(user);
+    //         }
+    //         else
+    //         {
+    //             // Update email if user changed it on Google
+    //             if (user.Email != payload.Email)
+    //             {
+    //                 user.Email = payload.Email;
+    //             }
+    //         }
+
+    //         // Add the refresh token to the user object
+    //         UserRefreshToken refreshToken = JwtTokenGenerator.GenerateRefreshToken(user.Id);
+
+    //         if (!await _repo.CreateRefreshToken(refreshToken))
+    //         {
+    //             return BadRequest("Failed to update user refresh token");
+    //         }
+
+    //         // Now, perform a single save operation for all changes
+    //         bool updated = await _repo.UpdateUserAsync(user);
+    //         if (!updated)
+    //         {
+    //             // Log the error and handle the failure gracefully
+    //             return BadRequest("Failed to update ");
+    //         }
+
+    //         // Generate access tokens 
+    //         string accessToken = JwtTokenGenerator.GenerateToken(user, HttpContext.RequestServices.GetRequiredService<IConfiguration>());
+
+    //         var cookieoptions = new CookieOptions
+    //         {
+    //             HttpOnly = true,
+    //             Secure = true,
+    //             SameSite = SameSiteMode.None,
+    //             Expires = DateTime.UtcNow.AddDays(7)
+    //         };
+
+    //         Response.Cookies.Append("refreshToken", refreshToken.Token, cookieoptions);
+
+    //         return Ok(new { AccessToken = accessToken });
+    //     }
+    //     catch (InvalidJwtException)
+    //     {
+    //         return Unauthorized("Invalid Google token.");
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         return StatusCode(500, ex.Message);
+    //     }
+    // }
 
     [HttpPost("auth/login")]
     [ProducesResponseType(200)]
@@ -333,7 +463,7 @@ public class AuthController(IUserRepo repo, OTPService otpService, EmailSender e
         string subject = "Confirm it's you";
         string body = $@"
             <div style='font-size:18px;'>
-                <h1 style='font-size:20px;'>Hi {email},</h1>yh
+                <h1 style='font-size:20px;'>Hi {email},</h1>
                 <p>We're sending a security code to confirm that it's really you.</p>
                 <p><strong style='font-size:20px;'> Code : <strong style='font-size:25px; word-spacing: 20px;'> {otp}</strong> </p>
                 <p>This code will expire in 5 minutes.</p>

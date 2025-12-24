@@ -7,6 +7,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { getApiErrorMessage } from "../../../SharedFunctions";
 import { AuthService } from "../../../services/apiServices/AuthService";
 import { useRouter } from "next/navigation";
+import AuthButton from "../components/AuthButton";
 
 const Page = () => {
   const router = useRouter();
@@ -177,12 +178,7 @@ const Page = () => {
               <p className="text-sm font-bol text-gray-500  mt-3">
                 A verification code will be sent you via Email
               </p>
-              <button
-                type="submit"
-                className="bg-black text-white py-2 rounded-lg my-2"
-              >
-                Send Code
-              </button>
+              <AuthButton label="Send code" styles='my-2' /> 
             </form>
           </div>
         );
