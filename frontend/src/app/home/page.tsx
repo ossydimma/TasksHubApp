@@ -85,7 +85,7 @@ export default function Home() {
       </div>
 
 
-      <section className={`flex flex-col md:flex-row justify-between w-full px-4 lmd:px-10 mt-3 md:mt-5 `}>
+      <section className={`flex flex-col md:flex-row justify-between w-full mt-3 md:mt-8 px-4 lmd:px-5`}>
         <TaskCarousel tasks={tasks} handleDisplayData={handleDisplayData} />
         <div className={`w-full md:w-[40%] h-full`}>
           <Calendar   

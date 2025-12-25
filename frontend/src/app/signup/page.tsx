@@ -144,19 +144,18 @@ export default function Page() {
         try {
           const token = await AuthService.googleSignup(session.idToken);
           setAccessToken(token);
-          setLoading(false);
           router.replace("/home");
         } catch (err: unknown) {
           const error = getApiErrorMessage(err);
           setErrorMessage(error);
-        } finally {
+
           // Remove param
           const url = new URL(window.location.href);
           url.searchParams.delete("postGoogleLogin");
           window.history.replaceState({}, "", url.toString());
 
           setLoading(false);
-        }
+        } 
       };
 
       await handleGoogleAuth();
@@ -164,41 +163,6 @@ export default function Page() {
     exchangeToken();
   }, [session, setAccessToken, router, status]);
 
-  // useEffect(() => {
-  //   const exchangeToken = async () => {
-  //     if (status !== "authenticated") return;
-
-  //     const searchParams = new URLSearchParams(window.location.search);
-  //     const shouldExchange = searchParams.get("postGoogleLogin") === "true";
-
-  //     if (!shouldExchange) return;
-  //     if (hasExchangedRef.current) return;
-  //     hasExchangedRef.current = true;
-
-  //     console.log("[GoogleLoginBtn] Detected postGoogleLogin flow.");
-
-  //     setLoading(true);
-  //     // Login or Signup flow
-  //     try {
-  //       const res = await api.post(
-  //         "/auth/google",
-  //         { credential: session.idToken },
-  //         { withCredentials: true }
-  //       );
-  //       console.log("[GoogleLoginBtn] Google login/signup successful.");
-
-  //       setAccessToken(res.data.accessToken);
-
-  //       setLoading(false);
-
-  //       router.replace("/home");
-  //     } catch (err: any) {
-  //       console.error("[GoogleLoginBtn] Failed to change Google account:", err);
-  //       setLoading(false);
-  //     }
-  //   };
-  //   exchangeToken();
-  // }, [session, setAccessToken]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -221,7 +185,7 @@ export default function Page() {
       )}
       {displayModal ? (
         <EnterOTP
-          className="w-[80%] sm:w-[50%] md:w-[40%] lg:w-[28%] top-1/2"
+          className="w-[90%] sm:w-[50%] md:w-[40%] lg:w-[28%] top-1/2 py-10 px-6 sm:p-6"
           aim={`signup`}
           handleCancel={() => setDisplayModal(false)}
           timeLeft={timeLeft}
@@ -230,7 +194,7 @@ export default function Page() {
           setLoading={setLoading}
         />
       ) : (
-        <div className="relative w-[80%] sm:w-[50%] md:w-[40%] lg:w-[28%] rounded-[0.8rem] px-4 py-5 border border-gray-300 font-serif">
+        <div className="relative w-[90%] sm:w-[50%] md:w-[40%] lg:w-[28%] rounded-[0.8rem] p-6 border border-gray-300 font-serif">
           <h2 className=" text-2xl text-black font-semibold text-center">
             Sign up
           </h2>
@@ -238,7 +202,7 @@ export default function Page() {
           <form
             action=""
             onSubmit={handleSignup}
-            className="relative flex flex-col gap-2 mt-5"
+            className="relative flex flex-col gap-2 mt-5 text-lg"
           >
             <p className="text-red-500">{errorMessage}</p>
 

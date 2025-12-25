@@ -119,19 +119,18 @@ export default function Page() {
         try {
           const token = await AuthService.googleLogin(session.idToken);
           setAccessToken(token);
-          setLoading(false);
-          router.replace("/home");
+          router.push("/home");
         } catch (err: unknown) {
           const error = await apiErrorMsg(err);
-          setErrorMessage(error);
-        } finally {
+          setErrorMessage(error); 
+
           // Remove param
           const url = new URL(window.location.href);
           url.searchParams.delete("postGoogleLogin");
           window.history.replaceState({}, "", url.toString());
           
           setLoading(false);
-        }
+        } 
       };
 
       await handleGoogleAuth();
@@ -163,7 +162,7 @@ export default function Page() {
           setLoading={setLoading}
         />
       ) : (
-        <div className=" w-[80%] sm:w-[50%] md:w-[40%] lg:w-[28%] rounded-[0.8rem] px-4 py-8 border border-gray-300 font-serif">
+        <div className=" w-[90%] sm:w-[50%] md:w-[40%] lg:w-[28%] rounded-[0.8rem] px-6 py-8 border border-gray-300 font-serif">
           <h2 className=" text-2xl text-black font-semibold text-center">
             Login
           </h2>

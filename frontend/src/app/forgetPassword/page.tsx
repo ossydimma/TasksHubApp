@@ -117,7 +117,7 @@ const Page = () => {
     switch (step) {
       case "email":
         return (
-          <div className="w-[80%] sm:w-[50%] md:w-[40%] lg:w-[28%] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-gray-300 p-4 rounded-lg shadow-lg">
+          <div className="w-[90%] sm:w-[50%] md:w-[40%] lg:w-[28%] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-gray-300 py-10 px-6 sm:p-6 rounded-lg shadow-lg ">
             <a
               href="/login"
               className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-300 w-fit p-1 transition-all duration-300 ease-in-out "
@@ -186,7 +186,7 @@ const Page = () => {
       case "code":
         return (
           <EnterOTP
-            className="w-[80%] sm:w-[50%] md:w-[40%] lg:w-[28%] top-1/2"
+            className="w-[90%] sm:w-[50%] md:w-[40%] lg:w-[28%] top-1/2 py-10 px-6 sm:p-6"
             aim={`reset password`}
             userEmail={emailValue}
             handleCancel={() => setStep("email")}
@@ -199,7 +199,7 @@ const Page = () => {
 
       case "reset":
         return (
-          <div className="w-[80%] sm:w-[50%] md:w-[40%] lg:w-[28%] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-gray-300 p-4 rounded-lg shadow-lg">
+          <div className="w-[90%] sm:w-[50%] md:w-[40%] lg:w-[28%] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-gray-300 py-10 px-6 sm:p-6 rounded-lg shadow-lg">
             <div
               className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-300 w-fit p-1 transition-all duration-300 ease-in-out "
               onClick={() => setStep("email")}
@@ -240,7 +240,7 @@ const Page = () => {
             <form
               action=""
               onSubmit={handleResetPassword}
-              className=" flex flex-col gap-4"
+              className=" flex flex-col gap-4 text-lg"
             >
               <p className="text-red-500">{errorMessage}</p>
               <div className="flex flex-col">

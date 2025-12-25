@@ -174,7 +174,7 @@ export default function EnterOTP({
             }
             className="flex flex-col gap-2 mt-4"
           >
-            <label htmlFor="otp" className="text-sm">
+            <label htmlFor="otp" className="text-[0.9rem] sm:text-sm">
               {" "}
               Enter the verification code that was sent to your email.{" "}
               <strong>

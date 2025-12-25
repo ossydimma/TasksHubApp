@@ -80,14 +80,14 @@ export default function Header() {
               </g>
             </svg>
           </div>
-          <h2 className=" text-xs md:text-[1rem] lg:text-lg font-extrabold">
+          <h2 className=" text-sm md:text-[1rem] lg:text-lg font-extrabold">
             Taskhub
           </h2>
         </div>
       )}
 
       <div>
-        <h1 className="text-sm xs:text-[1rem] sm:text-xl lmd:text-3xl py-5 px-6 lmd:px-8 font-extrabold tracking-wid italic">
+        <h1 className="text-[0.9rem] xs:text-[1rem] sm:text-xl lmd:text-3xl py-5 px-6 lmd:px-8 font-extrabold tracking-wid italic">
           Good Day, {userInfo?.userName}!
         </h1>
       </div>

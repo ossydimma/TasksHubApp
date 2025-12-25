@@ -20,7 +20,7 @@ export default function TaskCarousel({
   const labelMap: Record<string, string> = {
     allTasks: "All Tasks",
     overdueTasks: "Overdue Tasks",
-    todayTasks: "Today's Tasks",
+    todaysTasks: "Today's Tasks",
   };
 
   // Loading State
@@ -85,13 +85,13 @@ export default function TaskCarousel({
         delay: 5500,
         disableOnInteraction: true,
       }}
-      className="mx- md:mr-6 md:ml-2 w-full md:w-[58%] mb-10 md:mb-0 h-auto"
+      className="md:mr-6 w-full md:w-[55%] mb-8 md:mb-0 h-auto mt-4 md:-mt-6"
     >
       {Object.entries(tasks)
         .filter(([, arr]) => arr.length > 0)
         .map(([name, arr]) => (
           <SwiperSlide key={name}>
-            <div className="flex justify-between items-center text-black  md:mb-2 lmd:mb-2 font-serif px-5">
+            <div className="flex justify-between items-center text-black md:mb-2 lmd:mb-2 font-serif px-5">
               <h2 className="font-bold text-xl sm:text-2xl">
                 {labelMap[name] || name}
               </h2>
@@ -105,7 +105,7 @@ export default function TaskCarousel({
             {arr.map((task: TasksCarousel) => (
               <div
                 key={task.id}
-                className=" flex flex-col mb-2 bg-[#020101] text-white border-gray-400 border-2 rounded-3xl rounded-tl-none rounded-br-none cursor-pointer "
+                className=" flex flex-col mb-3 sm:mb-5 bg-[#020101] text-white border-gray-400 border-2 rounded-3xl rounded-tl-none rounded-br-none cursor-pointer "
                 onClick={() => router.push(`mytasks/${task.id}`)}
               >
                 <div className="pt-5 md:pt- lmd:pt-3 px-6 ">
