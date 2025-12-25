@@ -549,9 +549,9 @@ export default function SideBar() {
         // ---------------- MOBILE VIEW -------------------
         !showSideBar && isAuthenticated && (
           <div className=" w-full fixed bottom-0 bg-[#dadde2] z-50">
-            <ul className="flex justify-between items-center  text-xs xxs:text-sm px-6 xxs:px-8 pt-2  ">
+            <ul className="flex justify-between items-center w-full text-xs xxs:text-sm px-2 xxs:px-8 pt-2  ">
               {/* --------------- HOME -------------- */}
-              <li className="p-2 rounded-2xl cursor-pointer hover:bg-black hover:text-white fill-black hover:fill-white">
+              <li className="p-2 text-center rounded-2xl w-[18%] mx-auto cursor-pointer hover:bg-black hover:text-white fill-black hover:fill-white">
                 <Link href="/" className=" ">
                   <svg
                     className="w-5 xxs:w-6 mx-auto mb-1 "
@@ -576,7 +576,7 @@ export default function SideBar() {
               </li>
 
               {/* ---------- MY TASK ----------- */}
-              <li className="p-3 rounded-2xl cursor-pointer hover:bg-black hover:text-white fill-black hover:fill-white">
+              <li className=" p-2 text-center rounded-2xl w-[18%] mx-auto cursor-pointer hover:bg-black hover:text-white fill-black hover:fill-white">
                 <Link href="/mytasks" className="">
                   <svg
                     className="w-5 xxs:w-6 mx-auto mb-1"
@@ -605,31 +605,29 @@ export default function SideBar() {
               </li>
 
               {/* -------------- CREATE TASK --------------- */}
-              <li className="ml-3 mb-2 p-2 rounded-2xl cursor-pointer hover:bg-black fill-black hover:fill-white">
-                <Link href={"/mytasks/createtask"}>
-                  <div className="">
-                    <svg
-                      className=" w-8 xxs:w-10 "
-                      viewBox="0 0 32 32"
-                      version="1.1"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-                      <g
-                        id="SVGRepo_tracerCarrier"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      ></g>
-                      <g id="SVGRepo_iconCarrier">
-                        <path d="M16 0c-8.836 0-16 7.163-16 16s7.163 16 16 16c8.837 0 16-7.163 16-16s-7.163-16-16-16zM16 30.032c-7.72 0-14-6.312-14-14.032s6.28-14 14-14 14 6.28 14 14-6.28 14.032-14 14.032zM23 15h-6v-6c0-0.552-0.448-1-1-1s-1 0.448-1 1v6h-6c-0.552 0-1 0.448-1 1s0.448 1 1 1h6v6c0 0.552 0.448 1 1 1s1-0.448 1-1v-6h6c0.552 0 1-0.448 1-1s-0.448-1-1-1z"></path>
-                      </g>
-                    </svg>
-                  </div>
+              <li className=" mb-2 p-2 rounded-2xl w-[18%]  cursor-pointer hover:bg-black fill-black hover:fill-white">
+                <Link href={"/mytasks/createtask"} className="flex justify-center items-center w-full">
+                  <svg
+                    className=" w-8 xxs:w-10 "
+                    viewBox="0 0 32 32"
+                    version="1.1"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
+                    <g
+                      id="SVGRepo_tracerCarrier"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    ></g>
+                    <g id="SVGRepo_iconCarrier">
+                      <path d="M16 0c-8.836 0-16 7.163-16 16s7.163 16 16 16c8.837 0 16-7.163 16-16s-7.163-16-16-16zM16 30.032c-7.72 0-14-6.312-14-14.032s6.28-14 14-14 14 6.28 14 14-6.28 14.032-14 14.032zM23 15h-6v-6c0-0.552-0.448-1-1-1s-1 0.448-1 1v6h-6c-0.552 0-1 0.448-1 1s0.448 1 1 1h6v6c0 0.552 0.448 1 1 1s1-0.448 1-1v-6h6c0.552 0 1-0.448 1-1s-0.448-1-1-1z"></path>
+                    </g>
+                  </svg>
                 </Link>
               </li>
 
               {/* ------------- DOCUMENTATION ------------ */}
-              <li className="p-2 cursor-pointer rounded-2xl hover:bg-black">
+              <li className="p-2 text-center cursor-pointer rounded-2xl w-[18%] mx-auto hover:bg-black">
                 <Link
                   href="/documentation"
                   className=" hover:text-white fill-black hover:fill-white"
@@ -662,7 +660,7 @@ export default function SideBar() {
               </li>
 
               {/* ----------- SETTINGS ------------ */}
-              <li className="p-2 rounded-2xl cursor-pointer hover:bg-black hover:text-white stroke-black hover:stroke-white">
+              <li className="p-2 text-center rounded-2xl w-[18%] mx-auto cursor-pointer hover:bg-black hover:text-white stroke-black hover:stroke-white">
                 <Link href="/settings" className="">
                   <svg
                     className=" w-5 xxs:w-7 mx-auto mb-1 "
