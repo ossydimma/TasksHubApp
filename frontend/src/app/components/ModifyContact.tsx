@@ -45,7 +45,7 @@ export default function ModifyContact({
   //   // }
   // }, []);
   return (
-    <div>
+    <div className={`w-full`}>
       {/* {hasPhone ? (
         <div className="relative">
           <div>
@@ -97,11 +97,11 @@ export default function ModifyContact({
         </div>
       )} */}
       { (
-        <div className=" pt-10 pb-12 px-10 md:px-6 xl:px-10  absolute  left-1/2 transform -translate-x-1/2 z-10 bg-white shadow-xl h-[21rem] xxs:h-[19.2rem] xs:h-[19.5rem] md:h-[22rem] lmd:h-[21rem]  top-6 lmd:top-2  w-[95%] md:w-[95%] rounded-2xl ">
+        <div className=" pt-10 pb-12 px-2 sm:px-10 md:px-6 xl:px-10  z-10 bg-white shadow-xl h-[21rem] xxs:h-[19.2rem] xs:h-[19.5rem] md:h-[22rem] lmd:h-[21rem]  top-6 lmd:top-2  w-full md:w-[95%] rounded-2xl ">
           <h2 className="font-serif font-bold text-xl text-center border-b-2 border-dashed pb-2">
             Are you Sure?
           </h2>
-          <div className="my-8">
+          <div className="my-8 text-[0.9rem]">
             Switching to another Google account will prevent you from logging in again with this one below
             <div className="ml-auto mt-2 bg-black text-white py-3 tracking-wider px-2 text-sm xxs:text-[1rem] md:text-sm lmd:text-[1rem] text-center font-[500] rounded-bl-none rounded-tr-none rounded-[2rem] border-2 border-gray-500 border-dotted w-[75%] ">
                 {userInfo?.email}

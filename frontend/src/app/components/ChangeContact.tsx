@@ -75,7 +75,7 @@ export default function ChangeContact({
 
   return (
     <div className="">
-      <div className=" pt-6 pb-12 px-2 xxs:px-10 md:px-4 xl:px-10 mx-2 absolute  left-1/2 transform -translate-x-1/2 z-10 bg-white shadow-xl h-[25rem] xs:h-[25rem]  top-5 md:top-7  w-[95%] md:w-[68%] lmd:w-[52%] rounded-2xl ">
+      <div className=" pt-6 pb-12 px-2 xxs:px-10 md:px-4 xl:px-10 mx-2 absolute  left-1/2 transform -translate-x-1/2 z-10 bg-white shadow-xl h-[30rem] sm:h-[28rem] xs:h-[31rem]  top-[7rem] md:top-[7rem]  w-[95%] md:w-[68%] lmd:w-[52%] rounded-2xl ">
         <div>
           <section className="">
             <div
