@@ -434,8 +434,8 @@ export default function Page() {
       )}
       <header
         className={`flex ${
-          documents.length > 0 ? "justify-between" : "gap-[15%]"
-        }  items-center px-4 sm:px-6 mt-5 lmd:mt-4 -mb-2 border-b-2 border-dashed border-gray-500 pb-4`}
+          documents.length > 0 ? "justify-between" :  `${viewMode !== "list" ? 'gap-[15%]' : 'gap-[5%]'}`
+        }  items-center px-2 sm:px-6 mt-5 lmd:mt-4 -mb-2 border-b-2 border-dashed border-gray-500 pb-4`}
       >
         <div className="py-[0.5rem] px-4 text-sm md:text-lg bg-black text-white rounded-md cursor-pointer">
           Document
