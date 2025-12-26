@@ -81,7 +81,7 @@ export default function Home() {
     <main className="text-black mb-[5.5rem] sm:mb-[1.5rem] md:mb-0">
       <Header />
       <div className={`mt-5`}>
-        <DataDetailCard counts={dataCounts} />
+        <DataDetailCard counts={dataCounts} styles={'px-4 lmd:px-6'} />
       </div>
 
 

@@ -48,16 +48,16 @@ export default function Page() {
     }
   };
 
-    const getCounts = async () => {
+  const getCounts = async () => {
     try {
       const res = await SettingsServices.getUserDataCounts();
       setDataCounts(res.data);
     } catch (err) {
-      console.error(err)
+      console.error(err);
     }
   };
 
-  useEffect(()=> {
+  useEffect(() => {
     getCounts();
   }, []);
 
@@ -68,7 +68,7 @@ export default function Page() {
   }, [isAuthenticated, loading]);
 
   return (
-    <div className=" relative px-10 pt-7 pb-20 md:pb-0 w-full h-auto md:h-full flex flex-col gap-3 items-center">
+    <div className=" relative px-2 sm:px-5 md:px-10 pt-7 pb-16 sm:pb-20 md:pb-0 w-full h-auto md:h-full flex flex-col gap-3 items-center">
       {loading && (
         <div
           className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
@@ -80,27 +80,30 @@ export default function Page() {
           />
         </div>
       )}
-      <h1 className=" w-full text-center font-serif text-3xl font-bold border-b-2 border-gray-400 border-dashed pb-2 mb-4 md:mb-2">
+      <h1 className=" w-full text-center font-serif text-3xl font-bold border-b-2 border-gray-400 border-dashed pb-2 mb-2 sm:mb-4 md:mb-2">
         Profile
       </h1>
 
-      <div className="relative w-[60%] xxs:w-[42%] xs:w-[30%] sm:w-[36%] md:w-[28%] lmd:w-[25%] xl:w-[20%]  h-[25vh] sm:h-[33vh] md:h-[37vh] border-2 border-gray-300 rounded-full shadow-lg">
-        {imgSrc ? (
-          <Image
-            src={imgSrc}
-            alt="User's image"
-            width={100}
-            height={100}
-            className="rounded-full w-full h-full object-cover"
-            priority
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-4xl font text-gray-500">
-            NU
-          </div>
-        )}
+      <div className={`relative w-[35vw] max-w-52 min-w-28 aspect-square`}>
+        <div
+          className={`w-full h-full rounded-full overflow-hidden border-2 border-grey-300`}
+        >
+          {imgSrc ? (
+            <Image
+              src={imgSrc}
+              alt="User's image"
+              width={100}
+              height={100}
+              className="rounded-full w-full h-full object-cover"
+              priority
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-4xl font text-gray-500">
+              NU
+            </div>
+          )}
 
-        {/* Placeholder for image upload functionality */}
+          {/* Placeholder for image upload functionality */}
         <div>
           <input
             type="file"
@@ -112,10 +115,10 @@ export default function Page() {
 
           <label
             htmlFor="fileInput"
-            className="absolute bottom-4 right-4 flex items-center justify-center cursor-pointer stroke-white"
+            className="absolute bottom-4 right-7 flex items-center justify-center cursor-pointer stroke-white"
           >
             <svg
-              className=" w-6 md:w-7 mx-auto bg-blue-500 rounded-full p-1"
+              className=" w-6 mx-auto bg-blue-500 rounded-full p-1"
               viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -137,6 +140,7 @@ export default function Page() {
             </svg>
           </label>
         </div>
+        </div>
       </div>
 
       <div className="flex flex-col items-center pb-2 border-b-2 border-gray-400 border-dashed w-full">
@@ -144,31 +148,8 @@ export default function Page() {
         <h2 className="font-medium text-[1.15rem]">{userInfo?.email}</h2>
       </div>
 
-      <section className=" flex flex-col gap-4 md:flex-row md:gap-8 w-full justify-between items-center  py-4">
+      <section className=" w-full py-0 sm:py-4">
         <DataDetailCard counts={dataCounts} />
-        {/* <div className=" w-full md:w-[calc(1/4-1rem)] text-white text-center py-4 cursor-pointer bg-black rounded-2xl border">
-          <h2 className="font-extrabold text-[1rem]">All Task</h2>
-          <p className="text-sm font-bold  ">1000</p>
-        </div>
-        <div className=" w-full md:w-[calc(1/4-1rem)] text-white text-center py-4 cursor-pointer bg-black rounded-2xl border">
-          <h2 className="font-extrabold md:text-[0.85rem] lmd:text-[1rem]">
-            Completed Tasks
-          </h2>
-          <p className="text-sm font-bold ">1000</p>
-        </div>
-        <div className=" w-full md:w-[calc(1/4-1rem)] text-white text-center py-4 cursor-pointer bg-black rounded-2xl border">
-          <h2 className="font-extrabold md:text-[0.85rem] lmd:text-[1rem]">
-            Pending Tasks
-          </h2>
-          <p className="text-sm font-bold ">1000</p>
-        </div>
-        <Link
-          href={"/documentation"}
-          className=" w-full md:w-[calc(1/4-1rem)] text-white text-center py-4 cursor-pointer bg-black rounded-2xl border"
-        >
-          <h2 className="font-extrabold text-[1rem]">Documents</h2>
-          <p className="text-sm font-bold ">1000</p>
-        </Link> */}
       </section>
     </div>
   );

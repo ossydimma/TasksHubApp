@@ -179,16 +179,15 @@ export default function EditTaskPage() {
 
   return (
     <main className="pb-[3.6rem] sm:pb-0 relative w-full h-full flex justify-center items-center ">
-      {isLoading && (
+      {isLoading ? (
         <LoadingSpinner
           styles={{
             svg: "h-6 w-6 sm:h-9 sm:w-9  lmd:h-6 lmd:w-6",
             span: "text-sm sm:text-[1.1rem] lmd:text-sm",
           }}
-          text="Searching..."
+          text="Loading..."
         />
-      )}
-      {isSuccess ? (
+      ) : isSuccess ? (
         <div
           className={`absolute -translate-x-1/2 left-1/2 top-4 bg-white shadow-xl py-5 px-12 border`}
         >

@@ -6,8 +6,10 @@ import { useRouter } from "next/navigation";
 
 export default function DataDetailCard({
   counts,
+  styles
 }: {
   counts: DataCountsType | null;
+  styles?: string
 }) {
 
   const router = useRouter();
@@ -95,7 +97,7 @@ export default function DataDetailCard({
 
   return (
     <section
-      className={`h-auto md:h-[25vh] w-full flex flex-wrap justify-between px-4 lmd:px-6 `}
+      className={`h-auto md:h-[25vh] w-full flex flex-wrap justify-between  ${styles}`}
     >
       {dataOverview.map((data) => {
         const Icon = data.icon;
