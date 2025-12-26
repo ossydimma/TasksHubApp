@@ -214,7 +214,8 @@ export default function Page() {
           />
         </div>
       )}
-      <header className="flex justify-between  items-center px-4 md:px-7 mt-5 lmd:mt-4 -mb-2 border-b-2 border-dashed border-gray-500 pb-4">
+      <header className="flex justify-between  items-center px-2
+       sm:px-4 md:px-7 mt-5 lmd:mt-4 -mb-2 border-b-2 border-dashed border-gray-500 pb-4">
         <div className="  ">
           <div className="py-2 px-4 text-sm bg-black text-white rounded-md cursor-pointer">
             Tasks
@@ -223,7 +224,7 @@ export default function Page() {
 
         <div
           className={`
-           w-[40%] lg:w-[45%] flex items-center justify-between  border border-gray-600 rounded-3xl overflow-hidden`}
+           w-[45%] lg:w-[45%] flex items-center justify-between  border border-gray-600 rounded-3xl overflow-hidden`}
         >
           {query && (
             <div
@@ -231,7 +232,7 @@ export default function Page() {
               onClick={() => setQuery("")}
             >
               <svg
-                className="w-5 lmd:w-7 mx-auto"
+                className="w-5 lmd:w-7 mx-auto" 
                 viewBox="0 0 48 48"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"

@@ -126,8 +126,10 @@ export default function Page() {
     retrieveDraft();
   }, []);
 
+  // absolute left-1/2 top-6 sm:top-1/2 transform -translate-x-1/2 sm:-translate-y-1/2
+
   return (
-    <main className="pb-[3.6rem] sm:pb-0 relative w-full h-full">
+    <main className="pb-[3.6rem] sm:pb-0 relative w-full h-full  flex justify-center items-center">
       {isLoading && (
         <div
           className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto"
@@ -139,14 +141,14 @@ export default function Page() {
           />
         </div>
       )}
-      <div className="py-5 sm:py-8 pb absolute left-1/2 top-6 sm:top-1/2 transform -translate-x-1/2 sm:-translate-y-1/2 z-10 bg-white shadow-xl   w-[90%] md:w-[80%] lmd:w-[48%] rounded-3xl">
-        <div className=" w-[80%] lmd:w-[70%] mx-auto  px-4 py-2 border-b-2 border-dashed border-gray-500 ">
-          <h1 className="font-bold font-serif text-2xl sm:text-3xl text-center italic">
-            Create Task
-          </h1>
-        </div>
-
-        <div className=" w-[80%] lmd:w-[70%] mx-auto ">
+      <div className="py-10 z-10 bg-white shadow-xl w-[90%] md:w-[80%] lmd:w-[48%] rounded-3xl">
+        <div>
+          <div className=" w-[80%] lmd:w-[70%] mx-auto  px-4 py-2 border-b-2 border-dashed border-gray-500 ">
+            <h1 className="font-bold font-serif text-2xl sm:text-3xl text-center italic">
+              Create Task
+            </h1>
+          </div>
+          <div className=" w-[80%] lmd:w-[70%] mx-auto ">
           <p
             className={`${
               message.includes("successfully")
@@ -236,10 +238,7 @@ export default function Page() {
               />
             </div>
             <div className="ml-auto ">
-              <MyButton
-                label="Create"
-                type="submit"
-              />
+              <MyButton label="Create" type="submit" />
               {/* <button
                 type="submit"
                 className="bg-black  text-white w-[8rem] py-4 text-center rounded-2xl "
@@ -249,6 +248,9 @@ export default function Page() {
             </div>
           </form>
         </div>
+        </div>
+
+        
       </div>
     </main>
   );

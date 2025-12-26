@@ -89,8 +89,11 @@ export default function DisplayTask() {
     );
   }
 
+  // absolute left-1/2 top-4 sm:top-1/2 transform -translate-x-1/2 sm:-translate-y-1/2
+
+
   return (
-    <main className="pb-[3.6rem] sm:pb-0 relative w-full h-full">
+    <main className="pb-[3.6rem] sm:pb-0 relative w-full h-full flex justify-center items-center">
       {DeletePage && validate && (
         <div
           className={`px-6 bg-red-600 border w-full sm:w-auto  h-fit py-10 flex flex-col gap-4 justify-center items-center rounded-3xl absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20`}
@@ -125,7 +128,7 @@ export default function DisplayTask() {
           Task deleted
         </div>
       ) : (
-        <div className="py-4 sm:py-8 pb absolute left-1/2 top-4 sm:top-1/2 transform -translate-x-1/2 sm:-translate-y-1/2 z-10 bg-white shadow-xl w-[90%] md:w-[80%] lmd:w-[48%] rounded-3xl">
+        <div className="py-4 sm:py-8 pb  z-10 bg-white shadow-xl w-[90%] md:w-[80%] lmd:w-[48%] rounded-3xl">
           <div className=" w-[80%]  mx-auto  px-4 py-2 border-b-2 border-dashed border-gray-500 ">
             <h1 className="font-bold font-serif text-2xl sm:text-3xl text-center italic">
               {DeletePage ? "Delete Task" : "Task Details"}

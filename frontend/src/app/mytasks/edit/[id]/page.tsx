@@ -128,7 +128,7 @@ export default function EditTaskPage() {
         setErrorMessage("An unexpected error occured, try reloading the page.");
       }
     }
-    
+
     getTask();
   }, [taskId]);
 
@@ -178,17 +178,15 @@ export default function EditTaskPage() {
   }
 
   return (
-    <main className="pb-[3.6rem] sm:pb-0 relative w-full h-full">
+    <main className="pb-[3.6rem] sm:pb-0 relative w-full h-full flex justify-center items-center ">
       {isLoading && (
-        <div className="h-full w-full flex justify-center items-center">
-          <LoadingSpinner
-            styles={{
-              svg: "h-6 w-6 sm:h-9 sm:w-9  lmd:h-6 lmd:w-6",
-              span: "text-sm sm:text-[1.1rem] lmd:text-sm",
-            }}
-            text="Searching..."
-          />
-        </div>
+        <LoadingSpinner
+          styles={{
+            svg: "h-6 w-6 sm:h-9 sm:w-9  lmd:h-6 lmd:w-6",
+            span: "text-sm sm:text-[1.1rem] lmd:text-sm",
+          }}
+          text="Searching..."
+        />
       )}
       {isSuccess ? (
         <div
@@ -197,7 +195,7 @@ export default function EditTaskPage() {
           Task updated
         </div>
       ) : (
-        <div className="py-4 sm:pt-4 sm:pb absolute left-1/2 top-4 sm:top-1/2 transform -translate-x-1/2 sm:-translate-y-1/2 z-10 bg-white shadow-xl   w-[90%] md:w-[80%] lmd:w-[48%] rounded-3xl">
+        <div className="py-7  bg-white shadow-xl   w-[90%] md:w-[80%] lmd:w-[48%] rounded-3xl">
           <div className=" w-[80%]  mx-auto   px-4 py-2 sm:my-6 border-b-2 border-dashed border-gray-500 ">
             <h1 className="font-bold font-serif text-2xl sm:text-3xl text-center italic">
               Task Edit
