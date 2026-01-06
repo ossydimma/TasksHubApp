@@ -23,27 +23,27 @@ var redisHost = builder.Configuration["REDIS_HOST"];
 var redisPassword = builder.Configuration["REDIS_PASSWORD"];
 
 // --- Configure Hangfire Services ---
-builder.Services.AddHangfire(configuration => configuration
-    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-    .UseSimpleAssemblyNameTypeSerializer()
-    .UseRecommendedSerializerSettings()
-    .UsePostgreSqlStorage(options =>
-    {
-        options.UseNpgsqlConnection(connectionString);
-    }, new PostgreSqlStorageOptions
-    {
-        InvisibilityTimeout = TimeSpan.FromMinutes(5),
-        QueuePollInterval = TimeSpan.FromSeconds(3),
-        DistributedLockTimeout = TimeSpan.FromMinutes(10),
-        PrepareSchemaIfNecessary = true,
-        SchemaName = "hangfire"
-    }));
+// builder.Services.AddHangfire(configuration => configuration
+//     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+//     .UseSimpleAssemblyNameTypeSerializer()
+//     .UseRecommendedSerializerSettings()
+//     .UsePostgreSqlStorage(options =>
+//     {
+//         options.UseNpgsqlConnection(connectionString);
+//     }, new PostgreSqlStorageOptions
+//     {
+//         InvisibilityTimeout = TimeSpan.FromMinutes(5),
+//         QueuePollInterval = TimeSpan.FromSeconds(3),
+//         DistributedLockTimeout = TimeSpan.FromMinutes(10),
+//         PrepareSchemaIfNecessary = true,
+//         SchemaName = "hangfire"
+//     }));
 
-// Add the processing server as IHostedService
-builder.Services.AddHangfireServer(options =>
-{
-    options.WorkerCount = 5; // Limits concurrent database connections
-});
+// // Add the processing server as IHostedService
+// builder.Services.AddHangfireServer(options =>
+// {
+//     options.WorkerCount = 5; // Limits concurrent database connections
+// });
 
 // --- Configure EF Core for PostgreSQL ---
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -140,28 +140,28 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.UseHangfireDashboard("/hangfire", new DashboardOptions
-{
-    DashboardTitle = "TasksHub Jobs",
-    Authorization = new[]
-    {
-        new HangfireCustomBasicAuthenticationFilter
-        {
-            User = hangfireUser,
-            Pass = hangfirePass
-        }
-    }
-});
+// app.UseHangfireDashboard("/hangfire", new DashboardOptions
+// {
+//     DashboardTitle = "TasksHub Jobs",
+//     Authorization = new[]
+//     {
+//         new HangfireCustomBasicAuthenticationFilter
+//         {
+//             User = hangfireUser,
+//             Pass = hangfirePass
+//         }
+//     }
+// });
 
-RecurringJob.AddOrUpdate<TaskMaintenanceService>(
-    "UpdateOverdueTasksJob",
-    service => service.UpdateOverdueTasksAsync(),
-    Cron.Daily(1, 0),
-    new RecurringJobOptions
-    {
-        TimeZone = TimeZoneInfo.Utc,
-    }
-);
+// RecurringJob.AddOrUpdate<TaskMaintenanceService>(
+//     "UpdateOverdueTasksJob",
+//     service => service.UpdateOverdueTasksAsync(),
+//     Cron.Daily(1, 0),
+//     new RecurringJobOptions
+//     {
+//         TimeZone = TimeZoneInfo.Utc,
+//     }
+// );
 
 // Essential for Render/Docker deployments
 app.UseForwardedHeaders(new ForwardedHeadersOptions
